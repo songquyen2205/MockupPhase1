@@ -1,0 +1,25 @@
+{
+  "name": "phase_1_mvp",
+  "version": "1.0.0",
+  "description": "Thư mục này chứa các thiết kế, giao diện mẫu (mockups) và prototype tương tác cho **Phase 1 MVP (Hammer Job Agent)**.",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/songquyen2205/MockupPhase1.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "bugs": {
+    "url": "https://github.com/songquyen2205/MockupPhase1/issues"
+  },
+  "homepage": "https://github.com/songquyen2205/MockupPhase1#readme",
+  "dependencies": {
+    "jsdom": "^29.1.1",
+    "puppeteer": "^25.10.0"
+  }
+}

@@ -1,5 +1,17 @@
 # Phase 1 MVP - Prototypes & Mockups
 
+## Bản rà soát ngày 09/09/2026
+
+Mở `index.html` trực tiếp trên trình duyệt. Bản này có Dancer App và Admin CMS dùng chung dữ liệu mẫu, lưu local trên máy; không kết nối staging/production.
+
+- [Báo cáo BA / field mapping 19 views / Design / QC / PM](review/BA_DESIGN_QC_REVIEW.md)
+- [ERD snapshot từ link được cung cấp](review/erd.snapshot.dbml)
+- [Kết quả automation](review/test-results.json)
+- Chạy lại kiểm thử: `node prototype.test.cjs`.
+- Bản HTML trước khi chỉnh: `.local-review/2026-09-09/index.before.html`.
+
+**Quan trọng:** một số chức năng SOW chưa có model trong ERD. Prototype giữ chúng trong `extensions` để review flow, không xác nhận backend đã triển khai. Các đề xuất cần chốt được ghi rõ trong báo cáo. Danh sách cũ dưới đây chỉ là ghi chú lịch sử; mapping hiện hành nằm trong báo cáo 19 views.
+
 Thư mục này chứa các thiết kế, giao diện mẫu (mockups) và prototype tương tác cho **Phase 1 MVP (Hammer Job Agent)**.
 
 ---
