@@ -157,7 +157,10 @@ window.i18nDict = {
   "Admin moderation state. Statuses: Visible, Hidden, Removed.": "Trạng thái kiểm duyệt. Gồm: Visible (hiển thị bình thường), Hidden (tạm ẩn), Removed (gỡ vĩnh viễn).",
   "Latest crawl outcome. Statuses: Pending, Success, Failed, Unchanged.": "Kết quả cào mới nhất. Gồm: Pending (chờ cào), Success (đã lấy data), Failed (lỗi kết nối), Unchanged (nội dung không đổi).",
   "Review decision. Statuses: Pending, Approved, Rejected, Duplicate.": "Quyết định duyệt. Gồm: Pending (chờ duyệt), Approved (đưa vào cào data), Rejected (từ chối/spam), Duplicate (trùng lặp).",
-  "Latest search outcome. Statuses: Not run, Success, Failed.": "Kết quả tìm kiếm. Gồm: Not run (chưa chạy), Success (tìm thấy link), Failed (lỗi API)."};
+  "Latest search outcome. Statuses: Not run, Success, Failed.": "Kết quả tìm kiếm. Gồm: Not run (chưa chạy), Success (tìm thấy link), Failed (lỗi API).",
+  "Admin moderation state. Statuses: No restriction, Temporarily hidden, Removed.": "Trạng thái kiểm duyệt. Gồm: No restriction (bình thường), Temporarily hidden (tạm ẩn), Removed (gỡ vĩnh viễn).",
+  "No restriction": "Bình thường",
+  "Temporarily hidden": "Tạm ẩn"};
 
 const style = document.createElement('style');
 style.innerHTML = `
@@ -216,6 +219,11 @@ function initI18n() {
     root.querySelectorAll('input[placeholder], textarea[placeholder]').forEach(el => {
        const p = el.getAttribute('placeholder');
        if (p && window.i18nDict[p]) el.setAttribute('placeholder', window.i18nDict[p]);
+    });
+    
+    root.querySelectorAll('*[data-help]').forEach(el => {
+       const p = el.getAttribute('data-help');
+       if (p && window.i18nDict[p]) el.setAttribute('data-help', window.i18nDict[p]);
     });
     
     root.querySelectorAll('*[title]').forEach(el => {
