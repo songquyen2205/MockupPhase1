@@ -152,7 +152,12 @@ window.i18nDict = {
   "Availability": "Mức độ sẵn sàng",
   "18+ declaration": "Xác thực 18+",
   "Agent access": "Quyền truy cập",
-  "Crawl attempts": "Số lượt cào"};
+  "Crawl attempts": "Số lượt cào",
+  "Processing state. Statuses: New, Incomplete, Complete, Matched, Expired, Archived.": "Trạng thái xử lý. Gồm: New (vừa cào), Incomplete (thiếu data), Complete (đã đủ), Matched (đã ghép vũ công), Expired (hết hạn), Archived (lưu trữ).",
+  "Admin moderation state. Statuses: Visible, Hidden, Removed.": "Trạng thái kiểm duyệt. Gồm: Visible (hiển thị bình thường), Hidden (tạm ẩn), Removed (gỡ vĩnh viễn).",
+  "Latest crawl outcome. Statuses: Pending, Success, Failed, Unchanged.": "Kết quả cào mới nhất. Gồm: Pending (chờ cào), Success (đã lấy data), Failed (lỗi kết nối), Unchanged (nội dung không đổi).",
+  "Review decision. Statuses: Pending, Approved, Rejected, Duplicate.": "Quyết định duyệt. Gồm: Pending (chờ duyệt), Approved (đưa vào cào data), Rejected (từ chối/spam), Duplicate (trùng lặp).",
+  "Latest search outcome. Statuses: Not run, Success, Failed.": "Kết quả tìm kiếm. Gồm: Not run (chưa chạy), Success (tìm thấy link), Failed (lỗi API)."};
 
 const style = document.createElement('style');
 style.innerHTML = `
