@@ -160,7 +160,8 @@ window.i18nDict = {
   "Latest search outcome. Statuses: Not run, Success, Failed.": "Kết quả tìm kiếm. Gồm: Not run (chưa chạy), Success (tìm thấy link), Failed (lỗi API).",
   "Admin moderation state. Statuses: No restriction, Temporarily hidden, Removed.": "Trạng thái kiểm duyệt. Gồm: No restriction (bình thường), Temporarily hidden (tạm ẩn), Removed (gỡ vĩnh viễn).",
   "No restriction": "Bình thường",
-  "Temporarily hidden": "Tạm ẩn"};
+  "Temporarily hidden": "Tạm ẩn",
+  "Removed": "Đã gỡ"};
 
 const style = document.createElement('style');
 style.innerHTML = `
