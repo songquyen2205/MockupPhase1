@@ -144,9 +144,20 @@ function sourceTable(list){const p=ui.pagination?.sources||{page:1,limit:10};con
 
 function cmsSources(){const isSource=ui.sourceTab==='sources';
   let list=(isSource?db.ai_source_links:db.ai_discovery_queries).filter(o=>!o.is_deleted);
+  const tf=isSource?(ui.srcF?.time||'today'):(ui.kwF?.time||'today');
+  const now=new Date();
+  const isWithin=(dateStr)=>{
+    if(!dateStr||tf==='all')return true;
+    const d=new Date(dateStr);
+    if(tf==='today')return d.toDateString()===now.toDateString();
+    if(tf==='week')return (now-d)<=7*86400000;
+    if(tf==='month')return (now-d)<=30*86400000;
+    return true;
+  };
   const provMap={admin:'Admin',dancer:'Dancer',ai_keyword:'Keyword'};
   const srcProviders=Array.from(new Set(db.ai_source_links.map(s=>s.provider).filter(Boolean))).map(p=>[p,provMap[p]||p]);
   const statuses=[['pending','Pending'],['crawling','Crawling'],['success','Success'],['unchanged','Unchanged'],['failed','Failed']];if(isSource){
+    if(tf!=='all')list=list.filter(o=>isWithin(o.last_crawled_at));
     if(ui.srcF?.q){const q=ui.srcF.q.toLowerCase();list=list.filter(o=>String(o.id)===q||o.url.toLowerCase().includes(q)||o.source_code.toLowerCase().includes(q));}
     if(ui.srcF?.provider){const arr=ui.srcF.provider.split(',');list=list.filter(o=>arr.includes(o.provider));}
     if(ui.srcF?.region){const arr=ui.srcF.region.split(',');list=list.filter(o=>{const reg=o.country?getRegionForCountry(o.country):'';return arr.some(r=>reg.includes(r));});}
@@ -155,6 +166,7 @@ function cmsSources(){const isSource=ui.sourceTab==='sources';
     if(ui.srcF?.status){list=list.filter(o=>o.crawl_status===ui.srcF.status);}
   }
   else {
+    if(tf!=='all')list=list.filter(o=>isWithin(o.last_run_at));
     if (ui.kwF?.q) list = list.filter(o => o.keyword.toLowerCase().includes(ui.kwF.q.toLowerCase()));
     if (ui.kwF?.region) { const arr = ui.kwF.region.split(','); list = list.filter(o => arr.some(r => o.region?.includes(r))); }
     if (ui.kwF?.country) { const arr = ui.kwF.country.split(','); list = list.filter(o => arr.some(c => o.country?.includes(c))); }
@@ -168,20 +180,23 @@ function cmsSources(){const isSource=ui.sourceTab==='sources';
     }
   }
   
-  const todayRuns=discoveryRuns().filter(r=>r.started_at.startsWith(today()));
-  const kwWidget=`<div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:16px;margin-bottom:32px;"><div style="padding:16px;background:#fff;border-radius:8px;border:1px solid #e5e7eb;box-shadow:0 1px 3px rgba(0,0,0,0.05);"><div style="color:#6b7280;font-size:0.9em;margin-bottom:8px">Đã chạy hôm nay</div><div style="font-size:1.8em;font-weight:600">${todayRuns.length} keywords</div></div><div style="padding:16px;background:#fff;border-radius:8px;border:1px solid #e5e7eb;box-shadow:0 1px 3px rgba(0,0,0,0.05);"><div style="color:#6b7280;font-size:0.9em;margin-bottom:8px">Ra được</div><div style="font-size:1.8em;font-weight:600;color:#10b981">${todayRuns.reduce((a,b)=>a+(b.new_links||0),0)} links mới</div></div><div style="padding:16px;background:#fff;border-radius:8px;border:1px solid #e5e7eb;box-shadow:0 1px 3px rgba(0,0,0,0.05);"><div style="color:#6b7280;font-size:0.9em;margin-bottom:8px">Lỗi</div><div style="font-size:1.8em;font-weight:600;color:#ef4444">${todayRuns.filter(r=>r.status==='failed').length} keywords</div></div></div>`;
+  const tfLabel=tf==='today'?'hôm nay':tf==='week'?'tuần này':tf==='month'?'tháng này':'(Tất cả)';
+  const tfSelect=(id,val)=>`<select id="${id}" style="min-width:100px; height: 38px;"><option value="today" ${val==='today'?'selected':''}>Hôm nay</option><option value="week" ${val==='week'?'selected':''}>Tuần này</option><option value="month" ${val==='month'?'selected':''}>Tháng này</option><option value="all" ${val==='all'?'selected':''}>Tất cả</option></select>`;
+  
+  const filteredRuns=discoveryRuns().filter(r=>isWithin(r.started_at));
+  const kwWidget=`<div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:16px;margin-bottom:32px;"><div style="padding:16px;background:#fff;border-radius:8px;border:1px solid #e5e7eb;box-shadow:0 1px 3px rgba(0,0,0,0.05);"><div style="color:#6b7280;font-size:0.9em;margin-bottom:8px">Đã chạy ${tfLabel}</div><div style="font-size:1.8em;font-weight:600">${filteredRuns.length} keywords</div></div><div style="padding:16px;background:#fff;border-radius:8px;border:1px solid #e5e7eb;box-shadow:0 1px 3px rgba(0,0,0,0.05);"><div style="color:#6b7280;font-size:0.9em;margin-bottom:8px">Ra được</div><div style="font-size:1.8em;font-weight:600;color:#10b981">${filteredRuns.reduce((a,b)=>a+(b.new_links||0),0)} links mới</div></div><div style="padding:16px;background:#fff;border-radius:8px;border:1px solid #e5e7eb;box-shadow:0 1px 3px rgba(0,0,0,0.05);"><div style="color:#6b7280;font-size:0.9em;margin-bottom:8px">Lỗi</div><div style="font-size:1.8em;font-weight:600;color:#ef4444">${filteredRuns.filter(r=>r.status==='failed').length} keywords</div></div></div>`;
   
   const activeSrcCount=db.ai_source_links.filter(s=>s.enabled).length;
-  const todaySrcPipelines=db.ai_pipeline_runs.filter(r=>r.started_at.startsWith(today()));
-  const todaySrcCount=todaySrcPipelines.reduce((a,b)=>a+(b.total_sources||0),0);
+  const filteredSrcPipelines=db.ai_pipeline_runs.filter(r=>isWithin(r.started_at));
+  const filteredSrcCount=filteredSrcPipelines.reduce((a,b)=>a+(b.total_sources||0),0);
   const failedSrcCount=db.ai_source_links.filter(s=>s.crawl_status==='failed').length;
-  const srcWidget=`<div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:16px;margin-bottom:32px;"><div style="padding:16px;background:#fff;border-radius:8px;border:1px solid #e5e7eb;box-shadow:0 1px 3px rgba(0,0,0,0.05);"><div style="color:#6b7280;font-size:0.9em;margin-bottom:8px">Tổng Sources (Active)</div><div style="font-size:1.8em;font-weight:600">${activeSrcCount} sources</div></div><div style="padding:16px;background:#fff;border-radius:8px;border:1px solid #e5e7eb;box-shadow:0 1px 3px rgba(0,0,0,0.05);"><div style="color:#6b7280;font-size:0.9em;margin-bottom:8px">Đã cào hôm nay</div><div style="font-size:1.8em;font-weight:600;color:#10b981">${todaySrcCount} lượt</div></div><div style="padding:16px;background:#fff;border-radius:8px;border:1px solid #e5e7eb;box-shadow:0 1px 3px rgba(0,0,0,0.05);"><div style="color:#6b7280;font-size:0.9em;margin-bottom:8px">Lỗi (Failed)</div><div style="font-size:1.8em;font-weight:600;color:#ef4444">${failedSrcCount} sources</div></div></div>`;
+  const srcWidget=`<div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:16px;margin-bottom:32px;"><div style="padding:16px;background:#fff;border-radius:8px;border:1px solid #e5e7eb;box-shadow:0 1px 3px rgba(0,0,0,0.05);"><div style="color:#6b7280;font-size:0.9em;margin-bottom:8px">Tổng Sources (Active)</div><div style="font-size:1.8em;font-weight:600">${activeSrcCount} sources</div></div><div style="padding:16px;background:#fff;border-radius:8px;border:1px solid #e5e7eb;box-shadow:0 1px 3px rgba(0,0,0,0.05);"><div style="color:#6b7280;font-size:0.9em;margin-bottom:8px">Đã cào ${tfLabel}</div><div style="font-size:1.8em;font-weight:600;color:#10b981">${filteredSrcCount} lượt</div></div><div style="padding:16px;background:#fff;border-radius:8px;border:1px solid #e5e7eb;box-shadow:0 1px 3px rgba(0,0,0,0.05);"><div style="color:#6b7280;font-size:0.9em;margin-bottom:8px">Lỗi (Failed)</div><div style="font-size:1.8em;font-weight:600;color:#ef4444">${failedSrcCount} sources</div></div></div>`;
   
-
-  const srcFilters=`<div class="toolbar" style="margin-bottom:16px;gap:12px;display:flex;align-items:flex-start;background:#fff;padding:12px;border-radius:8px;border:1px solid #e5e7eb;"><input type="search" id="src-search" placeholder="Search URL or ID..." value="${esc(ui.srcF?.q||'')}" style="flex:1; height: 38px; min-width: 150px;"><div style="display:flex; flex-direction:column; gap:4px; flex:1;"><label style="font-size:0.8em;color:#6b7280;font-weight:600">Source Origin (Type)</label>${multiSelect('src-provider','All types',srcProviders,ui.srcF?.provider||'')}</div><div style="display:flex; flex-direction:column; gap:4px; flex:1;"><label style="font-size:0.8em;color:#6b7280;font-weight:600">Region</label>${multiSelect('src-region','All regions',queryRegions,ui.srcF?.region||'')}</div><div style="display:flex; flex-direction:column; gap:4px; flex:1;"><label style="font-size:0.8em;color:#6b7280;font-weight:600">Country</label>${multiSelect('src-country','All countries',getCountriesForRegion(ui.srcF?.region||''),ui.srcF?.country||'')}</div><div style="display:flex; flex-direction:column; gap:4px;"><label style="font-size:0.8em;color:#6b7280;font-weight:600">Status</label><select id="src-status" style="min-width:120px; height: 38px;"><option value="">All</option><option value="pending" ${ui.srcF?.status==='pending'?'selected':''}>Pending</option><option value="crawling" ${ui.srcF?.status==='crawling'?'selected':''}>Crawling</option><option value="success" ${ui.srcF?.status==='success'?'selected':''}>Success</option><option value="unchanged" ${ui.srcF?.status==='unchanged'?'selected':''}>Unchanged</option><option value="failed" ${ui.srcF?.status==='failed'?'selected':''}>Failed</option></select></div><div style="display:flex; align-items:flex-end; height:100%; padding-top:20px;">${btn('apply-src-filters','Filter','','primary')}</div></div>`;
+  const srcFilters=`<div class="toolbar" style="margin-bottom:16px;gap:12px;display:flex;align-items:flex-start;background:#fff;padding:12px;border-radius:8px;border:1px solid #e5e7eb;"><input type="search" id="src-search" placeholder="Search URL or ID..." value="${esc(ui.srcF?.q||'')}" style="flex:1; height: 38px; min-width: 150px;"><div style="display:flex; flex-direction:column; gap:4px;"><label style="font-size:0.8em;color:#6b7280;font-weight:600">Timeframe</label>${tfSelect('src-time',ui.srcF?.time||'today')}</div><div style="display:flex; flex-direction:column; gap:4px; flex:1;"><label style="font-size:0.8em;color:#6b7280;font-weight:600">Origin</label>${multiSelect('src-provider','All',srcProviders,ui.srcF?.provider||'')}</div><div style="display:flex; flex-direction:column; gap:4px; flex:1;"><label style="font-size:0.8em;color:#6b7280;font-weight:600">Region</label>${multiSelect('src-region','All regions',queryRegions,ui.srcF?.region||'')}</div><div style="display:flex; flex-direction:column; gap:4px; flex:1;"><label style="font-size:0.8em;color:#6b7280;font-weight:600">Country</label>${multiSelect('src-country','All countries',getCountriesForRegion(ui.srcF?.region||''),ui.srcF?.country||'')}</div><div style="display:flex; flex-direction:column; gap:4px;"><label style="font-size:0.8em;color:#6b7280;font-weight:600">Status</label><select id="src-status" style="min-width:120px; height: 38px;"><option value="">All</option><option value="pending" ${ui.srcF?.status==='pending'?'selected':''}>Pending</option><option value="crawling" ${ui.srcF?.status==='crawling'?'selected':''}>Crawling</option><option value="success" ${ui.srcF?.status==='success'?'selected':''}>Success</option><option value="unchanged" ${ui.srcF?.status==='unchanged'?'selected':''}>Unchanged</option><option value="failed" ${ui.srcF?.status==='failed'?'selected':''}>Failed</option></select></div><div style="display:flex; align-items:flex-end; height:100%; padding-top:20px;">${btn('apply-src-filters','Filter','','primary')}</div></div>`;
   
   const kwFilters=`<div class="toolbar" style="margin-bottom:16px;gap:12px;display:flex;align-items:flex-start;background:#fff;padding:12px;border-radius:8px;border:1px solid #e5e7eb;">
 <input type="search" id="kw-search" placeholder="Search keywords..." value="${esc(ui.kwF?.q||'')}" style="flex:1; height: 38px; min-width: 150px;">
+<div style="display:flex; flex-direction:column; gap:4px;"><label style="font-size:0.8em;color:#6b7280;font-weight:600">Timeframe</label>${tfSelect('kw-time',ui.kwF?.time||'today')}</div>
 <div style="display:flex; flex-direction:column; gap:4px; flex:1;"><label style="font-size:0.8em;color:#6b7280;font-weight:600">Region</label>${multiSelect('kw-region', 'All regions', queryRegions, ui.kwF?.region||'')}</div>
 <div style="display:flex; flex-direction:column; gap:4px; flex:1;"><label style="font-size:0.8em;color:#6b7280;font-weight:600">Country</label>${multiSelect('kw-country', 'All countries', getCountriesForRegion(ui.kwF?.region||''), ui.kwF?.country||'')}</div>
 <div style="display:flex; flex-direction:column; gap:4px; flex:1;"><label style="font-size:0.8em;color:#6b7280;font-weight:600">City</label>${multiSelect('kw-city', 'All cities', getCitiesForCountry(ui.kwF?.country||''), ui.kwF?.city||'')}</div>
@@ -189,10 +204,9 @@ function cmsSources(){const isSource=ui.sourceTab==='sources';
   <option value="">All</option>
   <option value="success" ${ui.kwF?.status==='success'?'selected':''}>Success</option>
   <option value="failed" ${ui.kwF?.status==='failed'?'selected':''}>Failed</option>
-  <option value="not_run" ${ui.kwF?.status==='not_run'?'selected':''}>Not Run</option>
+  <option value="not_run" ${ui.kwF?.status==='not_run'?'selected':''}>Not run yet</option>
 </select></div>
-<div style="display:flex; align-items:flex-end; height:100%; padding-top:20px;">${btn('apply-kw-filters','Filter','','primary')}</div>
-</div>`;
+<div style="display:flex; align-items:flex-end; height:100%; padding-top:20px;">${btn('apply-kw-filters', 'Filter', '', 'primary')}</div></div>`;
   
   return heading('CMS-04 · SPRINT 1','Crawler sources','Manage approved URLs and discovery keywords.',btn('source-edit',icon('plus')+(isSource?'Add source':'Add keyword'),'','primary',!editable()))+`<div class="tabs">${btn('source-tab','URL sources','sources',isSource?'active':'')}${btn('source-tab','Discovery keywords','keywords',!isSource?'active':'')}</div>`+
     (isSource?srcWidget+srcFilters+sourceTable(list)+`<div class="section-heading" style="margin-top: 48px;"><h3>Recent crawl runs</h3></div>`+runTable()
@@ -351,8 +365,14 @@ document.addEventListener('click',async event=>{
   else if(a==='delete-query'){if(confirm('Bạn có chắc chắn muốn xóa (ẩn) từ khóa này khỏi danh sách?')){const q=db.ai_discovery_queries.find(x=>x.id===Number(v));if(q)q.is_deleted=true;render();}}
   else if(a==='apply-kw-filters'){
     const getMulti = id => Array.from(document.getElementById(id)?.selectedOptions||[]).map(o=>o.value).join(',');
-    ui.kwF={q:$('#kw-search')?.value||'',region:getMulti('kw-region'),country:getMulti('kw-country'),city:getMulti('kw-city'),status:$('#kw-status')?.value||''};
+    ui.kwF={q:$('#kw-search')?.value||'',time:$('#kw-time')?.value||'today',region:getMulti('kw-region'),country:getMulti('kw-country'),city:getMulti('kw-city'),status:$('#kw-status')?.value||''};
     if(ui.pagination&&ui.pagination.keywords) ui.pagination.keywords.page = 1;
+    render();
+  }
+  else if(a==='apply-src-filters'){
+    const getMulti = id => Array.from(document.getElementById(id)?.selectedOptions||[]).map(o=>o.value).join(',');
+    ui.srcF={q:$('#src-search')?.value||'',time:$('#src-time')?.value||'today',provider:getMulti('src-provider'),region:getMulti('src-region'),country:getMulti('src-country'),city:getMulti('src-city'),status:$('#src-status')?.value||''};
+    if(ui.pagination&&ui.pagination.sources) ui.pagination.sources.page = 1;
     render();
   }
   else if(a==='toggle-run-results'){const tr=document.getElementById('run-results-'+v);if(tr)tr.style.display=tr.style.display==='none'?'table-row':'none';}
