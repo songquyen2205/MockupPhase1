@@ -58,7 +58,7 @@ const discoveryRuns=()=>ext().discoveryRuns||=[];
 const helpHeading=(label,description)=>`${label} <button type="button" class="column-help" data-help="${esc(description)}" aria-label="About ${esc(label)}" title="${esc(description)}">${icon('info')}</button>`;
 function dismissHelp(){document.getElementById('field-help-tooltip')?.remove();}
 function showHelp(button){dismissHelp();const tip=document.createElement('div');tip.id='field-help-tooltip';tip.setAttribute('role','tooltip');tip.textContent=button.dataset.help;document.body.append(tip);const r=button.getBoundingClientRect();tip.style.left=Math.max(8,Math.min(r.left,innerWidth-tip.offsetWidth-8))+'px';tip.style.top=(r.bottom+tip.offsetHeight+8<innerHeight?r.bottom+6:Math.max(8,r.top-tip.offsetHeight-6))+'px';}
-document.addEventListener('click',e=>{const b=e.target.closest('[data-help]');if(b)showHelp(b);else dismissHelp();});
+document.addEventListener('click',e=>{const b=e.target.closest('[data-help]');if(b)showHelp(b);else dismissHelp();if(!e.target.closest('.custom-multi')){document.querySelectorAll('.multi-drop').forEach(x=>x.style.display='none');}});
 document.addEventListener('mouseover',e=>{const b=e.target.closest('[data-help]');if(b)showHelp(b);});
 document.addEventListener('mouseout',e=>{if(e.target.closest('[data-help]'))dismissHelp();});
 document.addEventListener('focusin',e=>{if(e.target.matches('[data-help]'))showHelp(e.target);});
@@ -119,6 +119,27 @@ async function searchKeywords(all){if(!editable()||ui.discoveryRunning)return;co
 const visibleSources=()=>db.ai_source_links.filter(s=>!ui.search||JSON.stringify(s).toLowerCase().includes(ui.search.toLowerCase()));
 function sourceBulkToolbar(list){const eligible=list.filter(s=>s.enabled),selected=db.ai_source_links.filter(s=>s.enabled&&selectedSources.has(s.id));return `<div class="toolbar bulk-toolbar"><label class="check-row"><input type="checkbox" data-select-visible aria-label="Select all visible enabled sources" ${eligible.length&&eligible.every(s=>selectedSources.has(s.id))?'checked':''} ${!editable()||ui.running||!eligible.length?'disabled':''}>Select visible</label><span>${selected.length} selected</span>${btn('clear-source-selection','Clear selection','','link',!selected.length||ui.running)}${btn('crawl-selected',icon('arrows-clockwise')+'Crawl selected','','primary',!editable()||ui.running||!selected.length)}${btn('crawl-all-sources',icon('arrows-clockwise')+'Crawl all enabled','','',!editable()||ui.running||!db.ai_source_links.some(s=>s.enabled))}</div>`;}
 async function confirmSourceCrawl(all){if(!editable()||ui.running)return;const ids=db.ai_source_links.filter(s=>s.enabled&&(all||selectedSources.has(s.id))).map(s=>s.id);if(!ids.length)return;if(!confirm(all?`Run a sample crawl for all ${ids.length} enabled sources, including sources outside the current filter?`:`Run a sample crawl for ${ids.length} selected sources, including any selected sources outside the current filter?`))return;await crawl(ids);selectedSources.clear();render();}
+function multiSelect(id, placeholder, list, selectedStr) {
+  const selected = selectedStr ? selectedStr.split(',') : [];
+  let label = placeholder;
+  if (selected.length === 1) {
+    const found = list.find(x => (typeof x === 'string' ? x : x[0]) === selected[0]);
+    if (found) label = typeof found === 'string' ? found : found[1];
+  } else if (selected.length > 1) label = selected.length + ' selected';
+  let html = `<div style="position:relative;width:100%;min-width:140px;" class="custom-multi" id="${id}-wrapper">
+    <button type="button" style="width:100%;text-align:left;height:38px;background:#fff;border:1px solid #ccc;border-radius:4px;padding:0 8px;display:flex;justify-content:space-between;align-items:center;font-size:14px;color:#333;" onclick="const d=this.nextElementSibling;document.querySelectorAll('.multi-drop').forEach(x=>x!==d&&(x.style.display='none'));d.style.display=d.style.display==='none'?'block':'none';"><span style="white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${esc(label)}</span> <span style="font-size:10px;color:#999">▼</span></button>
+    <div class="multi-drop" style="display:none;position:absolute;top:100%;left:0;right:0;background:#fff;border:1px solid #ccc;z-index:999;max-height:220px;overflow-y:auto;box-shadow:0 4px 6px rgba(0,0,0,0.1);padding:4px;border-radius:4px;margin-top:2px;">`;
+  for(const item of list) {
+    const val = typeof item === 'string' ? item : item[0];
+    if(!val && val !== '') continue;
+    const text = typeof item === 'string' ? item : item[1];
+    const isSel = selected.includes(val);
+    if(val === '') continue; 
+    html += `<label style="display:flex;align-items:center;padding:6px 8px;cursor:pointer;font-size:14px;white-space:nowrap;"><input type="checkbox" data-multi-parent="${id}" value="${val}" style="margin:0 8px 0 0;" ${isSel?'checked':''}> ${esc(text)}</label>`;
+  }
+  return html + `</div></div>`;
+}
+
 function cmsSources(){const isSource=ui.sourceTab==='sources';
   let list=(isSource?db.ai_source_links:db.ai_discovery_queries).filter(o=>!o.is_deleted);
   if(isSource){if(ui.search)list=list.filter(o=>JSON.stringify(o).toLowerCase().includes(ui.search.toLowerCase()));}
@@ -128,22 +149,26 @@ function cmsSources(){const isSource=ui.sourceTab==='sources';
     if (ui.kwF?.country) { const arr = ui.kwF.country.split(','); list = list.filter(o => arr.some(c => o.country?.includes(c))); }
     if (ui.kwF?.city) { const arr = ui.kwF.city.split(','); list = list.filter(o => arr.some(c => o.city?.includes(c))); }
     if (ui.kwF?.status) {
-      if (ui.kwF.status === 'active') list = list.filter(o => o.enabled);
-      else if (ui.kwF.status === 'inactive') list = list.filter(o => !o.enabled);
+      list = list.filter(o => {
+          const r = discoveryRuns().find(x => x.query_id === o.id);
+          const st = r ? r.status : 'not_run';
+          return st === ui.kwF.status;
+      });
     }
   }
   
   const todayRuns=discoveryRuns().filter(r=>r.started_at.startsWith(today()));
   const kwWidget=`<div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:16px;margin-bottom:32px;"><div style="padding:16px;background:#fff;border-radius:8px;border:1px solid #e5e7eb;box-shadow:0 1px 3px rgba(0,0,0,0.05);"><div style="color:#6b7280;font-size:0.9em;margin-bottom:8px">Đã chạy hôm nay</div><div style="font-size:1.8em;font-weight:600">${todayRuns.length} keywords</div></div><div style="padding:16px;background:#fff;border-radius:8px;border:1px solid #e5e7eb;box-shadow:0 1px 3px rgba(0,0,0,0.05);"><div style="color:#6b7280;font-size:0.9em;margin-bottom:8px">Ra được</div><div style="font-size:1.8em;font-weight:600;color:#10b981">${todayRuns.reduce((a,b)=>a+(b.new_links||0),0)} links mới</div></div><div style="padding:16px;background:#fff;border-radius:8px;border:1px solid #e5e7eb;box-shadow:0 1px 3px rgba(0,0,0,0.05);"><div style="color:#6b7280;font-size:0.9em;margin-bottom:8px">Lỗi</div><div style="font-size:1.8em;font-weight:600;color:#ef4444">${todayRuns.filter(r=>r.status==='failed').length} keywords</div></div></div>`;
   const kwFilters=`<div class="toolbar" style="margin-bottom:16px;gap:12px;display:flex;align-items:flex-start;background:#fff;padding:12px;border-radius:8px;border:1px solid #e5e7eb;">
-<input type="search" id="kw-search" placeholder="Search keywords..." value="${esc(ui.kwF?.q||'')}" style="flex:1; height: 38px;">
-<div style="display:flex; flex-direction:column; gap:4px;"><label style="font-size:0.8em;color:#6b7280;font-weight:600">Region</label><select id="kw-region" multiple size="3" style="min-width:120px;">${options(queryRegions,ui.kwF?.region||'')}</select></div>
-<div style="display:flex; flex-direction:column; gap:4px;"><label style="font-size:0.8em;color:#6b7280;font-weight:600">Country</label><select id="kw-country" multiple size="3" style="min-width:120px;">${options(getCountriesForRegion(ui.kwF?.region||''),ui.kwF?.country||'')}</select></div>
-<div style="display:flex; flex-direction:column; gap:4px;"><label style="font-size:0.8em;color:#6b7280;font-weight:600">City</label><select id="kw-city" multiple size="3" style="min-width:120px;">${options(getCitiesForCountry(ui.kwF?.country||''),ui.kwF?.city||'')}</select></div>
-<div style="display:flex; flex-direction:column; gap:4px;"><label style="font-size:0.8em;color:#6b7280;font-weight:600">Status</label><select id="kw-status" style="min-width:100px; height: 38px;">
+<input type="search" id="kw-search" placeholder="Search keywords..." value="${esc(ui.kwF?.q||'')}" style="flex:1; height: 38px; min-width: 150px;">
+<div style="display:flex; flex-direction:column; gap:4px; flex:1;"><label style="font-size:0.8em;color:#6b7280;font-weight:600">Region</label>${multiSelect('kw-region', 'All regions', queryRegions, ui.kwF?.region||'')}</div>
+<div style="display:flex; flex-direction:column; gap:4px; flex:1;"><label style="font-size:0.8em;color:#6b7280;font-weight:600">Country</label>${multiSelect('kw-country', 'All countries', getCountriesForRegion(ui.kwF?.region||''), ui.kwF?.country||'')}</div>
+<div style="display:flex; flex-direction:column; gap:4px; flex:1;"><label style="font-size:0.8em;color:#6b7280;font-weight:600">City</label>${multiSelect('kw-city', 'All cities', getCitiesForCountry(ui.kwF?.country||''), ui.kwF?.city||'')}</div>
+<div style="display:flex; flex-direction:column; gap:4px;"><label style="font-size:0.8em;color:#6b7280;font-weight:600">Run Status</label><select id="kw-status" style="min-width:120px; height: 38px;">
   <option value="">All</option>
-  <option value="active" ${ui.kwF?.status==='active'?'selected':''}>Active</option>
-  <option value="inactive" ${ui.kwF?.status==='inactive'?'selected':''}>Inactive</option>
+  <option value="success" ${ui.kwF?.status==='success'?'selected':''}>Success</option>
+  <option value="failed" ${ui.kwF?.status==='failed'?'selected':''}>Failed</option>
+  <option value="not_run" ${ui.kwF?.status==='not_run'?'selected':''}>Not Run</option>
 </select></div>
 <div style="display:flex; align-items:flex-end; height:100%; padding-top:20px;">${btn('apply-kw-filters','Filter','','primary')}</div>
 </div>`;
@@ -307,25 +332,26 @@ document.addEventListener('change',event=>{const t=event.target;
       }
     }
   }
-  if(t.id==='kw-region'){
-    const vals=Array.from(t.selectedOptions).map(o=>o.value).join(',');
-    const ctry=$('#kw-country');
-    if(ctry)ctry.innerHTML=options(getCountriesForRegion(vals),'');
-  }
-  if(t.id==='kw-country'){
-    const regSelect=$('#kw-region');
-    const citySelect=$('#kw-city');
-    const vals=Array.from(t.selectedOptions).map(o=>o.value).join(',');
-    if(citySelect)citySelect.innerHTML=options(getCitiesForCountry(vals),'');
-    if(vals&&regSelect){
-      const inferred=getRegionForCountry(vals);
-      const currentRegs=Array.from(regSelect.selectedOptions).map(o=>o.value).join(',');
-      if(inferred&&currentRegs!==inferred){
-        const infArr=inferred.split(',');
-        for(const opt of regSelect.options)opt.selected=infArr.includes(opt.value);
-        t.innerHTML=options(getCountriesForRegion(inferred),vals);
-      }
-    }
+  if(t.dataset.multiParent){
+     const id = t.dataset.multiParent;
+     const getM = pid => Array.from(document.querySelectorAll(`input[data-multi-parent="${pid}"]:checked`)).map(cb=>cb.value).join(',');
+     const vals = getM(id);
+     const num = document.querySelectorAll(`input[data-multi-parent="${id}"]:checked`).length;
+     const wrapper = document.getElementById(id + '-wrapper');
+     if(wrapper) {
+         const btnSpan = wrapper.querySelector('button span');
+         if(num === 0) btnSpan.textContent = id==='kw-region'?'All regions':id==='kw-country'?'All countries':'All cities';
+         else if(num === 1) btnSpan.textContent = wrapper.querySelector('input:checked').nextSibling.textContent.trim();
+         else btnSpan.textContent = num + ' selected';
+     }
+     if(id === 'kw-region') {
+        const ctryWrapper = document.getElementById('kw-country-wrapper');
+        if(ctryWrapper) ctryWrapper.outerHTML = multiSelect('kw-country', 'All countries', getCountriesForRegion(vals), '');
+     }
+     if(id === 'kw-country') {
+        const cityWrapper = document.getElementById('kw-city-wrapper');
+        if(cityWrapper) cityWrapper.outerHTML = multiSelect('kw-city', 'All cities', getCitiesForCountry(vals), '');
+     }
   }
   if(t.id==='preview-role'){if(ui.dirty&&!confirm('Discard unsaved changes?')){render();return;}closeDialog(true);if(ui.mode==='cms')ui.role=t.value;else ui.guest=t.value==='guest';render();if(ui.mode==='dancer'&&!ui.guest&&!ageAllowed())openAge();}
   else if(t.id==='cms-status'){ui.status=t.value;render();}
