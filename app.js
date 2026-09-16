@@ -1,7 +1,7 @@
 'use strict';
-const STORE='hammer.phase1.review.v3';
+const STORE='hammer.phase1.review.v4';
 let db;try{db=JSON.parse(localStorage.getItem(STORE));}catch{}
-if(!db||db.version!==3)db=HammerSeed();
+if(!db||db.version!==4)db=HammerSeed();
 const ui={mode:'cms',cms:'jobs',mobile:'feed',role:'admin',guest:false,sourceTab:'sources',queueTab:'community',hub:'all',job:null,lang:'en',search:'',status:'',feedSearch:'',filters:{city:'',type:'',radius:null,duration:365,min:0},running:false,dialog:null,metrics:null,pendingJob:null,dirty:false};
 const $=s=>document.querySelector(s);
 const esc=v=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
