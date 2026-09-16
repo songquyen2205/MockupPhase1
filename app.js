@@ -122,11 +122,31 @@ async function confirmSourceCrawl(all){if(!editable()||ui.running)return;const i
 function cmsSources(){const isSource=ui.sourceTab==='sources';
   let list=(isSource?db.ai_source_links:db.ai_discovery_queries).filter(o=>!o.is_deleted);
   if(isSource){if(ui.search)list=list.filter(o=>JSON.stringify(o).toLowerCase().includes(ui.search.toLowerCase()));}
-  else{if(ui.kwF?.q)list=list.filter(o=>o.keyword.toLowerCase().includes(ui.kwF.q.toLowerCase()));if(ui.kwF?.region)list=list.filter(o=>o.region.includes(ui.kwF.region));if(ui.kwF?.country)list=list.filter(o=>o.country.includes(ui.kwF.country));}
+  else {
+    if (ui.kwF?.q) list = list.filter(o => o.keyword.toLowerCase().includes(ui.kwF.q.toLowerCase()));
+    if (ui.kwF?.region) { const arr = ui.kwF.region.split(','); list = list.filter(o => arr.some(r => o.region?.includes(r))); }
+    if (ui.kwF?.country) { const arr = ui.kwF.country.split(','); list = list.filter(o => arr.some(c => o.country?.includes(c))); }
+    if (ui.kwF?.city) { const arr = ui.kwF.city.split(','); list = list.filter(o => arr.some(c => o.city?.includes(c))); }
+    if (ui.kwF?.status) {
+      if (ui.kwF.status === 'active') list = list.filter(o => o.enabled);
+      else if (ui.kwF.status === 'inactive') list = list.filter(o => !o.enabled);
+    }
+  }
   
   const todayRuns=discoveryRuns().filter(r=>r.started_at.startsWith(today()));
   const kwWidget=`<div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:16px;margin-bottom:32px;"><div style="padding:16px;background:#fff;border-radius:8px;border:1px solid #e5e7eb;box-shadow:0 1px 3px rgba(0,0,0,0.05);"><div style="color:#6b7280;font-size:0.9em;margin-bottom:8px">Đã chạy hôm nay</div><div style="font-size:1.8em;font-weight:600">${todayRuns.length} keywords</div></div><div style="padding:16px;background:#fff;border-radius:8px;border:1px solid #e5e7eb;box-shadow:0 1px 3px rgba(0,0,0,0.05);"><div style="color:#6b7280;font-size:0.9em;margin-bottom:8px">Ra được</div><div style="font-size:1.8em;font-weight:600;color:#10b981">${todayRuns.reduce((a,b)=>a+(b.new_links||0),0)} links mới</div></div><div style="padding:16px;background:#fff;border-radius:8px;border:1px solid #e5e7eb;box-shadow:0 1px 3px rgba(0,0,0,0.05);"><div style="color:#6b7280;font-size:0.9em;margin-bottom:8px">Lỗi</div><div style="font-size:1.8em;font-weight:600;color:#ef4444">${todayRuns.filter(r=>r.status==='failed').length} keywords</div></div></div>`;
-  const kwFilters=`<div class="toolbar" style="margin-bottom:16px;gap:12px;display:flex;align-items:center;background:#fff;padding:12px;border-radius:8px;border:1px solid #e5e7eb;"><input type="search" id="kw-search" placeholder="Search keywords..." value="${esc(ui.kwF?.q||'')}" style="flex:1;"><select id="kw-region" style="max-width:150px">${options(queryRegions,ui.kwF?.region||'')}</select><select id="kw-country" style="max-width:150px">${options(getCountriesForRegion(ui.kwF?.region||''),ui.kwF?.country||'')}</select>${btn('apply-kw-filters','Filter','','primary')}</div>`;
+  const kwFilters=`<div class="toolbar" style="margin-bottom:16px;gap:12px;display:flex;align-items:flex-start;background:#fff;padding:12px;border-radius:8px;border:1px solid #e5e7eb;">
+<input type="search" id="kw-search" placeholder="Search keywords..." value="${esc(ui.kwF?.q||'')}" style="flex:1; height: 38px;">
+<div style="display:flex; flex-direction:column; gap:4px;"><label style="font-size:0.8em;color:#6b7280;font-weight:600">Region</label><select id="kw-region" multiple size="3" style="min-width:120px;">${options(queryRegions,ui.kwF?.region||'')}</select></div>
+<div style="display:flex; flex-direction:column; gap:4px;"><label style="font-size:0.8em;color:#6b7280;font-weight:600">Country</label><select id="kw-country" multiple size="3" style="min-width:120px;">${options(getCountriesForRegion(ui.kwF?.region||''),ui.kwF?.country||'')}</select></div>
+<div style="display:flex; flex-direction:column; gap:4px;"><label style="font-size:0.8em;color:#6b7280;font-weight:600">City</label><select id="kw-city" multiple size="3" style="min-width:120px;">${options(getCitiesForCountry(ui.kwF?.country||''),ui.kwF?.city||'')}</select></div>
+<div style="display:flex; flex-direction:column; gap:4px;"><label style="font-size:0.8em;color:#6b7280;font-weight:600">Status</label><select id="kw-status" style="min-width:100px; height: 38px;">
+  <option value="">All</option>
+  <option value="active" ${ui.kwF?.status==='active'?'selected':''}>Active</option>
+  <option value="inactive" ${ui.kwF?.status==='inactive'?'selected':''}>Inactive</option>
+</select></div>
+<div style="display:flex; align-items:flex-end; height:100%; padding-top:20px;">${btn('apply-kw-filters','Filter','','primary')}</div>
+</div>`;
   
   return heading('CMS-04 · SPRINT 1','Crawler sources','Manage approved URLs and discovery keywords.',btn('source-edit',icon('plus')+(isSource?'Add source':'Add keyword'),'','primary',!editable()))+`<div class="tabs">${btn('source-tab','URL sources','sources',isSource?'active':'')}${btn('source-tab','Discovery keywords','keywords',!isSource?'active':'')}</div>`+
     (isSource?searchBar()+sourceBulkToolbar(list)+table(['Select','Source code','URL','Provider','Country','City',helpHeading('Priority','Crawl priority: 1 is highest and 5 is lowest.'),helpHeading('Enabled','Whether this source is enabled for crawling.'),helpHeading('Crawl status','Latest crawl outcome. Statuses: Pending, Success, Failed, Unchanged.'),helpHeading('HTTP status','Response code returned by the source, such as 200 for success or 503 for unavailable.'),'Message','Last run','Next run','Action'],list.map(s=>row([`<input type="checkbox" data-select-source="${s.id}" aria-label="Select ${esc(s.source_code)}" ${selectedSources.has(s.id)&&s.enabled?'checked':''} ${!editable()||ui.running||!s.enabled?'disabled':''}>`,esc(s.source_code),external(s.url,s.url),esc(s.provider),esc(s.country||'Not specified'),esc(s.city||'Not specified'),String(s.priority),`<input type="checkbox" class="switch" aria-label="Enable ${esc(s.source_code)}" data-source-toggle="${s.id}" ${s.enabled?'checked':''} ${!editable()||ui.running?'disabled':''}>`,pill(s.crawl_status,s.crawl_status==='failed'?'red':s.crawl_status==='success'?'green':''),s.last_http_status||'—',esc(s.error_message||'—'),stamp(s.last_crawled_at),stamp(s.next_crawl_at),`<div class="actions">${ib('source-edit','Edit '+s.source_code,'pencil',s.id,!editable())}${ib('crawl-one','Crawl '+s.source_code,'arrows-clockwise',s.id,!editable()||ui.running||!s.enabled)}</div>`])))+`<div class="section-heading"><h3>Recent crawl runs</h3></div>`+runTable()
@@ -250,7 +270,12 @@ document.addEventListener('click',async event=>{
   else if(a==='discover'){if(!ui.discoveryRunning&&confirm('Chạy cào (Run) từ khóa này? Thao tác này sẽ tiêu tốn tài nguyên API.'))discoverKeyword(v);}
   else if(a==='query-details')queryDetails(v);
   else if(a==='delete-query'){if(confirm('Bạn có chắc chắn muốn xóa (ẩn) từ khóa này khỏi danh sách?')){const q=db.ai_discovery_queries.find(x=>x.id===Number(v));if(q)q.is_deleted=true;render();}}
-  else if(a==='apply-kw-filters'){ui.kwF={q:$('#kw-search')?.value||'',region:$('#kw-region')?.value||'',country:$('#kw-country')?.value||''};render();}
+  else if(a==='apply-kw-filters'){
+    const getMulti = id => Array.from(document.getElementById(id)?.selectedOptions||[]).map(o=>o.value).join(',');
+    ui.kwF={q:$('#kw-search')?.value||'',region:getMulti('kw-region'),country:getMulti('kw-country'),city:getMulti('kw-city'),status:$('#kw-status')?.value||''};
+    if(ui.pagination&&ui.pagination.keywords) ui.pagination.keywords.page = 1;
+    render();
+  }
   else if(a==='toggle-run-results'){const tr=document.getElementById('run-results-'+v);if(tr)tr.style.display=tr.style.display==='none'?'table-row':'none';}
   else if(a==='suspend'){ui.suspendId=Number(v);dialog('suspend',ext().agentSuspensions[v]?'Restore Job Agent access':'Suspend Job Agent access',`<p>This affects Job Agent only. Existing Hammer classes and wallet access are unchanged.</p>${area('reason','Reason *','','required')}`,'Confirm');}
   else if(a==='moderate')moderationDialog(v);
@@ -282,12 +307,24 @@ document.addEventListener('change',event=>{const t=event.target;
       }
     }
   }
-  if(t.id==='kw-region'){const ctry=$('#kw-country');if(ctry)ctry.innerHTML=options(getCountriesForRegion(t.value),'');}
+  if(t.id==='kw-region'){
+    const vals=Array.from(t.selectedOptions).map(o=>o.value).join(',');
+    const ctry=$('#kw-country');
+    if(ctry)ctry.innerHTML=options(getCountriesForRegion(vals),'');
+  }
   if(t.id==='kw-country'){
     const regSelect=$('#kw-region');
-    if(t.value&&regSelect){
-      const inferred=getRegionForCountry(t.value);
-      if(inferred&&regSelect.value!==inferred){regSelect.value=inferred;t.innerHTML=options(getCountriesForRegion(inferred),t.value);}
+    const citySelect=$('#kw-city');
+    const vals=Array.from(t.selectedOptions).map(o=>o.value).join(',');
+    if(citySelect)citySelect.innerHTML=options(getCitiesForCountry(vals),'');
+    if(vals&&regSelect){
+      const inferred=getRegionForCountry(vals);
+      const currentRegs=Array.from(regSelect.selectedOptions).map(o=>o.value).join(',');
+      if(inferred&&currentRegs!==inferred){
+        const infArr=inferred.split(',');
+        for(const opt of regSelect.options)opt.selected=infArr.includes(opt.value);
+        t.innerHTML=options(getCountriesForRegion(inferred),vals);
+      }
     }
   }
   if(t.id==='preview-role'){if(ui.dirty&&!confirm('Discard unsaved changes?')){render();return;}closeDialog(true);if(ui.mode==='cms')ui.role=t.value;else ui.guest=t.value==='guest';render();if(ui.mode==='dancer'&&!ui.guest&&!ageAllowed())openAge();}
