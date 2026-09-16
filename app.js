@@ -221,10 +221,11 @@ function runTable() {
   
   const html = sliced.flatMap(r => {
     const attempts = db.ai_crawl_attempts.filter(a => a.pipeline_run_id === r.id);
-    const detail = attempts.length ? table([ctr('Source ID'), 'URL', ctr('Status'), ctr('HTTP'), 'Message'], attempts.map(a => {
-       const url = a.final_url.length > 50 ? a.final_url.substring(0,47)+'...' : a.final_url;
-       return row([ctr(a.source_link_id), external(a.final_url, url), ctr(pill(a.status, a.status==='failed'?'red':a.status==='success'?'green':'')), ctr(a.http_status), esc(a.error_message||'—')]);
-    })) : empty('No source data available');
+    const detail=attempts.length?table([ctr('Source ID'),'URL',ctr('Status'),ctr('HTTP'),'Message'],attempts.map(a=>{
+      const f_url=a.final_url||a.url||db.ai_source_links.find(s=>s.id===a.source_link_id)?.url||'';
+      const url=f_url.length>50?f_url.substring(0,47)+'...':f_url;
+      return row([ctr(a.source_link_id),external(f_url,url),ctr(pill(a.status,a.status==='failed'?'red':a.status==='success'?'green':'')),ctr(a.http_status),esc(a.error_message||'—')]);
+    })):empty('No source data available');
     
     return [
        row([
