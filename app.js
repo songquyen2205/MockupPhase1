@@ -157,6 +157,7 @@ function cmsSources(){const isSource=ui.sourceTab==='sources';
   const provMap={admin:'Admin',dancer:'Dancer',ai_keyword:'Keyword'};
   const srcProviders=Array.from(new Set(db.ai_source_links.map(s=>s.provider).filter(Boolean))).map(p=>[p,provMap[p]||p]);
   const statuses=[['pending','Pending'],['crawling','Crawling'],['success','Success'],['unchanged','Unchanged'],['failed','Failed']];if(isSource){
+    if(tf!=='all')list=list.filter(o=>isWithin(o.last_crawled_at));
     if(ui.srcF?.q){const q=ui.srcF.q.toLowerCase();list=list.filter(o=>String(o.id)===q||o.url.toLowerCase().includes(q)||o.source_code.toLowerCase().includes(q));}
     if(ui.srcF?.provider){const arr=ui.srcF.provider.split(',');list=list.filter(o=>arr.includes(o.provider));}
     if(ui.srcF?.region){const arr=ui.srcF.region.split(',');list=list.filter(o=>{const reg=o.country?getRegionForCountry(o.country):'';return arr.some(r=>reg.includes(r));});}
@@ -165,6 +166,7 @@ function cmsSources(){const isSource=ui.sourceTab==='sources';
     if(ui.srcF?.status){list=list.filter(o=>o.crawl_status===ui.srcF.status);}
   }
   else {
+    if(tf!=='all')list=list.filter(o=>isWithin(o.last_run_at));
     if (ui.kwF?.q) list = list.filter(o => o.keyword.toLowerCase().includes(ui.kwF.q.toLowerCase()));
     if (ui.kwF?.region) { const arr = ui.kwF.region.split(','); list = list.filter(o => arr.some(r => o.region?.includes(r))); }
     if (ui.kwF?.country) { const arr = ui.kwF.country.split(','); list = list.filter(o => arr.some(c => o.country?.includes(c))); }
