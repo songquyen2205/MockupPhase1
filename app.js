@@ -136,32 +136,98 @@ function jobBulkToolbar(paginatedList){
   </div>`;
 }
 function cmsJobs(){
-  const allJobs=db.ai_opportunities.filter(o => !o.is_deleted && matches(o));
-  const pagination = ui.pagination?.jobs || { page: 1, limit: 10 };
-  const paginatedJobs = allJobs.slice((pagination.page - 1) * pagination.limit, pagination.page * pagination.limit);
+  let baseJobs = db.ai_opportunities.filter(o => !o.is_deleted);
+  
+  // Apply timeframe filter
+  const tf = ui.jobF?.time || 'all';
+  if(tf !== 'all') {
+    const now = new Date();
+    baseJobs = baseJobs.filter(o => {
+      const d = new Date(o.extracted_at);
+      if(tf === 'today') return d.toDateString() === now.toDateString();
+      if(tf === 'week') return (now - d) <= 7 * 86400000;
+      if(tf === 'month') return (now - d) <= 30 * 86400000;
+      return true;
+    });
+  }
 
-  return heading('CMS-01 – SPRINT 1','Job list','Review extracted opportunities and their original sources.') + jobBulkToolbar(paginatedJobs) + searchBar(statuses) + table([`<input type="checkbox" data-select-jobs-visible aria-label="Select all visible jobs" ${paginatedJobs.length&&paginatedJobs.every(o=>selectedJobs.has(o.id))?'checked':''} ${!editable()||!paginatedJobs.length?'disabled':''}>`, 'Job', 'Type', 'Styles', 'Organization', 'Location', helpHeading('Rubric Scores', 'AI Extraction & Trust Scores'), 'Reports', 'Status', 'Action'], paginatedJobs.map(o => {
-    const pendingReports = ext().reports?.filter(r => r.opportunity_id === o.id && r.status === 'pending') || [];
-    const reportCount = pendingReports.length;
-    
-    return row([
-      `<input type="checkbox" data-select-job="${o.id}" ${selectedJobs.has(o.id)?'checked':''} ${!editable()?'disabled':''}>`,
-      `<strong>${esc(o.title)}</strong>`,
-      pill(types.find(t=>t[0]===o.opportunity_type)?.[1]||o.opportunity_type||'N/A', ''),
-      `<small style="color:#6b7280;">${esc(o.dance_styles.join(', ')||'Any')}</small>`,
-      esc(o.organization||'Not provided'),
-      `${esc(o.city||'')}${o.city&&o.country?', ':''}${esc(o.country||'')}` || 'Not provided',
-      `<div style="font-size:0.85em"><span style="color:${(o.completeness_score*10)<5?'#ef4444':'#10b981'}">Info: ${(o.completeness_score*10).toFixed(1)}</span> | <span style="color:${(o.confidence*10)<7?'#ef4444':'#10b981'}">Trust: ${(o.confidence*10).toFixed(1)}</span></div>`,
-      `<div style="text-align:center;">${reportCount > 0 ? `<span style="color:#ef4444; font-weight:700; background:#fef2f2; padding:3px 8px; border-radius:12px; font-size:11px;">🚩 ${reportCount}</span>` : `<span style="color:#d1d5db; font-size:11px;">0</span>`}</div>`,
-      pill(statuses.find(s=>s[0]===o.status)?.[1]||o.status, o.status==='rejected'||o.status==='closed'?'red':(o.status==='needs_review'||o.status==='suspended')?'amber':'green'),
-      `<div style="display:flex; gap:6px;">
-        ${ib('job-drawer','Xem chi tiết','arrow-square-out',o.id)}
-        ${(o.status === 'needs_review' || o.status === 'suspended' || o.status === 'rejected') ? `<button class="icon-button" data-action="quick-approve" data-value="${o.id}" title="Duyệt nhanh (Publish)" style="color:#10b981;">${icon('check-circle')}</button>` : ''}
-        ${o.status === 'published' ? `<button class="icon-button" data-action="quick-suspend" data-value="${o.id}" title="Tạm ẩn (Suspend)" style="color:#f59e0b;">${icon('pause-circle')}</button>` : ''}
-        <button class="icon-button" data-action="quick-delete" data-value="${o.id}" title="Xóa (Soft Delete)" style="color:#ef4444;">${icon('trash')}</button>
-      </div>`
-    ]);
-  })) + paginationControls(allJobs.length, pagination.page, pagination.limit, 'jobs');
+  // Calculate Dashboard Metrics based on the TIMEFRAME-FILTERED baseJobs, NOT the search-filtered ones
+  const total = baseJobs.length;
+  const published = baseJobs.filter(o => o.status === 'published').length;
+  const needsReview = baseJobs.filter(o => o.status === 'needs_review').length;
+  const reportedCount = baseJobs.filter(o => ext().reports?.some(r => r.opportunity_id === o.id && r.status === 'pending')).length;
+
+  const jobWidget = `<div style="display:grid;grid-template-columns:repeat(4, 1fr);gap:16px;margin-bottom:24px;">
+    <div style="padding:16px;background:#fff;border-radius:8px;border:1px solid #e5e7eb;box-shadow:0 1px 3px rgba(0,0,0,0.05);">
+      <div style="color:#6b7280;font-size:0.9em;margin-bottom:8px">T?ng s? Job</div>
+      <div style="font-size:1.8em;font-weight:600">${total}</div>
+    </div>
+    <div style="padding:16px;background:#fff;border-radius:8px;border:1px solid #e5e7eb;box-shadow:0 1px 3px rgba(0,0,0,0.05);">
+      <div style="color:#6b7280;font-size:0.9em;margin-bottom:8px">�ang hi?n th? (Published)</div>
+      <div style="font-size:1.8em;font-weight:600;color:#10b981">${published}</div>
+    </div>
+    <div style="padding:16px;background:#fff;border-radius:8px;border:1px solid #e5e7eb;box-shadow:0 1px 3px rgba(0,0,0,0.05);">
+      <div style="color:#6b7280;font-size:0.9em;margin-bottom:8px">C?n duy?t (Needs review)</div>
+      <div style="font-size:1.8em;font-weight:600;color:#f59e0b">${needsReview}</div>
+    </div>
+    <div style="padding:16px;background:#fff;border-radius:8px;border:1px solid #e5e7eb;box-shadow:0 1px 3px rgba(0,0,0,0.05);">
+      <div style="color:#6b7280;font-size:0.9em;margin-bottom:8px">B? b�o c�o (Reported)</div>
+      <div style="font-size:1.8em;font-weight:600;color:#ef4444">${reportedCount}</div>
+    </div>
+  </div>`;
+
+  const tfSelect=(id,val)=>`<select id="${id}" style="min-width:100px; height: 38px;"><option value="today" ${val==='today'?'selected':''}>Hôm nay</option><option value="week" ${val==='week'?'selected':''}>Tuần này</option><option value="month" ${val==='month'?'selected':''}>Tháng này</option><option value="all" ${val==='all'?'selected':''}>Tất cả</option></select>`;
+  
+  const jobFilters = `<div class="filter-bar" style="margin-bottom:16px; display:flex; gap:12px; align-items:center;">
+    <input type="search" id="job-search" placeholder="Tìm kiếm Job..." value="${esc(ui.jobF?.q||'')}" style="flex:1; height: 38px; min-width: 150px;">
+    ${tfSelect('job-time', tf)}
+    ${select('job-status','',[['','Tất cả trạng thái']].concat(statuses),ui.jobF?.status||'','style="min-width:150px; height: 38px;"')}
+    <button type="button" class="primary" data-action="apply-job-filters" style="height: 38px;">Lọc</button>
+  </div>`;
+
+  // Apply search/status filters on top of baseJobs
+  let filteredJobs = baseJobs;
+  if(ui.jobF?.q) {
+    const q = ui.jobF.q.toLowerCase();
+    filteredJobs = filteredJobs.filter(o => o.title.toLowerCase().includes(q) || (o.organization && o.organization.toLowerCase().includes(q)) || o.id.toString() === q);
+  }
+  if(ui.jobF?.status) {
+    filteredJobs = filteredJobs.filter(o => o.status === ui.jobF.status);
+  }
+
+  const p=ui.pagination?.jobs||{page:1,limit:10};
+  const totalPaginated=filteredJobs.length;
+  const start=(p.page-1)*p.limit;
+  const paginatedJobs=filteredJobs.slice(start,start+p.limit);
+  const ctr=v=>`<div style="text-align:center">${v}</div>`;
+
+  return heading('CMS-01 � SPRINT 1','Danh s�ch Job','Review extracted opportunities and their original sources.') + 
+    jobWidget + 
+    jobFilters + 
+    jobBulkToolbar(paginatedJobs) + 
+    table([
+      ctr('Select'),'Job','Type & Styles','Organization','Location','Rubric Scores','Status',ctr('Reports'),'<div style="text-align:right">Action</div>'
+    ],paginatedJobs.map(o=>{
+      const pendingReports=ext().reports?.filter(r=>r.opportunity_id===o.id&&r.status==='pending')||[];
+      const badges=pendingReports.length?`<span class="pill red">?? ${pendingReports.length}</span>`:'�';
+      const quickActions=[];
+      if(o.status==='needs_review'||o.status==='suspended') quickActions.push(ib('quick-approve','Duy?t ngay','check',o.id,!editable()));
+      if(o.status==='published') quickActions.push(ib('quick-suspend','T?m ?n','pause',o.id,!editable()));
+      quickActions.push(ib('quick-delete','X�a (?n)','trash',o.id,!editable()));
+      quickActions.push(ib('job-drawer','Chi ti?t Job','arrow-square-out',o.id));
+      
+      return row([
+        ctr(`<input type="checkbox" data-select-job="${o.id}" aria-label="Select job ${o.id}" ${selectedJobs.has(o.id)?'checked':''} ${!editable()?'disabled':''}>`),
+        `<strong>${esc(o.title)}</strong><br><span style="color:#6b7280;font-size:12px;">ID: #${o.id}</span>`,
+        `${pill(types.find(t=>t[0]===o.opportunity_type)?.[1]||o.opportunity_type||'N/A', '')}<br><small style="color:#6b7280;margin-top:4px;display:block;">${esc(o.dance_styles?.join(', ')||'Not specified')}</small>`,
+        esc(o.organization||'Not provided'),
+        `${esc(o.city||'')}${o.city&&o.country?', ':''}${esc(o.country||'')}` || 'Not provided',
+        `<div style="font-size:0.85em"><span style="color:${(o.completeness_score*10)<6?'#ef4444':'#10b981'}">Info: ${(o.completeness_score*10).toFixed(1)}</span> | <span style="color:${(o.confidence*10)<7?'#ef4444':'#10b981'}">Trust: ${(o.confidence*10).toFixed(1)}</span></div>`,
+        pill(statuses.find(s=>s[0]===o.status)?.[1]||o.status, o.status==='rejected'||o.status==='closed'?'red':o.status==='suspended'?'amber':o.status==='needs_review'?'amber':'green'),
+        ctr(badges),
+        `<div class="actions" style="justify-content:flex-end">${quickActions.join('')}</div>`
+      ]);
+    })) + paginationControls(totalPaginated,p.page,p.limit,'jobs');
 }
 const selectedSources=new Set();
 const selectedKeywords=new Set();
@@ -512,18 +578,6 @@ document.addEventListener('click',async event=>{
   else if(a==='crawl-all-sources')await confirmSourceCrawl(true);
   else if(a==='clear-source-selection'){if(ui.running)return;selectedSources.clear();render();}
   else if(a==='quick-approve'){const j=db.ai_opportunities.find(o=>o.id===Number(v));if(j){j.status='published';rebuildRecommendations();render();toast('Đã duyệt Job');}}
-  else if(a==='quick-suspend'){const j=db.ai_opportunities.find(o=>o.id===Number(v));if(j){j.status='suspended';rebuildRecommendations();render();toast('Đã tạm ẩn Job');}}
-  else if(a==='quick-delete'){if(confirm('Bạn có chắc chắn muốn xóa (ẩn) Job này khỏi danh sách?')){const j=db.ai_opportunities.find(o=>o.id===Number(v));if(j)j.is_deleted=true;render();toast('Đã xóa Job khỏi danh sách hiển thị');}}
-  else if(a==='bulk-job-approve'){selectedJobs.forEach(id=>{const j=db.ai_opportunities.find(o=>o.id===id);if(j)j.status='published';});selectedJobs.clear();rebuildRecommendations();render();toast('Đã duyệt các Job được chọn');}
-  else if(a==='bulk-job-suspend'){selectedJobs.forEach(id=>{const j=db.ai_opportunities.find(o=>o.id===id);if(j)j.status='suspended';});selectedJobs.clear();rebuildRecommendations();render();toast('Đã tạm ẩn các Job được chọn');}
-  else if(a==='bulk-job-reject'){selectedJobs.forEach(id=>{const j=db.ai_opportunities.find(o=>o.id===id);if(j)j.status='rejected';});selectedJobs.clear();rebuildRecommendations();render();toast('Đã từ chối các Job được chọn');}
-  else if(a==='bulk-job-delete'){if(confirm('Bạn có chắc chắn muốn xóa (ẩn) các Job này khỏi danh sách? Dữ liệu gốc vẫn sẽ được giữ trong Database.')){selectedJobs.forEach(id=>{const j=db.ai_opportunities.find(o=>o.id===id);if(j)j.is_deleted=true;});selectedJobs.clear();render();toast('Đã xóa các Job khỏi danh sách hiển thị');}}
-  else if(a==='clear-job-selection'){selectedJobs.clear();render();}
-  else if(a==='approve')approveSource(v);
-  else if(a==='reject'){ui.rejectId=Number(v);dialog('reject','Reject source',area('reason','Reason *','','required maxlength="500"'),'Reject');}
-  else if(a==='discover'){if(!ui.discoveryRunning&&confirm('Chạy cào (Run) từ khóa này? Thao tác này sẽ tiêu tốn tài nguyên API.'))discoverKeyword(v);}
-  else if(a==='query-details')queryDetails(v);
-  else if(a==='delete-query'){if(confirm('Bạn có chắc chắn muốn xóa (ẩn) từ khóa này khỏi danh sách?')){const q=db.ai_discovery_queries.find(x=>x.id===Number(v));if(q)q.is_deleted=true;render();}}
   else if(a==='apply-kw-filters'){
     const getMulti = id => Array.from(document.getElementById(id)?.selectedOptions||[]).map(o=>o.value).join(',');
     ui.kwF={q:$('#kw-search')?.value||'',time:$('#kw-time')?.value||'today',region:getMulti('kw-region'),country:getMulti('kw-country'),city:getMulti('kw-city'),status:$('#kw-status')?.value||''};
