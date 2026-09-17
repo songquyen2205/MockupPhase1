@@ -159,19 +159,19 @@ function cmsJobs(){
 
   const jobWidget = `<div style="display:grid;grid-template-columns:repeat(4, 1fr);gap:16px;margin-bottom:24px;">
     <div style="padding:16px;background:#fff;border-radius:8px;border:1px solid #e5e7eb;box-shadow:0 1px 3px rgba(0,0,0,0.05);">
-      <div style="color:#6b7280;font-size:0.9em;margin-bottom:8px">T?ng s? Job</div>
+      <div style="color:#6b7280;font-size:0.9em;margin-bottom:8px">Tổng số Job</div>
       <div style="font-size:1.8em;font-weight:600">${total}</div>
     </div>
     <div style="padding:16px;background:#fff;border-radius:8px;border:1px solid #e5e7eb;box-shadow:0 1px 3px rgba(0,0,0,0.05);">
-      <div style="color:#6b7280;font-size:0.9em;margin-bottom:8px">�ang hi?n th? (Published)</div>
+      <div style="color:#6b7280;font-size:0.9em;margin-bottom:8px">Đang hiển thị (Published)</div>
       <div style="font-size:1.8em;font-weight:600;color:#10b981">${published}</div>
     </div>
     <div style="padding:16px;background:#fff;border-radius:8px;border:1px solid #e5e7eb;box-shadow:0 1px 3px rgba(0,0,0,0.05);">
-      <div style="color:#6b7280;font-size:0.9em;margin-bottom:8px">C?n duy?t (Needs review)</div>
+      <div style="color:#6b7280;font-size:0.9em;margin-bottom:8px">Cần duyệt (Needs review)</div>
       <div style="font-size:1.8em;font-weight:600;color:#f59e0b">${needsReview}</div>
     </div>
     <div style="padding:16px;background:#fff;border-radius:8px;border:1px solid #e5e7eb;box-shadow:0 1px 3px rgba(0,0,0,0.05);">
-      <div style="color:#6b7280;font-size:0.9em;margin-bottom:8px">B? b�o c�o (Reported)</div>
+      <div style="color:#6b7280;font-size:0.9em;margin-bottom:8px">Bị báo cáo (Reported)</div>
       <div style="font-size:1.8em;font-weight:600;color:#ef4444">${reportedCount}</div>
     </div>
   </div>`;
@@ -201,7 +201,7 @@ function cmsJobs(){
   const paginatedJobs=filteredJobs.slice(start,start+p.limit);
   const ctr=v=>`<div style="text-align:center">${v}</div>`;
 
-  return heading('CMS-01 � SPRINT 1','Danh s�ch Job','Review extracted opportunities and their original sources.') + 
+  return heading('CMS-01 · SPRINT 1','Danh sách Job','Review extracted opportunities and their original sources.') + 
     jobWidget + 
     jobFilters + 
     jobBulkToolbar(paginatedJobs) + 
@@ -209,12 +209,12 @@ function cmsJobs(){
       ctr('Select'),'Job','Type & Styles','Organization','Location','Rubric Scores','Status',ctr('Reports'),'<div style="text-align:right">Action</div>'
     ],paginatedJobs.map(o=>{
       const pendingReports=ext().reports?.filter(r=>r.opportunity_id===o.id&&r.status==='pending')||[];
-      const badges=pendingReports.length?`<span class="pill red">?? ${pendingReports.length}</span>`:'�';
+      const badges=pendingReports.length?`<span class="pill red">🚩 ${pendingReports.length}</span>`:'—';
       const quickActions=[];
-      if(o.status==='needs_review'||o.status==='suspended') quickActions.push(ib('quick-approve','Duy?t ngay','check',o.id,!editable()));
-      if(o.status==='published') quickActions.push(ib('quick-suspend','T?m ?n','pause',o.id,!editable()));
-      quickActions.push(ib('quick-delete','X�a (?n)','trash',o.id,!editable()));
-      quickActions.push(ib('job-drawer','Chi ti?t Job','arrow-square-out',o.id));
+      if(o.status==='needs_review'||o.status==='suspended') quickActions.push(ib('quick-approve','Duyệt ngay','check',o.id,!editable()));
+      if(o.status==='published') quickActions.push(ib('quick-suspend','Tạm ẩn','pause',o.id,!editable()));
+      quickActions.push(ib('quick-delete','Xóa (Ẩn)','trash',o.id,!editable()));
+      quickActions.push(ib('job-drawer','Chi tiết Job','arrow-square-out',o.id));
       
       return row([
         ctr(`<input type="checkbox" data-select-job="${o.id}" aria-label="Select job ${o.id}" ${selectedJobs.has(o.id)?'checked':''} ${!editable()?'disabled':''}>`),
@@ -426,31 +426,31 @@ function jobDrawer(id){
   const leftCol = `
     <fieldset ${!editable()?'disabled':''} style="border:0;padding:0;margin:0">
       <div class="form-grid">
-        <h3 style="grid-column:1/-1; margin:0 0 12px; border-bottom:1px solid var(--line); padding-bottom:8px; color:var(--ink); font-size:14px;">1. Tr?ng th�i & Co b?n</h3>
-        ${select('status','Tr?ng th�i Job (Status)',statuses,o.status)}
+        <h3 style="grid-column:1/-1; margin:0 0 12px; border-bottom:1px solid var(--line); padding-bottom:8px; color:var(--ink); font-size:14px;">1. Trạng thái & Cơ bản</h3>
+        ${select('status','Trạng thái Job (Status)',statuses,o.status)}
         ${field('opportunity_type','Opportunity type (Extracted)',o.opportunity_type,'text')}
         <div class="full" ${!o.title?'style="border:2px solid red;padding:5px;border-radius:4px"':''}>
-          ${!o.title?'<span style="color:red;font-size:12px;font-weight:bold">?? THI?U B?T BU?C</span>':''}
+          ${!o.title?'<span style="color:red;font-size:12px;font-weight:bold">⚠️ THIẾU BẮT BUỘC</span>':''}
           ${field('title','Job title *',o.title,'text','required')}
         </div>
         <div ${!o.organization?'style="border:2px solid red;padding:5px;border-radius:4px"':''}>
-          ${!o.organization?'<span style="color:red;font-size:12px;font-weight:bold">?? THI?U B?T BU?C</span>':''}
+          ${!o.organization?'<span style="color:red;font-size:12px;font-weight:bold">⚠️ THIẾU BẮT BUỘC</span>':''}
           ${field('organization','Organization',o.organization)}
         </div>
         <div class="full">${field('dance_styles','Dance styles (comma separated)',Array.isArray(o.dance_styles)?o.dance_styles.join(', '):o.dance_styles)}</div>
         
         <h3 style="grid-column:1/-1; margin:24px 0 12px; border-bottom:1px solid var(--line); padding-bottom:8px; color:var(--ink); font-size:14px; display:flex; justify-content:space-between; align-items:flex-end;">
-           <span>2. �?a di?m & N?i dung</span>
-           <a href="https://maps.google.com/?q=${encodeURIComponent(o.location_text||o.city||'')}" target="_blank" style="font-size:12px; font-weight:normal; display:flex; align-items:center; gap:4px;">??? M? Google Maps</a>
+           <span>2. Địa điểm & Nội dung</span>
+           <a href="https://maps.google.com/?q=${encodeURIComponent(o.location_text||o.city||'')}" target="_blank" style="font-size:12px; font-weight:normal; display:flex; align-items:center; gap:4px;">🗺️ Mở Google Maps</a>
         </h3>
         <div ${!o.city?'style="border:2px solid red;padding:5px;border-radius:4px"':''}>
-          ${!o.city?'<span style="color:red;font-size:12px;font-weight:bold">?? THI?U B?T BU?C</span>':''}
+          ${!o.city?'<span style="color:red;font-size:12px;font-weight:bold">⚠️ THIẾU BẮT BUỘC</span>':''}
           ${field('city','City',o.city)}
         </div>
         ${field('country','Country',o.country)}
         <div class="full">${area('description','Description *',o.description,'required')}</div>
         
-        <h3 style="grid-column:1/-1; margin:24px 0 12px; border-bottom:1px solid var(--line); padding-bottom:8px; color:var(--ink); font-size:14px;">3. Quy?n l?i & Th?i gian</h3>
+        <h3 style="grid-column:1/-1; margin:24px 0 12px; border-bottom:1px solid var(--line); padding-bottom:8px; color:var(--ink); font-size:14px;">3. Quyền lợi & Thời gian</h3>
         <div class="full" style="display:grid; grid-template-columns: 1fr 1fr 1fr; gap:16px;">
           ${field('amount','Compensation amount',c.amount??'','number','min="0" step="0.01"')}
           ${select('currency','Currency',['USD','SGD','JPY','VND'],c.currency||'USD')}
@@ -458,14 +458,14 @@ function jobDrawer(id){
         </div>
         ${field('deadline','Application deadline',o.deadline||'','date')}
         <div style="display:flex; align-items:flex-end; padding-bottom:8px;">
-          <label class="check-row" style="margin:0;"><input type="checkbox" name="is_perpetual" ${o.is_perpetual?'checked':''}> Tuy?n v� th?i h?n (B? qua m?c 30 ng�y)</label>
+          <label class="check-row" style="margin:0;"><input type="checkbox" name="is_perpetual" ${o.is_perpetual?'checked':''}> Tuyển vô thời hạn (Bỏ qua mốc 30 ngày)</label>
         </div>
         ${field('event_start_date','Event start date',o.event_start_date||'','date')}
         ${field('event_end_date','Event end date',o.event_end_date||'','date')}
         
         <h3 style="grid-column:1/-1; margin:24px 0 12px; border-bottom:1px solid var(--line); padding-bottom:8px; color:var(--ink); font-size:14px; display:flex; justify-content:space-between; align-items:flex-end;">
-           <span>4. Th�ng tin li�n h?</span>
-           <a href="${o.raw_url}" target="_blank" style="font-size:12px; font-weight:normal; display:flex; align-items:center; gap:4px;">?? Xem b�i dang g?c (Source)</a>
+           <span>4. Thông tin liên hệ</span>
+           <a href="${o.raw_url}" target="_blank" style="font-size:12px; font-weight:normal; display:flex; align-items:center; gap:4px;">🔗 Xem bài đăng gốc (Source)</a>
         </h3>
         <div class="full">${field('application_url','Application URL',o.application_url,'url')}</div>
         ${field('contact_email','Contact email',o.contact_email||'','email')}
@@ -476,8 +476,8 @@ function jobDrawer(id){
 
   const rightCol = `
     <div>
-      <h4 style="margin:0 0 12px; font-size:13px; color:var(--ink);">B?ng ch?ng c�o & �i?m s?</h4>
-      ${kv([['Source',source?.source_code],['Raw page ID',o.raw_page_id],['Extraction attempt ID',o.extraction_attempt_id],['Tr?c 1 (Th�ng tin)',(o.completeness_score*10).toFixed(1)+'/10d'],['Tr?c 2 (Tin c?y)',(o.confidence*10).toFixed(1)+'/10d'],['Missing fields',o.missing_fields.join(', ')||'None'],['Extracted at',stamp(o.extracted_at)]])}
+      <h4 style="margin:0 0 12px; font-size:13px; color:var(--ink);">Bằng chứng cào & Điểm số</h4>
+      ${kv([['Source',source?.source_code],['Raw page ID',o.raw_page_id],['Extraction attempt ID',o.extraction_attempt_id],['Trục 1 (Thông tin)',(o.completeness_score*10).toFixed(1)+'/10đ'],['Trục 2 (Tin cậy)',(o.confidence*10).toFixed(1)+'/10đ'],['Missing fields',o.missing_fields.join(', ')||'None'],['Extracted at',stamp(o.extracted_at)]])}
       <details style="margin-top:12px;">
         <summary style="font-size:12px; color:var(--blue); cursor:pointer;">Captured source text</summary>
         <pre class="raw" style="margin-top:8px;">${esc(raw?.text||'Not available')}</pre>
@@ -488,7 +488,7 @@ function jobDrawer(id){
       </details>
     </div>
     <div style="margin-top: 32px;">
-      <h4 style="margin:0 0 12px; font-size:13px; color:var(--ink);">Dancer d? xu?t (AI Match) (${matched.length})</h4>
+      <h4 style="margin:0 0 12px; font-size:13px; color:var(--ink);">Dancer đề xuất (AI Match) (${matched.length})</h4>
       ${matched.length ? `<table class="basic-table" style="width:100%; font-size:12px; border-collapse:collapse; border:1px solid #e5e7eb;">
         <thead style="background:#f3f4f6; text-align:left;">
           <tr><th style="padding:6px; border-bottom:1px solid #e5e7eb;">Dancer</th><th style="padding:6px; border-bottom:1px solid #e5e7eb;">Match</th><th style="padding:6px; border-bottom:1px solid #e5e7eb;">Action</th></tr>
@@ -496,21 +496,21 @@ function jobDrawer(id){
         <tbody>
           ${matched.map(r => `<tr><td style="padding:6px; border-bottom:1px solid #e5e7eb; font-weight:500;">#${r.dancer_id}</td><td style="padding:6px; border-bottom:1px solid #e5e7eb;">${Math.round(r.final_score*100)}%</td><td style="padding:6px; border-bottom:1px solid #e5e7eb;">${pill(r.status)}</td></tr>`).join('')}
         </tbody>
-      </table>` : `<div style="font-size:12px; color:#6b7280; padding:12px; background:#f9fafb; border-radius:4px; text-align:center;">Kh�ng c� Dancer d? xu?t cho Job n�y.</div>`}
+      </table>` : `<div style="font-size:12px; color:#6b7280; padding:12px; background:#f9fafb; border-radius:4px; text-align:center;">Không có Dancer đề xuất cho Job này.</div>`}
     </div>
   `;
 
-  dialog('edit-job',`Chi ti?t C�ng vi?c (Job #${o.id})`,
+  dialog('edit-job',`Chi tiết Công việc (Job #${o.id})`,
   `
   <div class="actions">
     ${pill(statuses.find(s=>s[0]===o.status)?.[1]||o.status,o.status==='error'||o.status==='closed'?'red':o.status==='pending'?'amber':'green')}
-    ${provisional?'<span class="pill amber">?? �i?m t?m</span>':''}
+    ${provisional?'<span class="pill amber">⚠️ Điểm tạm</span>':''}
   </div>
   <div class="divider"></div>
   <div style="display:flex; flex-direction:column; gap: 32px; padding-bottom: 24px;">
     <div>${leftCol}</div>
     <div style="border-top:2px solid var(--line); padding-top:24px;">
-      <h3 style="margin-bottom:16px; font-size:16px; color:var(--ink);">Th�ng tin ph�n t�ch & ?ng vi�n</h3>
+      <h3 style="margin-bottom:16px; font-size:16px; color:var(--ink);">Thông tin phân tích & Ứng viên</h3>
       <div style="display:grid; grid-template-columns: 1fr 1.5fr; gap: 24px;">
         ${rightCol}
       </div>
