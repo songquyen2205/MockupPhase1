@@ -475,8 +475,8 @@ function jobDrawer(id){
   `;
 
   const rightCol = `
-    <div>
-      <h4 style="margin:0 0 12px; font-size:13px; color:var(--ink);">Bằng chứng cào & Điểm số</h4>
+    <div style="border:1px solid #e5e7eb; padding:16px; border-radius:8px; background:#fff; margin-bottom: 24px; box-shadow:0 1px 3px rgba(0,0,0,0.02);">
+      <h4 style="margin:0 0 12px; font-size:14px; font-weight:600; color:var(--ink);">Bằng chứng cào & Điểm số</h4>
       ${kv([['Source',source?.source_code],['Raw page ID',o.raw_page_id],['Extraction attempt ID',o.extraction_attempt_id],['Trục 1 (Thông tin)',(o.completeness_score*10).toFixed(1)+'/10đ'],['Trục 2 (Tin cậy)',(o.confidence*10).toFixed(1)+'/10đ'],['Missing fields',o.missing_fields.join(', ')||'None'],['Extracted at',stamp(o.extracted_at)]])}
       <details style="margin-top:12px;">
         <summary style="font-size:12px; color:var(--blue); cursor:pointer;">Captured source text</summary>
@@ -487,8 +487,8 @@ function jobDrawer(id){
         <pre class="raw" style="margin-top:8px;">${esc(JSON.stringify(o,null,2))}</pre>
       </details>
     </div>
-    <div style="margin-top: 32px;">
-      <h4 style="margin:0 0 12px; font-size:13px; color:var(--ink);">Dancer đề xuất (AI Match) (${matched.length})</h4>
+    <div style="border:1px solid #e5e7eb; padding:16px; border-radius:8px; background:#fff; box-shadow:0 1px 3px rgba(0,0,0,0.02);">
+      <h4 style="margin:0 0 12px; font-size:14px; font-weight:600; color:var(--ink);">Dancer đề xuất (AI Match) (${matched.length})</h4>
       ${matched.length ? `<table class="basic-table" style="width:100%; font-size:12px; border-collapse:collapse; border:1px solid #e5e7eb;">
         <thead style="background:#f3f4f6; text-align:left;">
           <tr><th style="padding:6px; border-bottom:1px solid #e5e7eb;">Dancer</th><th style="padding:6px; border-bottom:1px solid #e5e7eb;">Match</th><th style="padding:6px; border-bottom:1px solid #e5e7eb;">Action</th></tr>
