@@ -205,7 +205,7 @@ function cmsJobs(){
     jobFilters + 
     jobBulkToolbar(paginatedJobs) + 
     table([
-      ctr('Select'),'Job','Type & Styles','Organization','Location','Rubric Scores','Status',ctr('Reports'),'<div style="text-align:right">Action</div>'
+      ctr('Select'),ctr('ID'),'JOB TITLE','TYPE','STYLE','Organization','Location','Rubric Scores','Status',ctr('Reports'),'<div style="text-align:right">Action</div>'
     ],paginatedJobs.map(o=>{
       const pendingReports=ext().reports?.filter(r=>r.opportunity_id===o.id&&r.status==='pending')||[];
       const badges=pendingReports.length?`<span class="pill red">🚩 ${pendingReports.length}</span>`:'—';
@@ -217,8 +217,10 @@ function cmsJobs(){
       
       return row([
         ctr(`<input type="checkbox" data-select-job="${o.id}" aria-label="Select job ${o.id}" ${selectedJobs.has(o.id)?'checked':''} ${!editable()?'disabled':''}>`),
-        `<strong>${esc(o.title)}</strong><br><span style="color:#6b7280;font-size:12px;">ID: #${o.id}</span>`,
-        `${pill(types.find(t=>t[0]===o.opportunity_type)?.[1]||o.opportunity_type||'N/A', '')}<br><small style="color:#6b7280;margin-top:4px;display:block;">${esc(o.dance_styles?.join(', ')||'Not specified')}</small>`,
+        ctr(`#${o.id}`),
+        `<strong>${esc(o.title||'Untitled')}</strong>`,
+        `${pill(types.find(t=>t[0]===o.opportunity_type)?.[1]||o.opportunity_type||'N/A', '')}`,
+        `<span style="color:#6b7280;font-size:0.9em">${esc(Array.isArray(o.dance_styles)?o.dance_styles.join(', '):o.dance_styles||'Not specified')}</span>`,
         esc(o.organization||'Not provided'),
         `${esc(o.city||'')}${o.city&&o.country?', ':''}${esc(o.country||'')}` || 'Not provided',
         `<div style="font-size:0.85em"><span style="color:${(o.completeness_score*10)<6?'#ef4444':'#10b981'}">Info: ${(o.completeness_score*10).toFixed(1)}</span> | <span style="color:${(o.confidence*10)<7?'#ef4444':'#10b981'}">Trust: ${(o.confidence*10).toFixed(1)}</span></div>`,
