@@ -579,6 +579,20 @@ document.addEventListener('click',async event=>{
   else if(a==='crawl-all-sources')await confirmSourceCrawl(true);
   else if(a==='clear-source-selection'){if(ui.running)return;selectedSources.clear();render();}
   else if(a==='quick-approve'){const j=db.ai_opportunities.find(o=>o.id===Number(v));if(j){j.status='published';rebuildRecommendations();render();toast('Đã duyệt Job');}}
+  else if(a==='quick-suspend'){if(confirm('Bạn có chắc chắn muốn tạm ẩn Job này không?')){const j=db.ai_opportunities.find(o=>o.id===Number(v));if(j){j.status='suspended';rebuildRecommendations();render();toast('Đã tạm ẩn Job');}}}
+  else if(a==='quick-delete'){if(confirm('Bạn có chắc chắn muốn xóa (ẩn) Job này khỏi hệ thống?')){const j=db.ai_opportunities.find(o=>o.id===Number(v));if(j){j.is_deleted=true;rebuildRecommendations();render();toast('Đã xóa Job');}}}
+  else if(a==='bulk-job-approve'){const selected=db.ai_opportunities.filter(o=>selectedJobs.has(o.id));if(selected.length){selected.forEach(j=>j.status='published');selectedJobs.clear();rebuildRecommendations();render();toast('Đã duyệt các Job được chọn');}}
+  else if(a==='bulk-job-suspend'){if(confirm(`Bạn có chắc chắn muốn tạm ẩn ${selectedJobs.size} Job đang chọn không?`)){const selected=db.ai_opportunities.filter(o=>selectedJobs.has(o.id));if(selected.length){selected.forEach(j=>j.status='suspended');selectedJobs.clear();rebuildRecommendations();render();toast('Đã tạm ẩn các Job được chọn');}}}
+  else if(a==='bulk-job-delete'){if(confirm(`Bạn có chắc chắn muốn xóa ${selectedJobs.size} Job khỏi hệ thống không?`)){const selected=db.ai_opportunities.filter(o=>selectedJobs.has(o.id));if(selected.length){selected.forEach(j=>j.is_deleted=true);selectedJobs.clear();rebuildRecommendations();render();toast('Đã xóa các Job được chọn');}}}
+  else if(a==='clear-job-selection'){selectedJobs.clear();render();}
+  else if(a==='apply-job-filters'){
+    const time=document.getElementById('job-time-filter');
+    if(time) ui.jobF={time:time.value};
+    ui.search=document.getElementById('cms-search').value;
+    const st=document.getElementById('cms-status');
+    if(st) ui.status=st.value;
+    render();
+  }
   else if(a==='apply-kw-filters'){
     const getMulti = id => Array.from(document.getElementById(id)?.selectedOptions||[]).map(o=>o.value).join(',');
     ui.kwF={q:$('#kw-search')?.value||'',time:$('#kw-time')?.value||'today',region:getMulti('kw-region'),country:getMulti('kw-country'),city:getMulti('kw-city'),status:$('#kw-status')?.value||''};
