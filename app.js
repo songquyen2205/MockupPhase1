@@ -177,25 +177,56 @@ function cmsJobs(){
 
   const tfSelect=(id,val)=>`<select id="${id}" style="min-width:100px; height: 38px;"><option value="today" ${val==='today'?'selected':''}>Hôm nay</option><option value="week" ${val==='week'?'selected':''}>Tuần này</option><option value="month" ${val==='month'?'selected':''}>Tháng này</option><option value="all" ${val==='all'?'selected':''}>Tất cả</option></select>`;
   
-    const allStyles = [...new Set(db.ai_opportunities.flatMap(o=>Array.isArray(o.dance_styles)?o.dance_styles:[o.dance_styles]).filter(Boolean))].map(s=>[s,s]).sort();
+  const allStyles = [...new Set(db.ai_opportunities.flatMap(o=>Array.isArray(o.dance_styles)?o.dance_styles:[o.dance_styles]).filter(Boolean))].map(s=>[s,s]).sort();
   const jobFilters = `<div class="filter-bar" style="margin-bottom:16px; display:flex; gap:12px; align-items:center; flex-wrap:wrap;">
-    <input type="search" id="job-search" placeholder="T�m ki?m Job..." value="${esc(ui.jobF?.q||'')}" style="flex:1; height: 38px; min-width: 150px;">
+    <input type="search" id="job-search" placeholder="Tìm kiếm Job..." value="${esc(ui.jobF?.q||'')}" style="flex:1; height: 38px; min-width: 150px;">
     ${tfSelect('job-time', tf)}
-    <div style="width:160px">${multiSelect('job-status', 'Tr?ng th�i', statuses, ui.jobF?.status||'')}</div>
-    <div style="width:160px">${multiSelect('job-country', 'Qu?c gia', queryCountries, ui.jobF?.country||'')}</div>
-    <div style="width:160px">${multiSelect('job-city', 'Th�nh ph?', queryCities(ui.jobF?.country||''), ui.jobF?.city||'')}</div>
-    <div style="width:160px">${multiSelect('job-style', 'Th? lo?i nh?y', allStyles, ui.jobF?.style||'')}</div>
-    <button type="button" class="primary" data-action="apply-job-filters" style="height: 38px;">L?c</button>
+    <div style="width:160px">${multiSelect('job-status', 'Trạng thái', statuses, ui.jobF?.status||'')}</div>
+    <div style="width:160px">${multiSelect('job-country', 'Quốc gia', queryCountries, ui.jobF?.country||'')}</div>
+    <div style="width:160px">${multiSelect('job-city', 'Thành phố', queryCities(ui.jobF?.country||''), ui.jobF?.city||'')}</div>
+    <div style="width:160px">${multiSelect('job-style', 'Thể loại nhảy', allStyles, ui.jobF?.style||'')}</div>
+    <div style="width:140px">${multiSelect('job-reported', 'Bị báo cáo', [['yes','Có report'],['no','Không có']], ui.jobF?.reported||'')}</div>
+    <button type="button" class="primary" data-action="apply-job-filters" style="height: 38px;">Lọc</button>
   </div>`;
 
   // Apply search/status filters on top of baseJobs
   let filteredJobs = baseJobs;
   if(ui.jobF?.q) {
     const q = ui.jobF.q.toLowerCase();
-    filteredJobs = filteredJobs.filter(o => o.title.toLowerCase().includes(q) || (o.organization && o.organization.toLowerCase().includes(q)) || o.id.toString() === q);
+    filteredJobs = filteredJobs.filter(o => 
+      (o.title||'').toLowerCase().includes(q) || 
+      (o.organization||'').toLowerCase().includes(q) || 
+      String(o.id)===q
+    );
   }
   if(ui.jobF?.status) {
-    filteredJobs = filteredJobs.filter(o => o.status === ui.jobF.status);
+    const arr = ui.jobF.status.split(',');
+    filteredJobs = filteredJobs.filter(o => arr.includes(o.status));
+  }
+  if(ui.jobF?.country) {
+    const arr = ui.jobF.country.split(',');
+    filteredJobs = filteredJobs.filter(o => arr.includes(o.country));
+  }
+  if(ui.jobF?.city) {
+    const arr = ui.jobF.city.split(',');
+    filteredJobs = filteredJobs.filter(o => arr.includes(o.city));
+  }
+  if(ui.jobF?.style) {
+    const arr = ui.jobF.style.split(',');
+    filteredJobs = filteredJobs.filter(o => {
+      const styles = Array.isArray(o.dance_styles)?o.dance_styles:[o.dance_styles];
+      return styles.some(s => arr.includes(s));
+    });
+  }
+  if(ui.jobF?.reported) {
+    const arr = ui.jobF.reported.split(',');
+    filteredJobs = filteredJobs.filter(o => {
+      const hasReport = ext().reports?.some(r => r.opportunity_id === o.id && r.status === 'pending');
+      if (arr.includes('yes') && arr.includes('no')) return true;
+      if (arr.includes('yes')) return hasReport;
+      if (arr.includes('no')) return !hasReport;
+      return true;
+    });
   }
 
   const p=ui.pagination?.jobs||{page:1,limit:10};
@@ -597,7 +628,8 @@ document.addEventListener('click',async event=>{
       status: getMulti('job-status'),
       country: getMulti('job-country'),
       city: getMulti('job-city'),
-      style: getMulti('job-style')
+      style: getMulti('job-style'),
+      reported: getMulti('job-reported')
     };
     render();
   }
