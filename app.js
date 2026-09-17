@@ -222,7 +222,7 @@ function cmsJobs(){
         esc(o.organization||'Not provided'),
         `${esc(o.city||'')}${o.city&&o.country?', ':''}${esc(o.country||'')}` || 'Not provided',
         `<div style="font-size:0.85em"><span style="color:${(o.completeness_score*10)<6?'#ef4444':'#10b981'}">Info: ${(o.completeness_score*10).toFixed(1)}</span> | <span style="color:${(o.confidence*10)<7?'#ef4444':'#10b981'}">Trust: ${(o.confidence*10).toFixed(1)}</span></div>`,
-        pill(statuses.find(s=>s[0]===o.status)?.[1]||o.status, o.status==='rejected'||o.status==='closed'?'red':o.status==='suspended'?'amber':o.status==='needs_review'?'amber':'green'),
+        pill(statuses.find(s=>s[0]===o.status)?.[1]||o.status, o.status==='closed'?'red':o.status==='suspended'?'amber':o.status==='needs_review'?'amber':'green'),
         ctr(badges),
         `<div class="actions" style="justify-content:flex-end">${quickActions.join('')}</div>`
       ]);
@@ -502,7 +502,7 @@ function jobDrawer(id){
   dialog('edit-job',`Chi tiết Công việc (Job #${o.id})`,
   `
   <div class="actions">
-    ${pill(statuses.find(s=>s[0]===o.status)?.[1]||o.status,o.status==='error'||o.status==='closed'?'red':o.status==='pending'?'amber':'green')}
+    ${pill(statuses.find(s=>s[0]===o.status)?.[1]||o.status,o.status==='closed'?'red':o.status==='suspended'?'amber':o.status==='needs_review'?'amber':'green')}
     ${provisional?'<span class="pill amber">⚠️ Điểm tạm</span>':''}
   </div>
   <div class="divider"></div>
