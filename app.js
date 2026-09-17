@@ -177,11 +177,15 @@ function cmsJobs(){
 
   const tfSelect=(id,val)=>`<select id="${id}" style="min-width:100px; height: 38px;"><option value="today" ${val==='today'?'selected':''}>Hôm nay</option><option value="week" ${val==='week'?'selected':''}>Tuần này</option><option value="month" ${val==='month'?'selected':''}>Tháng này</option><option value="all" ${val==='all'?'selected':''}>Tất cả</option></select>`;
   
-  const jobFilters = `<div class="filter-bar" style="margin-bottom:16px; display:flex; gap:12px; align-items:center;">
-    <input type="search" id="job-search" placeholder="Tìm kiếm Job..." value="${esc(ui.jobF?.q||'')}" style="flex:1; height: 38px; min-width: 150px;">
+    const allStyles = [...new Set(db.ai_opportunities.flatMap(o=>Array.isArray(o.dance_styles)?o.dance_styles:[o.dance_styles]).filter(Boolean))].map(s=>[s,s]).sort();
+  const jobFilters = `<div class="filter-bar" style="margin-bottom:16px; display:flex; gap:12px; align-items:center; flex-wrap:wrap;">
+    <input type="search" id="job-search" placeholder="T�m ki?m Job..." value="${esc(ui.jobF?.q||'')}" style="flex:1; height: 38px; min-width: 150px;">
     ${tfSelect('job-time', tf)}
-    ${select('job-status','',[['','Tất cả trạng thái']].concat(statuses),ui.jobF?.status||'','style="min-width:150px; height: 38px;"')}
-    <button type="button" class="primary" data-action="apply-job-filters" style="height: 38px;">Lọc</button>
+    <div style="width:160px">${multiSelect('job-status', 'Tr?ng th�i', statuses, ui.jobF?.status||'')}</div>
+    <div style="width:160px">${multiSelect('job-country', 'Qu?c gia', queryCountries, ui.jobF?.country||'')}</div>
+    <div style="width:160px">${multiSelect('job-city', 'Th�nh ph?', queryCities(ui.jobF?.country||''), ui.jobF?.city||'')}</div>
+    <div style="width:160px">${multiSelect('job-style', 'Th? lo?i nh?y', allStyles, ui.jobF?.style||'')}</div>
+    <button type="button" class="primary" data-action="apply-job-filters" style="height: 38px;">L?c</button>
   </div>`;
 
   // Apply search/status filters on top of baseJobs
@@ -586,11 +590,15 @@ document.addEventListener('click',async event=>{
   else if(a==='bulk-job-delete'){if(confirm(`Bạn có chắc chắn muốn xóa ${selectedJobs.size} Job khỏi hệ thống không?`)){const selected=db.ai_opportunities.filter(o=>selectedJobs.has(o.id));if(selected.length){selected.forEach(j=>j.is_deleted=true);selectedJobs.clear();rebuildRecommendations();render();toast('Đã xóa các Job được chọn');}}}
   else if(a==='clear-job-selection'){selectedJobs.clear();render();}
   else if(a==='apply-job-filters'){
-    const time=document.getElementById('job-time-filter');
-    if(time) ui.jobF={time:time.value};
-    ui.search=document.getElementById('cms-search').value;
-    const st=document.getElementById('cms-status');
-    if(st) ui.status=st.value;
+    const getMulti = id => Array.from(document.querySelectorAll(`input[data-multi-parent="${id}"]:checked`)).map(cb=>cb.value).join(',');
+    ui.jobF = {
+      q: $('#job-search')?.value || '',
+      time: $('#job-time')?.value || 'all',
+      status: getMulti('job-status'),
+      country: getMulti('job-country'),
+      city: getMulti('job-city'),
+      style: getMulti('job-style')
+    };
     render();
   }
   else if(a==='apply-kw-filters'){
