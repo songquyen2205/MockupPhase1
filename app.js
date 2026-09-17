@@ -36,7 +36,7 @@ const empty=(title,text='',action='')=>`<div class="empty"><h3>${title}</h3><p>$
 const table=(heads,rows)=>`<div class="table-wrap"><table><thead><tr>${heads.map(h=>`<th>${h}</th>`).join('')}</tr></thead><tbody>${rows.length?rows.join(''):`<tr><td colspan="${heads.length}">${empty('No records','Try a different search or filter.')}</td></tr>`}</tbody></table></div>`;
 const row=cells=>`<tr>${cells.map(c=>`<td>${c}</td>`).join('')}</tr>`;
 const types=['audition','workshop','commercial'];
-const statuses=[['needs_review','🟡 Chờ duyệt'],['published','🟢 Đang hiển thị'],['suspended','🟡 Tạm ẩn'],['closed','🔴 Đã đóng'],['rejected','🔴 Từ chối']];
+const statuses=[['needs_review','🟡 Chờ duyệt'],['published','🟢 Đang hiển thị'],['suspended','🟡 Tạm ẩn'],['closed','🔴 Đã đóng']];
 const countries=['Japan','Singapore'];
 const cities=['Tokyo','Osaka','Kyoto','Singapore'];
 const normalizeKeyword=value=>String(value??'').trim().replace(/\s+/g,' ').toLowerCase();
@@ -129,7 +129,6 @@ function jobBulkToolbar(paginatedList){
     <span style="font-weight:600; color:#15803d;">Đã chọn ${selected.length} jobs</span>
     ${btn('bulk-job-approve','🟢 Duyệt (Publish)','','primary',!editable())}
     ${btn('bulk-job-suspend','🟡 Tạm ẩn (Suspend)','','',!editable())}
-    ${btn('bulk-job-reject','🔴 Từ chối (Reject)','','',!editable())}
     <span style="width:1px; height:24px; background:#bbf7d0; margin:0 4px;"></span>
     ${btn('bulk-job-delete',icon('trash')+' Xóa (Ẩn khỏi danh sách)','','danger',!editable())}
     ${btn('clear-job-selection','Hủy chọn','','link')}
