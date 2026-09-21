@@ -475,16 +475,17 @@ function jobDrawer(id){
         </div>
         <div class="full">${field('dance_styles','Dance styles (comma separated)',Array.isArray(o.dance_styles)?o.dance_styles.join(', '):o.dance_styles)}</div>
         
-        <h3 style="grid-column:1/-1; margin:24px 0 12px; border-bottom:1px solid var(--line); padding-bottom:8px; color:var(--ink); font-size:14px; display:flex; justify-content:space-between; align-items:flex-end;">
-           <span>2. Địa điểm & Nội dung</span>
-           <a href="https://maps.google.com/?q=${encodeURIComponent(o.location_text||o.city||'')}" target="_blank" style="font-size:12px; font-weight:normal; display:flex; align-items:center; gap:4px;">🗺️ Mở Google Maps</a>
-        </h3>
+        <h3 style="grid-column:1/-1; margin:24px 0 12px; border-bottom:1px solid var(--line); padding-bottom:8px; color:var(--ink); font-size:14px;">2. Địa điểm & Nội dung</h3>
         <div ${!o.city?'style="border:2px solid red;padding:5px;border-radius:4px"':''}>
           ${!o.city?'<span style="color:red;font-size:12px;font-weight:bold">⚠️ THIẾU BẮT BUỘC</span>':''}
           ${field('city','City',o.city)}
         </div>
         ${field('country','Country',o.country)}
+        <div class="full" style="padding-top:4px;">
+          <a href="https://maps.google.com/?q=${encodeURIComponent(o.location_text||o.city||'')}" target="_blank" style="font-size:13px; font-weight:500; color:var(--blue); display:inline-flex; align-items:center; gap:6px;">🗺️ Mở Google Maps</a>
+        </div>
         <div class="full">${area('description','Description *',o.description,'required')}</div>
+        <div class="full">${area('requirements','Yêu cầu công việc (Kinh nghiệm / Bằng cấp)',o.requirements||'')}</div>
         
         <h3 style="grid-column:1/-1; margin:24px 0 12px; border-bottom:1px solid var(--line); padding-bottom:8px; color:var(--ink); font-size:14px;">3. Quyền lợi & Thời gian</h3>
         <div class="full" style="display:grid; grid-template-columns: 1fr 1fr 1fr; gap:16px;">
@@ -499,10 +500,11 @@ function jobDrawer(id){
         ${field('event_start_date','Event start date',o.event_start_date||'','date')}
         ${field('event_end_date','Event end date',o.event_end_date||'','date')}
         
-        <h3 style="grid-column:1/-1; margin:24px 0 12px; border-bottom:1px solid var(--line); padding-bottom:8px; color:var(--ink); font-size:14px; display:flex; justify-content:space-between; align-items:flex-end;">
-           <span>4. Thông tin liên hệ</span>
-           <a href="${o.raw_url}" target="_blank" style="font-size:12px; font-weight:normal; display:flex; align-items:center; gap:4px;">🔗 Xem bài đăng gốc (Source)</a>
-        </h3>
+        <h3 style="grid-column:1/-1; margin:24px 0 12px; border-bottom:1px solid var(--line); padding-bottom:8px; color:var(--ink); font-size:14px;">4. Thông tin liên hệ</h3>
+        <div class="full" style="display:flex; align-items:center; background:#f9fafb; padding:12px; border-radius:6px; border:1px solid #e5e7eb; margin-bottom:8px;">
+           <span style="flex:1; font-size:13px; font-weight:500; color:var(--ink);">Nguồn bài đăng (Original posting)</span>
+           <a href="${o.raw_url}" target="_blank" style="font-size:13px; font-weight:500; color:var(--blue); display:flex; align-items:center; gap:6px;">🔗 Xem bài đăng gốc</a>
+        </div>
         <div class="full">${field('application_url','Application URL',o.application_url,'url')}</div>
         ${field('contact_email','Contact email',o.contact_email||'','email')}
         ${field('contact_phone','Contact phone',o.contact_phone||'','tel')}
