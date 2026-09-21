@@ -475,17 +475,17 @@ function jobDrawer(id){
         </div>
         <div class="full">${field('dance_styles','Dance styles (comma separated)',Array.isArray(o.dance_styles)?o.dance_styles.join(', '):o.dance_styles)}</div>
         
-        <h3 style="grid-column:1/-1; margin:24px 0 12px; border-bottom:1px solid var(--line); padding-bottom:8px; color:var(--ink); font-size:14px;">2. Địa điểm & Nội dung</h3>
+        <h3 style="grid-column:1/-1; margin:24px 0 12px; border-bottom:1px solid var(--line); padding-bottom:8px; color:var(--ink); font-size:14px; display:flex; justify-content:space-between; align-items:center;">
+           <span>2. Địa điểm & Nội dung</span>
+           <a class="button" href="https://maps.google.com/?q=${encodeURIComponent(o.location_text||o.city||'')}" target="_blank" style="background:#f3f4f6; color:#374151; padding:4px 8px; border-radius:4px; font-size:12px; font-weight:500; display:inline-flex; align-items:center; gap:4px; text-decoration:none; border:1px solid #d1d5db;">🗺️ Mở Google Maps</a>
+        </h3>
         <div ${!o.city?'style="border:2px solid red;padding:5px;border-radius:4px"':''}>
           ${!o.city?'<span style="color:red;font-size:12px;font-weight:bold">⚠️ THIẾU BẮT BUỘC</span>':''}
           ${field('city','City',o.city)}
         </div>
         ${field('country','Country',o.country)}
-        <div class="full" style="padding-top:4px;">
-          <a href="https://maps.google.com/?q=${encodeURIComponent(o.location_text||o.city||'')}" target="_blank" style="font-size:13px; font-weight:500; color:var(--blue); display:inline-flex; align-items:center; gap:6px;">🗺️ Mở Google Maps</a>
-        </div>
         <div class="full">${area('description','Description *',o.description,'required')}</div>
-        <div class="full">${area('requirements','Yêu cầu công việc (Kinh nghiệm / Bằng cấp)',o.requirements||'')}</div>
+        <div class="full">${area('requirements','Yêu cầu công việc (Kinh nghiệm / Bằng cấp)', typeof o.requirements === 'object' ? JSON.stringify(o.requirements, null, 2) : (o.requirements||''))}</div>
         
         <h3 style="grid-column:1/-1; margin:24px 0 12px; border-bottom:1px solid var(--line); padding-bottom:8px; color:var(--ink); font-size:14px;">3. Quyền lợi & Thời gian</h3>
         <div class="full" style="display:grid; grid-template-columns: 1fr 1fr 1fr; gap:16px;">
