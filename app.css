@@ -7,3 +7,33 @@
 .column-help{display:inline-flex;align-items:center;justify-content:center;width:24px;height:24px;padding:0;border:0;background:transparent;color:var(--muted);vertical-align:middle;cursor:help}.column-help i{font-size:16px}#field-help-tooltip{position:fixed;z-index:10000;width:max-content;max-width:min(300px,calc(100vw - 16px));padding:10px 12px;background:#fff;color:#24312c;border:1px solid #ced8d5;border-radius:5px;box-shadow:0 4px 16px #0002;font-size:13px;line-height:1.5;pointer-events:none}
 @media(max-width:1100px){.workspace{padding:24px 20px}.layout{grid-template-columns:185px minmax(0,1fr)}.stats{grid-template-columns:repeat(2,1fr)}.stat:nth-child(2){border-right:0}.review-bar{padding:12px 16px}.brand small{max-width:145px}.page-heading{flex-wrap:wrap}}
 @media(max-width:700px){.review-bar{min-height:98px;padding:12px;gap:10px;flex-wrap:wrap}.brand{font-size:13px}.brand>b{width:30px;height:30px;font-size:20px}.brand small{font-size:8px}.review-bar>.segmented{order:3;width:100%}.review-bar>.segmented button{flex:1}.preview-options select{max-width:139px;font-size:11px;min-height:34px}.preview-options .icon-button{width:32px;height:32px}.preview-options a{display:none}.layout{display:block}.sidebar{padding:8px;display:flex;overflow-x:auto;gap:4px}.sidebar-title,.sidebar .footnote{display:none}.sidebar button{white-space:nowrap;width:auto;font-size:11px;min-width:96px;padding:9px}.sidebar button i{display:none}.workspace{padding:20px 14px}.page-heading{margin-bottom:18px}.page-heading h1{font-size:23px}.toolbar{gap:8px}.toolbar select{max-width:170px}.stats{margin:16px 0}.stat{padding:15px 12px}.stat b{font-size:22px}.overlay{padding:12px}.dialog{max-height:calc(100dvh - 24px)}.dialog-head,.dialog-body{padding:17px}.dialog-footer{padding:14px 17px;flex-wrap:wrap}.dialog-head h2{font-size:17px}.form-grid{grid-template-columns:1fr}.form-grid .full{grid-column:auto}.dancer-stage{padding:0;display:block}.mobile-app{width:100%;border:0;border-radius:0;box-shadow:none}.mobile-body{min-height:calc(100dvh - 330px);padding:18px 17px 24px}.mobile-top{padding:20px 17px 15px}.overlay.sheet{padding:0}.sheet .dialog{width:100%;max-height:92dvh}.tabs{gap:18px}.tabs button{font-size:12px}.kv{grid-template-columns:1fr 1.4fr}td,th{padding:12px}.section-heading{flex-wrap:wrap}.actions{gap:6px}}
+
+/* Hammer Real App Overrides */
+.mobile-app { background: #fff; color: #000; }
+.mobile-bottom { background: #fff; border-top: 1px solid #eaeaea; justify-content: space-between; padding: 12px 10px; padding-bottom: 25px; }
+.mobile-bottom button { color: #888; font-size: 11px; padding: 4px; min-width: unset; flex: 1; }
+.mobile-bottom button.active { color: #000; font-weight: bold; }
+.mobile-bottom i { font-size: 22px; margin-bottom: 2px; }
+.create-btn { border: 2px solid #000 !important; border-radius: 8px; padding: 2px 8px !important; color: #000 !important; margin-top: 2px; height: 28px; display: flex; align-items: center; justify-content: center; width: 40px; margin: 0 auto; }
+.mobile-top { background: #fff; border-bottom: 1px solid #eaeaea; padding: 20px 17px 15px; position: sticky; top: 0; z-index: 10; color: #000; }
+.mobile-body { padding-top: 20px; background: #f5f5f5; color: #000; min-height: 540px; }
+.job-card { background: #fff; border-color: #e5e5e5; }
+.job-card h3 button { color: #000; }
+.organization { color: #555; }
+.card-bottom { border-color: #f0f0f0; }
+.detail-meta { color: #666; }
+.score-line, .detail-section h3 { color: #000; }
+.empty h3 { color: #000; }
+.form-grid input, .form-grid select { background: #fff; color: #000; border-color: #ddd; }
+
+
+/* Pro UI Overrides */
+details > summary { list-style: none; }
+details > summary::-webkit-details-marker { display: none; }
+.chip-label { cursor:pointer; font-size:13px; color:var(--ink); background:#fff; border:1px solid #d1d5db; border-radius:20px; padding:6px 14px; transition:all 0.2s ease; display:inline-block; }
+.chip-input:checked + .chip-label { background:#10b981; border-color:#10b981; color:#fff; font-weight:600; }
+.chip-input { display:none; }
+.chip-group { display:flex; flex-wrap:wrap; gap:8px; margin-top:8px; margin-bottom:16px; }
+.form-label { font-size:12px; font-weight:600; color:#4b5563; margin-bottom:4px; display:block; }
+.pro-input { width:100%; padding:10px 12px; border:1px solid #d1d5db; border-radius:8px; font-size:14px; }
+.pro-card { background:#fff; border:1px solid #e5e7eb; border-radius:12px; padding:16px; box-shadow:0 1px 3px rgba(0,0,0,0.05); margin-bottom:20px; }
