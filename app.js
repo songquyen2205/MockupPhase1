@@ -3339,37 +3339,39 @@ document.addEventListener("submit", (event) => {
       );
       return;
     }
-    if (
-      isSource &&
-      (!normalized ||
-        list.some(
-          (s) =>
-            s.id !== ui.editId &&
-            (s.normalized_url === normalized ||
-              s.source_code.toLowerCase() ===
-                v.source_code.trim().toLowerCase()),
-        ))
-    ) {
-      formError("Enter a valid public URL and a unique source name / URL.");
-      return;
-    }
-    if (
-      !isSource &&
-      list.some(
-        (q) =>
-          q.id !== ui.editId &&
-          normalizeKeyword(q.keyword) === normalizeKeyword(v.keyword) &&
-          q.region === v.region &&
-          q.country === v.country &&
-          q.city === v.city,
-      )
-    ) {
-      formError(
-        "Từ khóa này đã tồn tại trong khu vực này. Vui lòng kiểm tra lại.",
-      );
-      return;
-    }
-    const changes = isSource
+    if (isSource) {
+        if (!normalized) {
+          formError("Enter a valid public URL.");
+          return;
+        }
+        const existing = list.find((s) => s.id !== ui.editId && (s.normalized_url === normalized || s.source_code.toLowerCase() === v.source_code.trim().toLowerCase()));
+        if (existing) {
+          dialog(
+            "duplicate-conflict",
+            "Duplicate Source",
+            `<p style="margin-bottom:12px;">The source <strong>${esc(existing.source_code)}</strong> already exists.</p>
+             <p style="color:var(--muted); font-size:13px;">Would you like to view its details?</p>
+             <input type="hidden" name="target_id" value="${existing.id}">`,
+            "View Details"
+          );
+          return;
+        }
+      }
+      if (!isSource) {
+        const existing = list.find((q) => q.id !== ui.editId && normalizeKeyword(q.keyword) === normalizeKeyword(v.keyword) && q.region === v.region && q.country === v.country && q.city === v.city);
+        if (existing) {
+          dialog(
+            "duplicate-conflict",
+            "Duplicate Keyword",
+            `<p style="margin-bottom:12px;">The keyword <strong>${esc(existing.keyword)}</strong> already exists.</p>
+             <p style="color:var(--muted); font-size:13px;">Would you like to view its details?</p>
+             <input type="hidden" name="target_id" value="${existing.id}">`,
+            "View Details"
+          );
+          return;
+        }
+      }
+      const changes = isSource
       ? {
           source_code: v.source_code.trim(),
           provider: v.provider,
@@ -3484,7 +3486,10 @@ document.addEventListener("submit", (event) => {
     audit("Agent access changed: " + v.reason, ui.suspendId);
     closeDialog(true);
     render();
-  } else if (kind === "report") {
+  } else if (kind === "duplicate-conflict") {
+      closeDialog(true);
+      sourceDialog(Number(v.target_id));
+    } else if (kind === "report") {
     if (
       ext().reports.some(
         (r) =>

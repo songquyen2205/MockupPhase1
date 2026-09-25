@@ -37,3 +37,22 @@ details > summary::-webkit-details-marker { display: none; }
 .form-label { font-size:12px; font-weight:600; color:#4b5563; margin-bottom:4px; display:block; }
 .pro-input { width:100%; padding:10px 12px; border:1px solid #d1d5db; border-radius:8px; font-size:14px; }
 .pro-card { background:#fff; border:1px solid #e5e7eb; border-radius:12px; padding:16px; box-shadow:0 1px 3px rgba(0,0,0,0.05); margin-bottom:20px; }
+
+/* CMS Theme (Black & White Overrides) */
+.layout button.primary { background: #000; color: #fff; border-color: #000; }
+.layout button.primary:hover { background: #333; }
+.layout a { color: #000; text-decoration: underline; font-weight: 500; }
+.layout a:hover { text-decoration: none; }
+.layout button.link { color: #000; font-weight: 500; text-decoration: underline; }
+.layout button.link:hover { text-decoration: none; }
+.layout .pill { background: #f0f0f0 !important; color: #000 !important; border: 1px solid #ccc; font-weight: 500; }
+.layout .permission { border-left-color: #000; }
+
+
+body:has(#mode-cms.active) .overlay button.primary { background: #000; color: #fff; border-color: #000; }
+body:has(#mode-cms.active) .overlay button.primary:hover { background: #333; }
+body:has(#mode-cms.active) .overlay a { color: #000; text-decoration: underline; font-weight: 500; }
+body:has(#mode-cms.active) .overlay a:hover { text-decoration: none; }
+body:has(#mode-cms.active) .overlay button.link { color: #000; font-weight: 500; text-decoration: underline; }
+body:has(#mode-cms.active) .overlay button.link:hover { text-decoration: none; }
+
