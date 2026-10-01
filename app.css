@@ -25,6 +25,8 @@
 .score-line, .detail-section h3 { color: #000; }
 .empty h3 { color: #000; }
 .form-grid input, .form-grid select { background: #fff; color: #000; border-color: #ddd; }
+.job-form-section-title{grid-column:1/-1;margin:24px 0 12px;border-bottom:1px solid var(--line);padding-bottom:8px;color:var(--ink);font-size:14px}.source-reference{display:flex;align-items:center;justify-content:space-between;gap:16px;background:#f8faf9;padding:12px;border:1px solid #e5e7eb;border-radius:6px;margin-bottom:12px}.source-reference div{display:flex;flex-direction:column;gap:4px;min-width:0}.source-reference small{line-height:1.35}.source-reference a{display:inline-flex;align-items:center;gap:6px;white-space:nowrap;font-size:12px;font-weight:600}.application-fields-note{color:var(--muted);font-size:12px;line-height:1.5;margin:-2px 0 14px}
+@media(max-width:700px){.source-reference{align-items:flex-start;flex-direction:column}}
 
 
 /* Pro UI Overrides */

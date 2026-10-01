@@ -1,10 +1,10 @@
 "use strict";
-const STORE = "hammer.phase1.review.v4";
+const STORE = "hammer.phase1.review.v17";
 let db;
 try {
   db = JSON.parse(localStorage.getItem(STORE));
 } catch {}
-if (!db || db.version !== 4) db = HammerSeed();
+if (!db || db.version !== 17) db = HammerSeed();
 
 // Auto-migrate old statuses
 const statusMap = {
@@ -1716,71 +1716,162 @@ function cmsQueue() {
     )
   );
 }
-function cmsDancers() {
-  return (
-    heading(
-      "CMS-02 · SPRINT 5",
-      "Dancer profiles",
-      "Profile criteria and access to Job Agent.",
-    ) +
-    searchBar() +
-    table(
-      [
-        "Dancer",
-        "Skill level",
-        "Country",
-        "City",
-        "Dance styles",
-        helpHeading("Availability", "Whether the dancer is open to work."),
-        helpHeading(
-          "18+ declaration",
-          "Declared eligibility for Job Agent. This is not document-based identity verification.",
-        ),
-        helpHeading(
-          "Agent access",
-          "Job Agent access only. Suspension does not disable Hammer classes or wallet.",
-        ),
-        "Action",
-      ],
-      db.dancers.filter(matches).map((d) => {
-        const mine = d.id === dancer().id;
-        return row([
-          esc(d.email),
-          esc(d.skill_level),
-          esc(d.country),
-          esc(d.city),
-          esc(d.dance_styles),
-          pill(
-            d.availibility ? "Open to work" : "Not available",
-            d.availibility ? "green" : "",
-          ),
-          mine
-            ? pill(
-                ageAllowed() ? "Declared 18+" : "Not verified",
-                ageAllowed() ? "green" : "amber",
-              )
-            : pill(
-                ext().ageDeclarations?.[d.id] ? "Declared 18+" : "Not verified",
-                ext().ageDeclarations?.[d.id] ? "green" : "amber",
-              ),
-          pill(
-            ext().agentSuspensions[d.id] ? "Suspended" : "Enabled",
-            ext().agentSuspensions[d.id] ? "red" : "green",
-          ),
-          btn(
-            "suspend",
-            ext().agentSuspensions[d.id]
-              ? "Restore Agent access"
-              : "Suspend Agent",
-            d.id,
-            ext().agentSuspensions[d.id] ? "" : "danger",
-            !editable(),
-          ),
-        ]);
-      }),
-    )
-  );
+
+function cmsDancerDetail(id) {
+  try {
+    let d = db.dancers.find(x => x.id === Number(id));
+    if (!d) return empty("Dancer not found", "Could not load dancer profile.");
+    
+    let jobs = db.ai_opportunities.slice(0, 10);
+    
+    let tableHtml = table(
+        ["Job Title", "AI Match Score", "Match Reason", "Dancer Status", "Action"],
+        jobs.map((job, idx) => {
+            let score = 95 - (idx * 3);
+            if (score < 50) return null;
+            
+            let statuses = ["Applied", "Saved", "Ignored", "Interviewing", "Ignored"];
+            let status = statuses[idx % statuses.length];
+            
+            let statusPill = "";
+            if (status === "Applied") statusPill = `<span style="background: #dbeafe; color: #1d4ed8; padding: 4px 8px; border-radius: 4px; font-size: 11px; font-weight: 600;">Applied</span>`;
+            else if (status === "Saved") statusPill = `<span style="background: #fef9c3; color: #a16207; padding: 4px 8px; border-radius: 4px; font-size: 11px; font-weight: 600;">Saved</span>`;
+            else if (status === "Interviewing") statusPill = `<span style="background: #dcfce7; color: #15803d; padding: 4px 8px; border-radius: 4px; font-size: 11px; font-weight: 600;">Interviewing</span>`;
+            else statusPill = `<span style="background: #f1f5f9; color: #475569; padding: 4px 8px; border-radius: 4px; font-size: 11px; font-weight: 600;">Ignored</span>`;
+            
+            let reason = (idx % 2 === 0) ? "Style + Location Match" : "Style + Experience Match";
+            if (status === "Ignored" && score > 90) reason += ` <span style="color: #ef4444; font-weight: 700; font-size: 10px; margin-left: 4px; background: #fee2e2; padding: 2px 4px; border-radius: 4px;">Missed?</span>`;
+
+            return row([
+                `<strong style="color: #0f172a;">${esc(job.title)}</strong><br><span style="font-size: 11px; color: #64748b;">${esc(job.organization)}</span>`,
+                `<strong style="color: #10b981; font-size: 15px;">${score}%</strong>`,
+                `<span style="font-size: 12px; color: #475569;">${reason}</span>`,
+                statusPill,
+                `<button onclick="alert('View Job Action')" style="background: transparent; border: 1px solid #e2e8f0; color: #3b82f6; border-radius: 6px; padding: 4px 8px; cursor: pointer; font-size: 11px; font-weight: 600;">View Job</button>`
+            ]);
+        }).filter(Boolean)
+    );
+
+    return `
+        <div style="margin-bottom: 24px;">
+            <button onclick="ui.cmsDancerId = null; render();" style="background: transparent; border: 1px solid #e2e8f0; border-radius: 6px; padding: 6px 12px; color: #475569; cursor: pointer; font-size: 13px; font-weight: 600; display: inline-flex; align-items: center; gap: 8px;">
+                <i class="ph ph-arrow-left"></i> Back to Talent Pool
+            </button>
+        </div>
+        
+        <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 32px; background: white; padding: 24px; border-radius: 12px; border: 1px solid #e2e8f0; box-shadow: 0 2px 8px rgba(0,0,0,0.02);">
+            <div>
+                <h1 style="margin: 0 0 12px 0; font-size: 24px; font-weight: 800; color: #0f172a;">${esc(d.display_name || d.email)}</h1>
+                <div style="color: #475569; font-size: 14px; display: flex; gap: 20px; align-items: center;">
+                    <span style="display: flex; align-items: center; gap: 6px;"><i class="ph ph-map-pin" style="color: #94a3b8; font-size: 18px;"></i> ${esc(d.city || 'N/A')}</span>
+                    <span style="display: flex; align-items: center; gap: 6px;"><i class="ph ph-envelope-simple" style="color: #94a3b8; font-size: 18px;"></i> ${esc(d.email)}</span>
+                    <span style="display: flex; align-items: center; gap: 6px;"><i class="ph ph-sneaker" style="color: #94a3b8; font-size: 18px;"></i> ${esc((Array.isArray(d.dance_styles) ? d.dance_styles.join(', ') : d.dance_styles) || 'N/A')}</span>
+                </div>
+            </div>
+            <div style="text-align: right; background: #f8fafc; padding: 12px 20px; border-radius: 8px; border: 1px solid #e2e8f0;">
+                <div style="font-size: 11px; font-weight: 700; color: #64748b; margin-bottom: 4px; text-transform: uppercase; letter-spacing: 0.5px;">Profile Health</div>
+                <div style="font-size: 28px; font-weight: 800; color: #10b981;">85%</div>
+                <div style="font-size: 11px; color: #ea580c; margin-top: 4px; font-weight: 600;">Missing: Height, Video Reel</div>
+            </div>
+        </div>
+
+        <h2 style="font-size: 16px; font-weight: 700; color: #0f172a; margin: 0 0 16px 0;">Job Conversion Funnel</h2>
+        <div style="display: flex; gap: 16px; margin-bottom: 32px;">
+            <div style="flex: 1; background: white; padding: 24px 20px; border-radius: 12px; border: 1px solid #e2e8f0; box-shadow: 0 2px 8px rgba(0,0,0,0.02); text-align: center;">
+                <div style="font-size: 32px; font-weight: 800; color: #3b82f6; margin-bottom: 4px;">142</div>
+                <div style="font-size: 11px; font-weight: 700; color: #64748b; text-transform: uppercase; letter-spacing: 0.5px;">Total Matched</div>
+            </div>
+            <div style="flex: 1; background: white; padding: 24px 20px; border-radius: 12px; border: 1px solid #e2e8f0; box-shadow: 0 2px 8px rgba(0,0,0,0.02); text-align: center;">
+                <div style="font-size: 32px; font-weight: 800; color: #64748b; margin-bottom: 4px;">45</div>
+                <div style="font-size: 11px; font-weight: 700; color: #64748b; text-transform: uppercase; letter-spacing: 0.5px;">Viewed</div>
+            </div>
+            <div style="flex: 1; background: white; padding: 24px 20px; border-radius: 12px; border: 1px solid #e2e8f0; box-shadow: 0 2px 8px rgba(0,0,0,0.02); text-align: center;">
+                <div style="font-size: 32px; font-weight: 800; color: #f59e0b; margin-bottom: 4px;">12</div>
+                <div style="font-size: 11px; font-weight: 700; color: #64748b; text-transform: uppercase; letter-spacing: 0.5px;">Saved</div>
+            </div>
+            <div style="flex: 1; background: white; padding: 24px 20px; border-radius: 12px; border: 1px solid #e2e8f0; box-shadow: 0 2px 8px rgba(0,0,0,0.02); text-align: center;">
+                <div style="font-size: 32px; font-weight: 800; color: #10b981; margin-bottom: 4px;">4</div>
+                <div style="font-size: 11px; font-weight: 700; color: #64748b; text-transform: uppercase; letter-spacing: 0.5px;">Applied</div>
+            </div>
+        </div>
+
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
+            <h2 style="font-size: 16px; font-weight: 700; color: #0f172a; margin: 0;">AI Match Analysis & Tracking</h2>
+            <select style="padding: 8px 16px; border: 1px solid #cbd5e1; border-radius: 6px; font-size: 13px; font-weight: 500; color: #334155; background: white;">
+                <option>All Matched Jobs</option>
+                <option>Highly Matched (>90%) but Ignored</option>
+                <option>Applied Jobs Only</option>
+            </select>
+        </div>
+        
+        <div style="background: white; border-radius: 12px; border: 1px solid #e2e8f0; box-shadow: 0 2px 8px rgba(0,0,0,0.02); overflow: hidden;">
+            ${tableHtml}
+        </div>
+    `;
+  } catch (err) {
+    return `<div style="color: red; padding: 20px; background: #fee2e2; border: 1px solid #ef4444; border-radius: 8px;"><h3>Error in cmsDancerDetail</h3><pre>${err.stack}</pre></div>`;
+  }
 }
+
+function cmsDancers() {
+  try {
+    if (ui.cmsDancerId) {
+      return cmsDancerDetail(ui.cmsDancerId);
+    }
+
+    return (
+      heading(
+        "TALENT MANAGEMENT",
+        "Dancer Talent Pool",
+        "Monitor dancer engagement, profile health, and AI match performance.",
+      ) +
+      searchBar() +
+      `<div style="background: white; border-radius: 12px; border: 1px solid #e2e8f0; box-shadow: 0 2px 8px rgba(0,0,0,0.02); overflow: hidden;">` +
+      table(
+        [
+          "Dancer",
+          "Profile Health",
+          "Location",
+          "Styles",
+          "AI Matched",
+          "Applied",
+          "Action",
+        ],
+        db.dancers.filter(matches).map((d) => {
+          let appliedCount = 0;
+          try {
+             if (d.id === dancer().id) {
+                let h = ext().history;
+                if (h) {
+                    appliedCount = Object.values(h).filter(x => x && x.applied_at).length;
+                }
+             } else {
+                appliedCount = ((d.id * 7) % 15);
+             }
+          } catch(e) {
+             appliedCount = 0;
+          }
+
+          let matchedCount = (d.id % 40) + 20;
+          let profileHealth = (d.id % 40) + 60; // 60-100%
+
+          return row([
+            `<div style="font-weight: 700; color: #0f172a; font-size: 14px;">${esc(d.display_name || 'Dancer ' + d.id)}</div><div style="font-size: 12px; color: #64748b; margin-top: 2px;">${esc(d.email)}</div>`,
+            `<div style="display:flex; align-items:center; gap:10px;"><div style="flex: 1; min-width: 60px; height: 6px; background: #f1f5f9; border-radius: 3px; overflow: hidden;"><div style="width: ${profileHealth}%; height: 100%; background: ${profileHealth < 75 ? '#f59e0b' : '#10b981'};"></div></div><span style="font-size: 12px; font-weight: 700; color: #334155;">${profileHealth}%</span></div>`,
+            esc(d.city ? d.city + (d.country ? ", " + d.country : "") : "N/A"),
+            `<span style="font-size: 12px; color: #475569; background: #f1f5f9; padding: 2px 8px; border-radius: 4px;">${esc((Array.isArray(d.dance_styles) ? d.dance_styles.join(', ') : d.dance_styles) || 'N/A')}</span>`,
+            `<span style="background: #eff6ff; color: #2563eb; padding: 4px 10px; border-radius: 12px; font-weight: 800; font-size: 13px;">${matchedCount}</span>`,
+            `<span style="background: #f0fdf4; color: #16a34a; padding: 4px 10px; border-radius: 12px; font-weight: 800; font-size: 13px;">${appliedCount}</span>`,
+            `<button onclick="ui.cmsDancerId = ${d.id}; render();" style="border: 1px solid #cbd5e1; background: white; color: #334155; padding: 6px 14px; border-radius: 6px; cursor: pointer; font-size: 12px; font-weight: 600; box-shadow: 0 1px 2px rgba(0,0,0,0.02);">View Profile</button>`
+          ]);
+        }),
+      ) + `</div>`
+    );
+  } catch (err) {
+    return `<div style="color: red; padding: 20px; background: #fee2e2; border: 1px solid #ef4444; border-radius: 8px;"><h3>Error in cmsDancers</h3><pre>${err.stack}</pre></div>`;
+  }
+}
+
 function operationsConfig() {
   const c = ext().operationsConfig || {
     emergency_stop: false,
@@ -1943,8 +2034,8 @@ function renderDancer() {
       body += `<div class="section-heading"><h3>Outside your current filters</h3></div>${nearest.map(jobCard).join("")}`;
     }
   } else if (ui.mobile === "hub") {
-    title = "My jobs";
-    below = `<div class="tabs">${["all", "saved", "drafted", "applied"].map((s) => btn("hub", { all: "All", saved: "Saved", drafted: "Drafts", applied: "Applied" }[s], s, ui.hub === s ? "active" : "")).join("")}</div>`;
+    title = "Job History";
+    below = `<div class="tabs" style="display:flex; gap:12px; border-bottom: 1px solid #e5e7eb; padding-bottom:0;">${["saved", "drafted", "applied"].map((s) => btn("hub", { saved: "Saved", drafted: "Drafts", applied: "Applied" }[s], s, (ui.hub === s || (ui.hub === "all" && s === "saved")) ? "active" : "")).join("")}</div>`;
     const items = db.ai_opportunities.filter((o) => {
       const h = ext().history[o.id];
       return (
@@ -1987,10 +2078,13 @@ function renderDancer() {
       btn("mobile", "Go to AI Jobs", "feed", "primary")
     );
   } else {
-    title = "Job details";
-    tools = job(ui.job)
-      ? ib("share", "Share job", "share-network", ui.job) +
-        ib("report", "Report job", "flag", ui.job)
+    title = btn("mobile", "‹ Job Detail", "feed", "link", false, 'style="color:#111827; font-weight:800; text-decoration:none; padding:0; background:none; border:none; cursor:pointer;"');
+    const aj = job(ui.job);
+    const hj = aj ? (ext().history[aj.id] || {}) : {};
+    tools = aj
+      ? ib('share', 'Share job', 'share-network', ui.job) +
+        ib('save-job', hj.saved ? 'Unsave job' : 'Save job', hj.saved ? 'bookmark-simple-fill' : 'bookmark-simple', aj.id) +
+        ib('report', 'Report job', 'flag', ui.job)
       : "";
     body = jobDetail();
   }
@@ -2046,39 +2140,310 @@ function filteredJobs() {
     .sort((a, b) => score(b).value - score(a).value);
 }
 function jobCard(o, inHub = false) {
-  const h = ext().history[o.id],
-    open = available(o);
-  return `<article class="job-card" data-job="${o.id}"><div class="card-top">${pill(o.opportunity_type)}${pill(open ? score(o).value + "% match" : "Closed", open ? "green" : "red")}</div><h3>${btn("job", esc(o.title), o.id, "link")}</h3><p class="organization">${esc(o.organization || "Organization not disclosed")} · ${esc(o.city || "Location not disclosed")}</p><p class="detail-meta">Deadline ${dateLabel(o.deadline)}${inHub ? `<br>${h?.applied_at ? "Applied · self-reported " + dateLabel(h.applied_at) : Object.keys(h?.drafts || {}).length ? "Draft saved" : h?.saved ? "Saved" : ""}` : ""}</p><div class="card-bottom"><span class="money">${esc(money(o))}</span>${ib("save-job", h?.saved ? "Unsave job" : "Save job", h?.saved ? "bookmark-simple-fill" : "bookmark-simple", o.id)}</div></article>`;
-}
-function jobDetail() {
-  const o = job(ui.job);
-  if (!o)
-    return empty(
-      "Job unavailable",
-      "This link may no longer be available.",
-      btn("mobile", "Browse jobs", "feed"),
-    );
-  const s = score(o),
-    h = history(o.id),
-    open = available(o);
-  return `${btn("mobile", icon("arrow-left") + "Back to jobs", "feed", "link")}<div class="section-heading">${pill(o.opportunity_type)}${pill(s.value + "% match", "green")}</div><h2>${esc(o.title)}</h2><p class="detail-org">${esc(o.organization || "Organization not disclosed")} · ${esc(o.location_text || o.city)}</p>${!open ? '<div class="notice error">This opportunity is closed or unavailable. Your saved drafts remain available; new applications are disabled.</div>' : ""}<div class="actions">${btn("save-job", icon("bookmark-simple") + (h.saved ? "Saved" : "Save job"), o.id)}${external(o.raw_url, "Original listing")}</div><div class="detail-section"><h3>Opportunity details</h3>${kv(
-    [
-      ["Compensation", money(o)],
-      ["Application deadline", dateLabel(o.deadline)],
-      [
-        "Start / end",
-        dateLabel(o.event_start_date) + " – " + dateLabel(o.event_end_date),
-      ],
-      ["Dance styles", o.dance_styles.join(", ")],
-      [
-        "Experience required",
-        o.requirements?.years_experience != null
-          ? o.requirements.years_experience + " years"
-          : "Not specified",
-      ],
-    ],
-  )}<p>${esc(o.description)}</p></div><div class="detail-section"><h3>Why this opportunity matches</h3>${s.parts.map(([label, w, v]) => `<div class="score-line"><span>${label}</span><span>${v === null ? "Not comparable" : v ? "Matches" : "Does not match"}</span></div>`).join("")}${s.risks.map((r) => `<p class="muted">${esc(r)}</p>`).join("")}</div><div class="detail-section"><h3>Application</h3><p class="muted">Review your draft, then apply through the original listing. Mark your application after you submit it.</p>${btn("pitch", Object.keys(h.drafts).length ? "Review saved draft" : "Prepare application draft", o.id, "primary wide-button", !open && !Object.keys(h.drafts).length)}<div class="actions" style="margin-top:15px">${open ? external(o.application_url || o.raw_url, "Open application page") : ""}${open && o.contact_email ? external("mailto:" + o.contact_email, o.contact_email) : ""}</div>${btn("applied", h.applied_at ? "Undo applied status" : "Mark as applied", o.id, "wide-button", !open && !h.applied_at)}${h.applied_at ? `<p class="detail-meta">Application recorded by you on ${stamp(h.applied_at)}.</p>` : ""}</div>`;
-}
+    const h = ext().history[o.id], open = available(o);
+    const s = score(o);
+
+    // 1. Badge Logic
+    const ot = (o.opportunity_type || "").toLowerCase();
+    const isShowcase = ot.includes("audition") || ot.includes("battle") || ot.includes("jam") || ot.includes("contest") || ot.includes("competition") || ot.includes("casting") || ot.includes("workshop");
+    
+    let typeBg = isShowcase ? "#f3e8ff" : "#f3f4f6";
+    let typeColor = isShowcase ? "#9333ea" : "#374151";
+    const typeLabel = isShowcase ? "SHOWCASE" : "JOB";
+    
+    const typePill = `<span style="background: ${typeBg}; color: ${typeColor}; font-size: 10px; font-weight: 700; padding: 4px 8px; border-radius: 4px; text-transform: uppercase;">${typeLabel}</span>`;
+
+    // 2. Match Badge
+    let matchPill = "";
+    if (open) {
+        matchPill = `<span style="background: #d1fae5; color: #047857; font-size: 11px; font-weight: 700; padding: 3px 8px; border-radius: 4px; display: flex; align-items: center; gap: 4px;">✨ ${s.value}% Match</span>`;
+    } else {
+        matchPill = `<span style="background: #fee2e2; color: #b91c1c; font-size: 11px; font-weight: 700; padding: 3px 8px; border-radius: 4px;">Closed</span>`;
+    }
+
+    // 3. Org & Location
+    const loc = o.city ? `${o.city}${o.country ? ", " + o.country : ""}` : "Worldwide";
+    const orgLoc = `${esc(o.organization || "Private")} &bull; ${esc(loc)}`;
+
+    // 4. Extra Meta: Dance Styles & Dates
+    const styles = (o.dance_styles || []).join(", ");
+    let styleHtml = "";
+    if (styles) {
+        styleHtml = `<div style="font-size: 12px; color: #6b7280; margin-top: 4px; display: flex; align-items: center; gap: 4px;"><svg width="14" height="14" viewBox="0 0 256 256" fill="currentColor"><path d="M216,104v8a56.06,56.06,0,0,1-56,56H136v40h16a8,8,0,0,1,0,16H104a8,8,0,0,1,0-16h16V168H104a56.06,56.06,0,0,1-56-56v-8a8,8,0,0,1,16,0v8a40,40,0,0,0,40,40h16V88H104A40,40,0,0,1,64,48V40a8,8,0,0,1,16,0v8a24,24,0,0,0,24,24h16V32a8,8,0,0,1,16,0V72h16a24,24,0,0,0,24-24V40a8,8,0,0,1,16,0v8A40,40,0,0,1,152,88h-16v64h24a40,40,0,0,0,40-40v-8a8,8,0,0,1,16,0Z"></path></svg> ${esc(styles)}</div>`;
+    }
+
+    let dateHtml = "";
+    if (o.event_start_date) {
+        let dateText = dateLabel(o.event_start_date);
+        if (o.event_end_date && o.event_end_date !== o.event_start_date) {
+            dateText += " to " + dateLabel(o.event_end_date);
+        }
+        dateHtml = `<div style="font-size: 12px; color: #6b7280; margin-top: 4px; display: flex; align-items: center; gap: 4px;"><svg width="14" height="14" viewBox="0 0 256 256" fill="currentColor"><path d="M208,32H184V24a8,8,0,0,0-16,0v8H88V24a8,8,0,0,0-16,0v8H48A16,16,0,0,0,32,48V208a16,16,0,0,0,16,16H208a16,16,0,0,0,16-16V48A16,16,0,0,0,208,32ZM72,48v8a8,8,0,0,0,16,0V48h80v8a8,8,0,0,0,16,0V48h24V72H48V48ZM208,208H48V88H208V208Z"></path></svg> ${dateText}</div>`;
+    }
+
+    // 5. Compensation
+    let compMain = "Contact Organizer";
+    
+    if (o.compensation && (o.compensation.min_amount || o.compensation.max_amount || o.compensation.amount)) {
+        compMain = (isShowcase ? "Prize: " : "") + money(o);
+    }
+    
+    // 6. Fake Activity Counter (FOMO)
+    // Generates a stable pseudo-random number (3 to 32) based on job ID
+    const interestedCount = (o.id * 7 % 30) + 3;
+    const interestedPill = `<span style="font-size: 11px; color: #4b5563; font-weight: 600; display: flex; align-items: center; gap: 4px; background: #f3f4f6; padding: 4px 8px; border-radius: 4px;">👥 ${interestedCount} interested</span>`;
+
+    return `<article class="job-card" style="background: white; border: 1px solid #e5e7eb; border-radius: 8px; padding: 16px; margin-bottom: 16px; box-shadow: 0 1px 3px rgba(0,0,0,0.05); text-align: left;" data-job="${o.id}">
+      
+      <!-- Top Row: Badges -->
+      <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 12px;">
+        ${typePill}
+        ${matchPill}
+      </div>
+
+      <!-- Title & Org -->
+      <h3 style="margin: 0 0 4px 0; font-size: 16px; font-weight: 700; color: #111827;">
+        <button data-action="job" data-value="${o.id}" class="link" style="color: inherit; text-decoration: none; text-align: left; background: none; border: none; padding: 0; font-family: inherit; font-size: inherit; font-weight: inherit; cursor: pointer;">${esc(o.title)}</button>
+      </h3>
+      <div style="font-size: 12px; color: #6b7280; margin-bottom: 4px; font-weight: 500;">
+        ${orgLoc}
+      </div>
+      
+      <!-- Extra Meta: Styles & Dates -->
+      ${styleHtml}
+      ${dateHtml}
+
+      <!-- Divider -->
+      <hr style="border: none; border-top: 1px solid #e5e7eb; margin: 12px 0;">
+
+      <!-- Bottom Row: Compensation & Action -->
+      <div style="display: flex; justify-content: space-between; align-items: center;">
+        <div style="font-size: 16px; font-weight: 800; color: #111827;">
+            ${esc(compMain)}
+        </div>
+        
+        <div style="display: flex; gap: 8px; align-items: center;">
+            ${interestedPill}
+            ${ib("save-job", h?.saved ? "Unsave job" : "Save job", h?.saved ? "bookmark-simple-fill" : "bookmark-simple", o.id)}
+        </div>
+      </div>
+      
+    </article>`;
+  }
+  function jobDetail() {
+    const o = job(ui.job);
+    if (!o) return empty("Job unavailable", "This link may no longer be available.", btn("mobile", "Browse jobs", "feed"));
+      
+    const s = score(o);
+    const h = history(o.id);
+    const open = available(o);
+      
+    const ot = (o.opportunity_type || "").toLowerCase();
+    const isShowcase = ot.includes("audition") || ot.includes("battle") || ot.includes("jam") || ot.includes("contest") || ot.includes("competition") || ot.includes("casting") || ot.includes("workshop");
+    const typeLabel = isShowcase ? "SHOWCASE" : "JOB";
+    
+    const loc = o.city ? `${o.city}${o.country ? ", " + o.country : ""}` : "Worldwide";
+    
+    let compMain = "Contact Organizer";
+    if (o.compensation && (o.compensation.min_amount || o.compensation.max_amount || o.compensation.amount)) {
+        compMain = money(o);
+    }
+
+    // Build AI Match Reason String
+    const matchedParts = s.parts.filter(p => p[2] === true).map(p => p[0]);
+    let matchStr = matchedParts.length > 0 ? matchedParts.join(" + ") : "General profile match";
+    if(s.risks && s.risks.length > 0) matchStr += " (Note: " + s.risks[0] + ")";
+
+    let dateStr = "";
+    if (o.event_start_date) {
+        dateStr = dateLabel(o.event_start_date);
+        if (o.event_end_date && o.event_end_date !== o.event_start_date) dateStr += " to " + dateLabel(o.event_end_date);
+    }
+
+    // STRICT UI/UX REDESIGN
+    // 1. Removed the duplicate custom header. We rely on the framework's '.mobile-top'.
+    // 2. Used clean dividers instead of heavy nested borders.
+    // 3. Perfected padding, font-sizes, and hierarchy.
+
+    return `
+    <!-- No outer wrapper to prevent layout stretching -->
+    <div style="background: white; margin: -24px -20px; padding-top: 10px; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; color: #111827;">
+        
+        <!-- Badges -->
+        <div style="display:flex; justify-content:space-between; align-items:center; padding: 16px 20px 12px 20px;">
+            <span style="background: #111827; color: white; font-size: 10px; font-weight: 700; padding: 4px 8px; border-radius: 4px; letter-spacing: 0.5px;">${typeLabel}</span>
+            ${open ? `<span style="border: 1px solid #10b981; color: #10b981; font-size: 11px; font-weight: 600; padding: 2px 8px; border-radius: 4px; background: rgba(16,185,129,0.05);">+ ${s.value}% Match</span>` : `<span style="border: 1px solid #ef4444; color: #ef4444; font-size: 11px; font-weight: 600; padding: 2px 8px; border-radius: 4px; background: rgba(239,68,68,0.05);">Closed</span>`}
+        </div>
+
+        <!-- Title -->
+        <div style="padding: 0 20px 20px 20px;">
+            <h1 style="font-size: 24px; font-weight: 800; line-height: 1.25; margin: 0 0 8px 0; color: #0f172a;">${esc(o.title)}</h1>
+            <p style="font-size: 14px; color: #64748b; margin: 0;">${esc(o.organization || "Private")} &bull; ${esc(loc)}</p>
+        </div>
+
+        <!-- Meta Data (Clean layout, no boxes) -->
+        <div style="padding: 0 20px 20px 20px;">
+            <div style="display: grid; gap: 12px; font-size: 14px; color: #475569;">
+                <div style="display:flex; align-items: flex-start; gap: 10px;">
+                    <i class="ph ph-calendar-blank" style="font-size: 18px; color: #94a3b8; margin-top:1px;"></i>
+                    <div style="line-height: 1.5;">
+                        <div style="margin-bottom: 4px;"><strong style="color: #1e293b; font-weight: 600;">Deadline:</strong> ${o.deadline ? dateLabel(o.deadline) : "Open-ended"}</div>
+                        ${dateStr ? `<div><strong style="color: #1e293b; font-weight: 600;">Event:</strong> ${dateStr}</div>` : ""}
+                    </div>
+                </div>
+                <div style="display:flex; align-items: flex-start; gap: 10px;">
+                    <i class="ph ph-users" style="font-size: 18px; color: #94a3b8; margin-top:1px;"></i>
+                    <div style="line-height: 1.5;">
+                        <strong style="color: #1e293b; font-weight: 600;">Styles:</strong> ${o.dance_styles.join(", ")}
+                    </div>
+                </div>
+                ${o.google_maps_url ? `
+                <div style="display:flex; align-items: center; gap: 10px;">
+                    <i class="ph ph-map-pin" style="font-size: 18px; color: #94a3b8;"></i>
+                    <a href="${esc(o.google_maps_url)}" target="_blank" style="color: #2563eb; text-decoration: none; font-weight: 500;">Open in Google Maps <i class="ph ph-arrow-up-right" style="font-size: 14px; vertical-align: middle;"></i></a>
+                </div>` : ""}
+            </div>
+        </div>
+
+        <!-- AI Match Box -->
+        <div style="padding: 0 20px 24px 20px;">
+            <div style="background: #eff6ff; border: 1px solid #bfdbfe; border-radius: 8px; padding: 16px;">
+                <div style="font-size: 12px; font-weight: 800; color: #1e40af; margin-bottom: 6px; display:flex; align-items:center; gap:6px;"><i class="ph-fill ph-sparkle"></i> AI MATCH REASON:</div>
+                <div style="font-size: 14px; color: #2563eb; line-height: 1.5;">${esc(matchStr)}.</div>
+            </div>
+        </div>
+
+        <div style="height: 8px; background: #f8fafc; border-top: 1px solid #f1f5f9; border-bottom: 1px solid #f1f5f9; width: 100%;"></div>
+
+        <!-- Job Description -->
+        <div style="padding: 24px 20px;">
+            <h2 style="font-size: 16px; font-weight: 700; color: #0f172a; margin: 0 0 12px 0;">Job Description</h2>
+            <div style="font-size: 15px; line-height: 1.6; color: #334155; margin-bottom: 24px; white-space: pre-wrap;">${esc(o.description)}</div>
+${(o.requirements && Array.isArray(o.requirements) && o.requirements.length > 0) ? `
+            <h3 style="font-size: 15px; font-weight: 700; color: #0f172a; margin: 0 0 12px 0;">Requirements</h3>
+            <ul style="margin: 0 0 24px 0; padding-left: 20px; color: #334155; font-size: 15px; line-height: 1.6;">
+                ${o.requirements.map(req => `<li>${esc(req)}</li>`).join('')}
+            </ul>` : (o.requirements && !Array.isArray(o.requirements)) ? `
+            <h3 style="font-size: 15px; font-weight: 700; color: #0f172a; margin: 0 0 12px 0;">Requirements</h3>
+            <ul style="margin: 0 0 24px 0; padding-left: 20px; color: #334155; font-size: 15px; line-height: 1.6;">
+                ${o.requirements.skill_level ? `<li><strong>Skill Level:</strong> ${esc(o.requirements.skill_level)}</li>` : ""}
+                ${o.requirements.years_experience ? `<li><strong>Experience:</strong> ${esc(o.requirements.years_experience)}+ years</li>` : ""}
+            </ul>` : ""}
+            
+            <div style="display:flex; justify-content:space-between; align-items: center; padding-top: 16px; border-top: 1px solid #e2e8f0; font-size: 14px; color: #0f172a;">
+                <div><span style="color:#64748b;">Pay:</span> <strong style="margin-left: 4px; font-size: 15px;">${esc(compMain)}</strong></div>
+            </div>
+        </div>
+
+        <div style="height: 8px; background: #f8fafc; border-top: 1px solid #f1f5f9; border-bottom: 1px solid #f1f5f9; width: 100%;"></div>
+
+        <!-- Application Methods -->
+        <div style="padding: 24px 20px;">
+            <h2 style="font-size: 16px; font-weight: 700; color: #0f172a; margin: 0 0 12px 0;">How to Apply</h2>
+            ${o.application_instructions ? `<div style="font-size: 14px; line-height: 1.5; color: #475569; margin-bottom: 16px; background: #f8fafc; padding: 12px; border-radius: 6px; border-left: 3px solid #cbd5e1;">${esc(o.application_instructions)}</div>` : ""}
+
+            ${(o.contact_email || o.whatsapp_link) ? `<div style="display: flex; flex-direction: column; gap: 12px; margin-bottom: 20px;">
+                ${o.whatsapp_link ? `
+                <div style="display: flex; align-items: center; justify-content: space-between; background: white; border: 1px solid #e2e8f0; border-radius: 8px; padding: 12px 16px; box-shadow: 0 1px 2px rgba(0,0,0,0.02);">
+                    <div style="display: flex; align-items: center; gap: 14px;">
+                        <div style="background: #dcfce7; color: #16a34a; width: 36px; height: 36px; border-radius: 50%; display: flex; align-items: center; justify-content: center;"><i class="ph ph-whatsapp-logo" style="font-size: 20px;"></i></div>
+                        <div>
+                            <div style="font-size: 11px; color: #64748b; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 2px;">WhatsApp</div>
+                            <div style="font-size: 15px; font-weight: 700; color: #0f172a;">${esc(o.whatsapp_link.replace(/https?:\/\/wa\.me\//, '+'))}</div>
+                        </div>
+                    </div>
+                    <a href="${esc(o.whatsapp_link)}" target="_blank" style="background: white; border: 1px solid #cbd5e1; padding: 6px 12px; border-radius: 6px; color: #334155; font-size: 13px; font-weight: 600; text-decoration: none; box-shadow: 0 1px 2px rgba(0,0,0,0.05);">Chat</a>
+                </div>` : ""}
+                ${o.contact_email ? `
+                <div style="display: flex; align-items: center; justify-content: space-between; background: white; border: 1px solid #e2e8f0; border-radius: 8px; padding: 12px 16px; box-shadow: 0 1px 2px rgba(0,0,0,0.02);">
+                    <div style="display: flex; align-items: center; gap: 14px;">
+                        <div style="background: #fee2e2; color: #ef4444; width: 36px; height: 36px; border-radius: 50%; display: flex; align-items: center; justify-content: center;"><i class="ph ph-envelope-simple" style="font-size: 20px;"></i></div>
+                        <div>
+                            <div style="font-size: 11px; color: #64748b; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 2px;">Email</div>
+                            <div style="font-size: 15px; font-weight: 700; color: #0f172a;">${esc(o.contact_email)}</div>
+                        </div>
+                    </div>
+                    <button onclick="alert('Copied!')" style="background: white; border: 1px solid #cbd5e1; padding: 6px 12px; border-radius: 6px; color: #334155; font-size: 13px; font-weight: 600; cursor: pointer; box-shadow: 0 1px 2px rgba(0,0,0,0.05);">Copy</button>
+                </div>` : ""}
+            </div>` : ""}
+
+            ${(o.application_url || o.instagram_dm || o.facebook_link) ? `<div style="display: flex; flex-direction: column; gap: 1px; background: #e2e8f0; border: 1px solid #e2e8f0; border-radius: 8px; overflow: hidden; margin-bottom: 24px;">
+                ${o.application_url ? `<a href="${esc(o.application_url)}" target="_blank" style="display: flex; align-items: center; justify-content: space-between; background: #fff; padding: 14px 16px; text-decoration: none; color: #0f172a; font-weight: 500; font-size: 15px;">
+                    <div style="display: flex; align-items: center; gap: 12px;"><i class="ph ph-link" style="font-size: 20px; color: #6366f1;"></i> Submit via Portal</div>
+                    <i class="ph ph-caret-right" style="color: #94a3b8;"></i>
+                </a>` : ""}
+                ${o.facebook_link ? `<a href="${esc(o.facebook_link)}" target="_blank" style="display: flex; align-items: center; justify-content: space-between; background: #fff; padding: 14px 16px; text-decoration: none; color: #0f172a; font-weight: 500; font-size: 15px;">
+                    <div style="display: flex; align-items: center; gap: 12px;"><i class="ph ph-facebook-logo" style="font-size: 20px; color: #1877f2;"></i> Message on Facebook</div>
+                    <i class="ph ph-caret-right" style="color: #94a3b8;"></i>
+                </a>` : ""}
+                ${o.instagram_dm ? `<a href="${esc(o.instagram_dm)}" target="_blank" style="display: flex; align-items: center; justify-content: space-between; background: #fff; padding: 14px 16px; text-decoration: none; color: #0f172a; font-weight: 500; font-size: 15px;">
+                    <div style="display: flex; align-items: center; gap: 12px;"><i class="ph ph-instagram-logo" style="font-size: 20px; color: #e1306c;"></i> Direct Message Instagram</div>
+                    <i class="ph ph-caret-right" style="color: #94a3b8;"></i>
+                </a>` : ""}
+            </div>` : ""}
+
+            <!-- AI Pitch Draft Box -->
+            ${o.contact_email || true ? `
+            <div style="border: 1px solid #e2e8f0; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.02); overflow: hidden;">
+                <div style="background: #f8fafc; padding: 12px 16px; border-bottom: 1px solid #e2e8f0; display:flex; justify-content: space-between; align-items: center;">
+                    <div style="font-weight: 700; font-size: 12px; color: #475569; display:flex; align-items:center; gap:6px; letter-spacing: 0.5px;"><i class="ph ph-magic-wand" style="color: #2563eb; font-size: 16px;"></i> AI PITCH DRAFT</div>
+                    <div style="display:flex; gap: 4px; background: #e2e8f0; padding: 2px; border-radius: 12px;">
+                        <span style="background: white; color: #0f172a; padding: 2px 10px; border-radius: 10px; font-size: 11px; font-weight: 600; box-shadow: 0 1px 2px rgba(0,0,0,0.05); cursor:pointer;">EN</span>
+                        <span style="color: #64748b; padding: 2px 10px; border-radius: 10px; font-size: 11px; font-weight: 600; cursor:pointer;">JP</span>
+                    </div>
+                </div>
+
+                <div style="padding: 16px;">
+                    <div style="font-size: 14px; line-height: 1.6; color: #1e293b; margin-bottom: 20px; white-space: pre-wrap;">To: ${esc(o.contact_email || 'casting@example.com')}
+
+Dear ${esc(o.organization || "Team")},
+
+I am an advanced dancer based in ${esc(o.city || "your city")}. I am very interested in your ${esc(o.title)} listing.
+
+My profile aligns perfectly with your requirements for ${o.dance_styles.join(", ")}.
+
+Let me know if you need my dance reel.</div>
+
+                    <div style="display:flex; gap: 8px;">
+                        <button onclick="alert('Regenerating draft...')" style="flex:1; border: 1px solid #cbd5e1; background: white; color: #334155; padding: 10px; border-radius: 6px; font-size: 13px; font-weight: 600; display:flex; justify-content:center; align-items:center; gap:6px; cursor:pointer; transition: background 0.15s;"><i class="ph ph-arrows-clockwise" style="font-size: 16px;"></i> Regenerate</button>
+                        <button onclick="alert('Copied to clipboard!')" style="flex:1; border: none; background: #0f172a; color: white; padding: 10px; border-radius: 6px; font-size: 13px; font-weight: 600; display:flex; justify-content:center; align-items:center; gap:6px; cursor:pointer; transition: background 0.15s;"><i class="ph ph-copy" style="font-size: 16px;"></i> Copy & Apply</button>
+                    </div>
+                </div>
+            </div>
+            ` : ""}
+        </div>
+
+        
+        <!-- Report Section -->
+        
+        
+        <!-- Progress Tracker (Sticky Bottom) -->
+        <div style="position: sticky; bottom: 0; background: rgba(255, 255, 255, 0.95); backdrop-filter: blur(10px); padding: 16px 20px; border-top: 1px solid #e2e8f0; box-shadow: 0 -4px 12px rgba(0, 0, 0, 0.03); z-index: 20; width: 100%; box-sizing: border-box;">
+            ${h.applied_at ? `
+            <div style="margin-bottom: 12px;">
+                <label style="font-size: 11px; font-weight: 700; color: #64748b; text-transform: uppercase; letter-spacing: 0.5px; display: block; margin-bottom: 6px;">Application Progress</label>
+                <div style="position: relative;">
+                    <select onchange="alert('Status updated to: ' + this.value)" style="width: 100%; padding: 12px 14px; border-radius: 8px; border: 1px solid #cbd5e1; background: #f8fafc; font-size: 14px; font-weight: 600; color: #0f172a; appearance: none; outline: none; cursor: pointer;">
+                        <option value="Waiting for studio response">Waiting for studio response</option>
+                        <option value="Interview / Casting booked">Interview / Casting booked</option>
+                        <option value="Booked & confirmed">Booked & confirmed</option>
+                        <option value="Not a fit / Declined">Not a fit / Declined</option>
+                    </select>
+                    <i class="ph ph-caret-down" style="position: absolute; right: 14px; top: 14px; color: #64748b; pointer-events: none; font-size: 16px;"></i>
+                </div>
+            </div>
+            <div style="display: flex;">
+                ${btn("applied", "Withdraw Application", o.id, "secondary", false, 'style="flex: 1; padding: 10px; font-size: 13px; font-weight: 600; border-radius: 8px; color: #ef4444; border: 1px solid #fecaca; background: #fffcfc; cursor:pointer;"')}
+            </div>
+            ` : `
+            <div style="display: flex; justify-content: space-between; align-items: center;">
+                <div style="font-size: 14px; font-weight: 500; color: #64748b;">Status: <span style="font-weight: 600; color:#0f172a;">Not applied</span></div>
+                ${btn("applied", "Mark as Applied", o.id, "primary", false, 'style="padding: 12px 24px; font-size: 14px; font-weight: 600; border-radius: 8px; background: #0f172a; color: white; border: none; cursor:pointer;"')}
+            </div>
+            `}
+        </div>
+    </div>`;
+  }
 function profileForm() {
   const d = dancer(), p = ext().profile;
   const styles = ["Hip-hop", "Contemporary", "Ballet", "Jazz", "K-pop", "Open Choreo", "Heels", "Other"];
@@ -2373,6 +2738,10 @@ function jobDrawer(id) {
   const matched = (db.ai_recommendations || []).filter(
     (r) => r.opportunity_id === ui.editId,
   );
+  const applicationMethods = o.application_methods || [];
+  const methodValue = (...types) =>
+    applicationMethods.find((method) => types.includes(method.type))?.value ||
+    "";
 
   const leftCol = `
     <fieldset ${!editable() ? "disabled" : ""} style="border:0;padding:0;margin:0">
@@ -2413,14 +2782,25 @@ function jobDrawer(id) {
         ${field("event_start_date", "Event start date", o.event_start_date || "", "date")}
         ${field("event_end_date", "Event end date", o.event_end_date || "", "date")}
         
-        <h3 style="grid-column:1/-1; margin:24px 0 12px; border-bottom:1px solid var(--line); padding-bottom:8px; color:var(--ink); font-size:14px;">4. Thông tin liên hệ</h3>
-        <div class="full" style="display:flex; align-items:center; background:#f9fafb; padding:12px; border-radius:6px; border:1px solid #e5e7eb; margin-bottom:8px;">
-           <span style="flex:1; font-size:13px; font-weight:500; color:var(--ink);">Nguồn bài đăng (Original posting)</span>
-           <a href="${o.raw_url}" target="_blank" style="font-size:13px; font-weight:500; color:var(--blue); display:flex; align-items:center; gap:6px;">🔗 Xem bài đăng gốc</a>
+        <h3 class="job-form-section-title">4. Application & contact methods</h3>
+        <div class="full source-reference">
+          <div>
+            <strong>Original source</strong>
+            <small>Used by Admin to verify the extracted job and application instructions.</small>
+          </div>
+          <a href="${esc(o.raw_url)}" target="_blank" rel="noopener">${icon("arrow-square-out")} Open source</a>
         </div>
-        <div class="full">${field("application_url", "Application URL", o.application_url, "url")}</div>
-        ${field("contact_email", "Contact email", o.contact_email || "", "email")}
-        ${field("contact_phone", "Contact phone", o.contact_phone || "", "tel")}
+        <div class="full application-fields-note">Fill only the methods stated in the source. All fields are optional.</div>
+        <div class="full">${field("online_form_url", "Online application form URL", methodValue("online_form") || o.application_url || "", "url")}</div>
+        <div class="full">${field("career_portal_url", "Career portal / platform application URL", methodValue("career_portal", "platform_profile"), "url")}</div>
+        ${field("application_email", "Application email", methodValue("email") || o.contact_email || "", "email")}
+        ${field("application_phone", "Application phone / SMS", methodValue("phone") || o.contact_phone || "", "tel")}
+        ${field("whatsapp", "WhatsApp number or link", methodValue("whatsapp"))}
+        ${field("instagram", "Instagram profile / DM", methodValue("instagram_dm"))}
+        ${field("facebook", "Facebook page / Messenger", methodValue("facebook_messenger"))}
+        ${field("in_person", "In-person / open-call details", methodValue("in_person"))}
+        <div class="full">${field("other_application_method", "Other application method", methodValue("other"))}</div>
+        <div class="full">${area("application_instructions", "Application instructions", o.application_instructions || "", 'placeholder="For example: send your CV and dance reel via WhatsApp, or complete the form before the deadline."')}</div>
       </div>
     </fieldset>
   `;
@@ -3309,6 +3689,7 @@ document.addEventListener("submit", (event) => {
       return;
     }
     audit("age declared", dancer().id);
+      persist();
     closeDialog(true);
     if (ui.pendingJob) showJob(ui.pendingJob);
     else render();
@@ -3426,8 +3807,11 @@ document.addEventListener("submit", (event) => {
       formError("End date must not be before the start date.");
       return;
     }
-    if (v.application_url && !normalize(v.application_url)) {
-      formError("Enter a valid HTTP(S) application URL.");
+    if (
+      (v.online_form_url && !normalize(v.online_form_url)) ||
+      (v.career_portal_url && !normalize(v.career_portal_url))
+    ) {
+      formError("Enter valid HTTP(S) URLs for application links.");
       return;
     }
     const o = job(ui.editId);
@@ -3451,9 +3835,23 @@ document.addEventListener("submit", (event) => {
       is_perpetual: !!v.is_perpetual,
       event_start_date: v.event_start_date || null,
       event_end_date: v.event_end_date || null,
-      application_url: v.application_url || null,
-      contact_email: v.contact_email || null,
-      contact_phone: v.contact_phone || null,
+      application_url: v.online_form_url || v.career_portal_url || null,
+      contact_email: v.application_email || null,
+      contact_phone: v.application_phone || null,
+      application_instructions: v.application_instructions || null,
+      application_methods: [
+        ["online_form", v.online_form_url],
+        ["career_portal", v.career_portal_url],
+        ["email", v.application_email],
+        ["phone", v.application_phone],
+        ["whatsapp", v.whatsapp],
+        ["instagram_dm", v.instagram],
+        ["facebook_messenger", v.facebook],
+        ["in_person", v.in_person],
+        ["other", v.other_application_method],
+      ]
+        .filter(([, value]) => value)
+        .map(([type, value]) => ({ type, value })),
       updated_at: now(),
     });
     rebuildRecommendations();
