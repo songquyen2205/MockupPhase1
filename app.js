@@ -1,10 +1,10 @@
 "use strict";
-const STORE = "hammer.phase1.review.v26";
+const STORE = "hammer.phase1.review.v27";
 let db;
 try {
   db = JSON.parse(localStorage.getItem(STORE));
 } catch {}
-if (!db || db.version !== 26) db = HammerSeed();
+if (!db || db.version !== 27) db = HammerSeed();
 
 // Auto-migrate old statuses
 const statusMap = {
@@ -2280,7 +2280,7 @@ function jobCard(o, inHub = false) {
         <!-- Badges -->
         <div style="display:flex; justify-content:space-between; align-items:center; padding: 16px 20px 12px 20px;">
             <span style="background: #111827; color: white; font-size: 10px; font-weight: 700; padding: 4px 8px; border-radius: 4px; letter-spacing: 0.5px;">${typeLabel}</span>
-            ${open ? `<span ${s.est ? `onclick="alert('${s.est_reason.replace(/'/g, "\\'")}')" style="cursor: pointer; border: 1px solid #10b981; color: #10b981; font-size: 11px; font-weight: 600; padding: 2px 8px; border-radius: 4px; background: rgba(16,185,129,0.05);"` : `style="border: 1px solid #10b981; color: #10b981; font-size: 11px; font-weight: 600; padding: 2px 8px; border-radius: 4px; background: rgba(16,185,129,0.05);"`}>+ ${s.value}%${s.est ? ' * est' : ' Match'}</span>` : `<span style="border: 1px solid #ef4444; color: #ef4444; font-size: 11px; font-weight: 600; padding: 2px 8px; border-radius: 4px; background: rgba(239,68,68,0.05);">Closed</span>`}
+            ${open ? `<span ${s.est ? `onclick="toast('${s.est_reason.replace(/'/g, "\\'")}')" style="cursor: pointer; border: 1px solid #10b981; color: #10b981; font-size: 11px; font-weight: 600; padding: 2px 8px; border-radius: 4px; background: rgba(16,185,129,0.05);"` : `style="border: 1px solid #10b981; color: #10b981; font-size: 11px; font-weight: 600; padding: 2px 8px; border-radius: 4px; background: rgba(16,185,129,0.05);"`}>+ ${s.value}%${s.est ? ' * est' : ' Match'}</span>` : `<span style="border: 1px solid #ef4444; color: #ef4444; font-size: 11px; font-weight: 600; padding: 2px 8px; border-radius: 4px; background: rgba(239,68,68,0.05);">Closed</span>`}
         </div>
 
         <!-- Title -->
@@ -2371,7 +2371,7 @@ ${(o.requirements && Array.isArray(o.requirements) && o.requirements.length > 0)
                             <div style="font-size: 15px; font-weight: 700; color: #0f172a;">${esc(o.contact_email)}</div>
                         </div>
                     </div>
-                    <button onclick="alert('Copied!')" style="background: white; border: 1px solid #cbd5e1; padding: 6px 12px; border-radius: 6px; color: #334155; font-size: 13px; font-weight: 600; cursor: pointer; box-shadow: 0 1px 2px rgba(0,0,0,0.05);">Copy</button>
+                    <button onclick="toast('Copied!')" style="background: white; border: 1px solid #cbd5e1; padding: 6px 12px; border-radius: 6px; color: #334155; font-size: 13px; font-weight: 600; cursor: pointer; box-shadow: 0 1px 2px rgba(0,0,0,0.05);">Copy</button>
                 </div>` : ""}
             </div>` : ""}
 
@@ -2400,7 +2400,7 @@ ${(o.requirements && Array.isArray(o.requirements) && o.requirements.length > 0)
                             <span style="background: white; color: #0f172a; padding: 2px 10px; border-radius: 10px; font-size: 11px; font-weight: 600; box-shadow: 0 1px 2px rgba(0,0,0,0.05); cursor:pointer;">EN</span>
                             <span style="color: #64748b; padding: 2px 10px; border-radius: 10px; font-size: 11px; font-weight: 600; cursor:pointer;">JP</span>
                         </div>
-                        <button onclick="alert('Regenerating draft...')" style="background: white; border: 1px solid #cbd5e1; color: #475569; padding: 4px; border-radius: 6px; display: flex; align-items: center; justify-content: center; cursor: pointer; transition: all 0.15s; box-shadow: 0 1px 2px rgba(0,0,0,0.02);" title="Regenerate draft">
+                        <button onclick="toast('Regenerating draft...')" style="background: white; border: 1px solid #cbd5e1; color: #475569; padding: 4px; border-radius: 6px; display: flex; align-items: center; justify-content: center; cursor: pointer; transition: all 0.15s; box-shadow: 0 1px 2px rgba(0,0,0,0.02);" title="Regenerate draft">
                             <i class="ph ph-arrows-clockwise" style="font-size: 16px;"></i>
                         </button>
                     </div>
@@ -2418,7 +2418,7 @@ My profile aligns perfectly with your requirements for ${(Array.isArray(o.dance_
 Let me know if you need my dance reel.</div>
 
                     <div style="display:flex;">
-                        <button onclick="alert('Copied to clipboard!')" style="flex:1; border: none; background: #0f172a; color: white; padding: 12px; border-radius: 8px; font-size: 14px; font-weight: 600; display:flex; justify-content:center; align-items:center; gap:8px; cursor:pointer; box-shadow: 0 2px 4px rgba(0,0,0,0.1);"><i class="ph ph-copy" style="font-size: 18px;"></i> Copy & Apply</button>
+                        <button onclick="toast('Copied to clipboard!')" style="flex:1; border: none; background: #0f172a; color: white; padding: 12px; border-radius: 8px; font-size: 14px; font-weight: 600; display:flex; justify-content:center; align-items:center; gap:8px; cursor:pointer; box-shadow: 0 2px 4px rgba(0,0,0,0.1);"><i class="ph ph-copy" style="font-size: 18px;"></i> Copy & Apply</button>
                     </div>
                 </div>
             </div>
