@@ -1,10 +1,10 @@
 "use strict";
-const STORE = "hammer.phase1.review.v19";
+const STORE = "hammer.phase1.review.v20";
 let db;
 try {
   db = JSON.parse(localStorage.getItem(STORE));
 } catch {}
-if (!db || db.version !== 19) db = HammerSeed();
+if (!db || db.version !== 20) db = HammerSeed();
 
 // Auto-migrate old statuses
 const statusMap = {
@@ -948,6 +948,7 @@ function score(o) {
     points = parts.reduce((n, p) => n + (p[2] ? p[1] : 0), 0);
   return {
     value: Math.round((points / weight) * 100),
+    est: weight < 60,
     parts,
     risks: comparable
       ? []
@@ -1028,7 +1029,7 @@ function renderCMS() {
     ["jobs", "briefcase", "Danh sách Job"],
     ["sources", "globe", "Nguồn dữ liệu"],
     ["queue", "tray", "Hàng đợi duyệt"],
-    ["dancers", "users", "Hồ sơ Dancer"],
+    ["dancers", "users", "Users & Job Activity"],
     ["operations", "chart-bar", "Cấu hình vận hành"],
   ];
   const content = {
@@ -1717,159 +1718,161 @@ function cmsQueue() {
   );
 }
 
-function cmsDancerDetail(id) {
-  try {
-    let d = db.dancers.find(x => x.id === Number(id));
-    if (!d) return empty("Dancer not found", "Could not load dancer profile.");
-    
-    let jobs = db.ai_opportunities.slice(0, 10);
-    
-    let tableHtml = table(
-        ["Job Title", "AI Match Score", "Match Reason", "Dancer Status", "Action"],
-        jobs.map((job, idx) => {
-            let score = 95 - (idx * 3);
-            if (score < 50) return null;
-            
-            let statuses = ["Applied", "Saved", "Ignored", "Interviewing", "Ignored"];
-            let status = statuses[idx % statuses.length];
-            
-            let statusPill = "";
-            if (status === "Applied") statusPill = `<span style="background: #dbeafe; color: #1d4ed8; padding: 4px 8px; border-radius: 4px; font-size: 11px; font-weight: 600;">Applied</span>`;
-            else if (status === "Saved") statusPill = `<span style="background: #fef9c3; color: #a16207; padding: 4px 8px; border-radius: 4px; font-size: 11px; font-weight: 600;">Saved</span>`;
-            else if (status === "Interviewing") statusPill = `<span style="background: #dcfce7; color: #15803d; padding: 4px 8px; border-radius: 4px; font-size: 11px; font-weight: 600;">Interviewing</span>`;
-            else statusPill = `<span style="background: #f1f5f9; color: #475569; padding: 4px 8px; border-radius: 4px; font-size: 11px; font-weight: 600;">Ignored</span>`;
-            
-            let reason = (idx % 2 === 0) ? "Style + Location Match" : "Style + Experience Match";
-            if (status === "Ignored" && score > 90) reason += ` <span style="color: #ef4444; font-weight: 700; font-size: 10px; margin-left: 4px; background: #fee2e2; padding: 2px 4px; border-radius: 4px;">Missed?</span>`;
+function cmsProspects() {
+  return (ext().prospects ||= [
+    { id: "P-001", display_name: "Aiko Mori", email: "aiko.mori@example.com", phone_number: "+81 90 1234 7788", city: "Tokyo", country: "Japan", status: "New", source: "Admin import", dance_styles: "Contemporary, Ballet" },
+    { id: "P-002", display_name: "Nadia Lim", email: "nadia.lim@example.com", phone_number: "+65 8123 3344", city: "Singapore", country: "Singapore", status: "Invited", source: "Event signup", dance_styles: "Hip-Hop, K-pop" },
+  ]);
+}
 
-            return row([
-                `<strong style="color: #0f172a;">${esc(job.title)}</strong><br><span style="font-size: 11px; color: #64748b;">${esc(job.organization)}</span>`,
-                `<strong style="color: #10b981; font-size: 15px;">${score}%</strong>`,
-                `<span style="font-size: 12px; color: #475569;">${reason}</span>`,
-                statusPill,
-                `<button onclick="alert('View Job Action')" style="background: transparent; border: 1px solid #e2e8f0; color: #3b82f6; border-radius: 6px; padding: 4px 8px; cursor: pointer; font-size: 11px; font-weight: 600;">View Job</button>`
-            ]);
-        }).filter(Boolean)
-    );
+function userJobRecords(user, isProspect = false) {
+  const jobs = db.ai_opportunities.filter((job) => !job.is_deleted).slice(0, 8);
+  const activity = ["Applied", "Viewed", "Saved", "Not viewed", "Applied", "Not viewed", "Viewed", "Saved"];
+  return jobs.map((job, index) => ({
+    job,
+    score: Math.max(54, 96 - index * 6 - (Number(user.id) % 4)),
+    matchStatus: index < 6 ? "Matched" : "Not eligible",
+    delivery: isProspect ? (index < 2 ? "Shared manually" : "Not sent") : index < 5 ? "Shown in app" : "Not shown",
+    activity: isProspect ? (index === 0 ? "Interested" : "No response") : activity[index],
+    updated: index < 2 ? "Today" : `${index + 1} days ago`,
+  }));
+}
 
-    return `
-        <div style="margin-bottom: 24px;">
-            <button onclick="ui.cmsDancerId = null; render();" style="background: transparent; border: 1px solid #e2e8f0; border-radius: 6px; padding: 6px 12px; color: #475569; cursor: pointer; font-size: 13px; font-weight: 600; display: inline-flex; align-items: center; gap: 8px;">
-                <i class="ph ph-arrow-left"></i> Back to Talent Pool
-            </button>
-        </div>
-        
-        <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 32px; background: white; padding: 24px; border-radius: 12px; border: 1px solid #e2e8f0; box-shadow: 0 2px 8px rgba(0,0,0,0.02);">
-            <div>
-                <h1 style="margin: 0 0 12px 0; font-size: 24px; font-weight: 800; color: #0f172a;">${esc(d.display_name || d.email)}</h1>
-                <div style="color: #475569; font-size: 14px; display: flex; gap: 20px; align-items: center;">
-                    <span style="display: flex; align-items: center; gap: 6px;"><i class="ph ph-map-pin" style="color: #94a3b8; font-size: 18px;"></i> ${esc(d.city || 'N/A')}</span>
-                    <span style="display: flex; align-items: center; gap: 6px;"><i class="ph ph-envelope-simple" style="color: #94a3b8; font-size: 18px;"></i> ${esc(d.email)}</span>
-                    <span style="display: flex; align-items: center; gap: 6px;"><i class="ph ph-sneaker" style="color: #94a3b8; font-size: 18px;"></i> ${esc((Array.isArray(d.dance_styles) ? d.dance_styles.join(', ') : d.dance_styles) || 'N/A')}</span>
-                </div>
-            </div>
-            <div style="text-align: right; background: #f8fafc; padding: 12px 20px; border-radius: 8px; border: 1px solid #e2e8f0;">
-                <div style="font-size: 11px; font-weight: 700; color: #64748b; margin-bottom: 4px; text-transform: uppercase; letter-spacing: 0.5px;">Profile Health</div>
-                <div style="font-size: 28px; font-weight: 800; color: #10b981;">85%</div>
-                <div style="font-size: 11px; color: #ea580c; margin-top: 4px; font-weight: 600;">Missing: Height, Video Reel</div>
-            </div>
-        </div>
+function userActivityPill(value) {
+  const styles = {
+    Applied: "green",
+    Interested: "green",
+    Saved: "amber",
+    Viewed: "blue",
+    "Not viewed": "",
+    "No response": "",
+  };
+  return pill(value, styles[value] || "");
+}
 
-        <h2 style="font-size: 16px; font-weight: 700; color: #0f172a; margin: 0 0 16px 0;">Job Conversion Funnel</h2>
-        <div style="display: flex; gap: 16px; margin-bottom: 32px;">
-            <div style="flex: 1; background: white; padding: 24px 20px; border-radius: 12px; border: 1px solid #e2e8f0; box-shadow: 0 2px 8px rgba(0,0,0,0.02); text-align: center;">
-                <div style="font-size: 32px; font-weight: 800; color: #3b82f6; margin-bottom: 4px;">142</div>
-                <div style="font-size: 11px; font-weight: 700; color: #64748b; text-transform: uppercase; letter-spacing: 0.5px;">Total Matched</div>
-            </div>
-            <div style="flex: 1; background: white; padding: 24px 20px; border-radius: 12px; border: 1px solid #e2e8f0; box-shadow: 0 2px 8px rgba(0,0,0,0.02); text-align: center;">
-                <div style="font-size: 32px; font-weight: 800; color: #64748b; margin-bottom: 4px;">45</div>
-                <div style="font-size: 11px; font-weight: 700; color: #64748b; text-transform: uppercase; letter-spacing: 0.5px;">Viewed</div>
-            </div>
-            <div style="flex: 1; background: white; padding: 24px 20px; border-radius: 12px; border: 1px solid #e2e8f0; box-shadow: 0 2px 8px rgba(0,0,0,0.02); text-align: center;">
-                <div style="font-size: 32px; font-weight: 800; color: #f59e0b; margin-bottom: 4px;">12</div>
-                <div style="font-size: 11px; font-weight: 700; color: #64748b; text-transform: uppercase; letter-spacing: 0.5px;">Saved</div>
-            </div>
-            <div style="flex: 1; background: white; padding: 24px 20px; border-radius: 12px; border: 1px solid #e2e8f0; box-shadow: 0 2px 8px rgba(0,0,0,0.02); text-align: center;">
-                <div style="font-size: 32px; font-weight: 800; color: #10b981; margin-bottom: 4px;">4</div>
-                <div style="font-size: 11px; font-weight: 700; color: #64748b; text-transform: uppercase; letter-spacing: 0.5px;">Applied</div>
-            </div>
-        </div>
+function cmsDancerDetail(id, kind = "user") {
+  const isProspect = kind === "prospect";
+  const user = isProspect
+    ? cmsProspects().find((item) => item.id === String(id))
+    : db.dancers.find((item) => item.id === Number(id));
+  if (!user) return empty("User not found", "The selected record is unavailable.");
 
-        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
-            <h2 style="font-size: 16px; font-weight: 700; color: #0f172a; margin: 0;">AI Match Analysis & Tracking</h2>
-            <select style="padding: 8px 16px; border: 1px solid #cbd5e1; border-radius: 6px; font-size: 13px; font-weight: 500; color: #334155; background: white;">
-                <option>All Matched Jobs</option>
-                <option>Highly Matched (>90%) but Ignored</option>
-                <option>Applied Jobs Only</option>
-            </select>
-        </div>
-        
-        <div style="background: white; border-radius: 12px; border: 1px solid #e2e8f0; box-shadow: 0 2px 8px rgba(0,0,0,0.02); overflow: hidden;">
-            ${tableHtml}
-        </div>
-    `;
-  } catch (err) {
-    return `<div style="color: red; padding: 20px; background: #fee2e2; border: 1px solid #ef4444; border-radius: 8px;"><h3>Error in cmsDancerDetail</h3><pre>${err.stack}</pre></div>`;
-  }
+  const records = userJobRecords(user, isProspect);
+  const applied = records.filter((item) => ["Applied", "Interested"].includes(item.activity)).length;
+  const viewed = records.filter((item) => ["Viewed", "Saved", "Applied", "Interested"].includes(item.activity)).length;
+  const tab = ui.cmsUserTab || "jobs";
+  const name = user.display_name || user.email?.split("@")[0] || `User ${user.id}`;
+  const accountStatus = isProspect ? user.status : user.isActive === false ? "Suspended" : "Active";
+
+  const profilePanel = `<div class="user-profile-grid">
+    ${kv([
+      ["Name", name],
+      ["User ID", isProspect ? "Not registered" : `#${user.id}`],
+      ["Email", user.email || "Not provided"],
+      ["Phone number", user.phone_number || "Not provided"],
+      ["Status", accountStatus],
+      ["Location", [user.city, user.country].filter(Boolean).join(", ") || "Not provided"],
+      ["Dance styles", Array.isArray(user.dance_styles) ? user.dance_styles.join(", ") : user.dance_styles],
+      [isProspect ? "Lead source" : "Skill level", isProspect ? user.source : user.skill_level],
+    ])}
+  </div>`;
+
+  const jobsPanel = `
+    <div class="user-job-summary">
+      <div><strong>${records.filter((item) => item.matchStatus === "Matched").length}</strong><span>Matched jobs</span></div>
+      <div><strong>${viewed}</strong><span>${isProspect ? "Contacted" : "Viewed or saved"}</span></div>
+      <div><strong>${applied}</strong><span>${isProspect ? "Interested" : "Applied"}</span></div>
+      <div><strong>${records.filter((item) => item.delivery.includes("Not")).length}</strong><span>Not delivered</span></div>
+    </div>
+    <div class="section-heading user-job-heading">
+      <div><h3>Job Activity</h3><small>One record for each relationship between this ${isProspect ? "prospect" : "user"} and a CMS job.</small></div>
+      <select aria-label="Filter job activity"><option>All job activity</option><option>Matched only</option><option>Applied / interested</option><option>Not delivered</option></select>
+    </div>
+    ${table(
+      ["Job", "CMS status", "Match", "Delivery", isProspect ? "Prospect response" : "User activity", "Last update", "Action"],
+      records.map(({ job, score, matchStatus, delivery, activity, updated }) =>
+        row([
+          `<strong>#${job.id} · ${esc(job.title)}</strong><small>${esc(job.organization || "Organization not provided")}</small>`,
+          pill(statuses.find((status) => status[0] === job.status)?.[1] || job.status, job.status === "published" ? "green" : job.status === "closed" ? "red" : "amber"),
+          matchStatus === "Matched" ? `<strong class="match-score">${score}%</strong><small>Style, location and experience</small>` : pill(matchStatus),
+          `<span>${esc(delivery)}</span>`,
+          userActivityPill(activity),
+          esc(updated),
+          ib("job-drawer", "View job", "arrow-square-out", job.id),
+        ]),
+      ),
+    )}`;
+
+  return `
+    <div class="user-detail-topline">
+      ${btn("user-list", icon("arrow-left") + "Back to users")}
+      <div class="actions">${isProspect ? btn("link-prospect", "Link to existing user", user.id) + btn("invite-prospect", "Send invitation", user.id, "primary") : ib("edit-user", "Edit user", "pencil-simple", user.id)}</div>
+    </div>
+    <div class="user-detail-header">
+      <div class="user-avatar">${esc(name.slice(0, 1).toUpperCase())}</div>
+      <div class="user-heading"><div class="actions"><h1>${esc(name)}</h1>${pill(isProspect ? "Prospect" : "Existing user", isProspect ? "amber" : "green")}</div><p>${esc(user.email || user.phone_number || "No contact information")}</p></div>
+      <div class="user-state"><span>Account status</span><strong>${esc(accountStatus)}</strong><small>${isProspect ? "No Hammer account linked" : "Registered Hammer user"}</small></div>
+    </div>
+    <div class="user-detail-tabs">
+      <button class="${tab === "profile" ? "active" : ""}" onclick="ui.cmsUserTab='profile';render();">Profile Details</button>
+      <button class="${tab === "jobs" ? "active" : ""}" onclick="ui.cmsUserTab='jobs';render();">Job Activity <span>${records.length}</span></button>
+    </div>
+    <div class="user-detail-panel">${tab === "profile" ? profilePanel : jobsPanel}</div>`;
 }
 
 function cmsDancers() {
-  try {
-    if (ui.cmsDancerId) {
-      return cmsDancerDetail(ui.cmsDancerId);
-    }
-
-    return (
-      heading(
-        "TALENT MANAGEMENT",
-        "Dancer Talent Pool",
-        "Monitor dancer engagement, profile health, and AI match performance.",
-      ) +
-      searchBar() +
-      `<div style="background: white; border-radius: 12px; border: 1px solid #e2e8f0; box-shadow: 0 2px 8px rgba(0,0,0,0.02); overflow: hidden;">` +
-      table(
-        [
-          "Dancer",
-          "Profile Health",
-          "Location",
-          "Styles",
-          "AI Matched",
-          "Applied",
-          "Action",
-        ],
-        db.dancers.filter(matches).map((d) => {
-          let appliedCount = 0;
-          try {
-             if (d.id === dancer().id) {
-                let h = ext().history;
-                if (h) {
-                    appliedCount = Object.values(h).filter(x => x && x.applied_at).length;
-                }
-             } else {
-                appliedCount = ((d.id * 7) % 15);
-             }
-          } catch(e) {
-             appliedCount = 0;
-          }
-
-          let matchedCount = (d.id % 40) + 20;
-          let profileHealth = (d.id % 40) + 60; // 60-100%
-
+  if (ui.cmsDancerId) return cmsDancerDetail(ui.cmsDancerId, ui.cmsUserKind || "user");
+  const view = ui.cmsUsersView || "users";
+  const prospects = cmsProspects();
+  const users = db.dancers.filter(matches);
+  const listTable = view === "users"
+    ? table(
+        ["ID", "Name", "User name", "Email", "Phone number", "Status", "Matched jobs", "Applied", "Action"],
+        users.map((user) => {
+          const records = userJobRecords(user);
           return row([
-            `<div style="font-weight: 700; color: #0f172a; font-size: 14px;">${esc(d.display_name || 'Dancer ' + d.id)}</div><div style="font-size: 12px; color: #64748b; margin-top: 2px;">${esc(d.email)}</div>`,
-            `<div style="display:flex; align-items:center; gap:10px;"><div style="flex: 1; min-width: 60px; height: 6px; background: #f1f5f9; border-radius: 3px; overflow: hidden;"><div style="width: ${profileHealth}%; height: 100%; background: ${profileHealth < 75 ? '#f59e0b' : '#10b981'};"></div></div><span style="font-size: 12px; font-weight: 700; color: #334155;">${profileHealth}%</span></div>`,
-            esc(d.city ? d.city + (d.country ? ", " + d.country : "") : "N/A"),
-            `<span style="font-size: 12px; color: #475569; background: #f1f5f9; padding: 2px 8px; border-radius: 4px;">${esc((Array.isArray(d.dance_styles) ? d.dance_styles.join(', ') : d.dance_styles) || 'N/A')}</span>`,
-            `<span style="background: #eff6ff; color: #2563eb; padding: 4px 10px; border-radius: 12px; font-weight: 800; font-size: 13px;">${matchedCount}</span>`,
-            `<span style="background: #f0fdf4; color: #16a34a; padding: 4px 10px; border-radius: 12px; font-weight: 800; font-size: 13px;">${appliedCount}</span>`,
-            `<button onclick="ui.cmsDancerId = ${d.id}; render();" style="border: 1px solid #cbd5e1; background: white; color: #334155; padding: 6px 14px; border-radius: 6px; cursor: pointer; font-size: 12px; font-weight: 600; box-shadow: 0 1px 2px rgba(0,0,0,0.02);">View Profile</button>`
+            `#${user.id}`,
+            `<strong>${esc(user.display_name || user.email?.split("@")[0] || "Not provided")}</strong>`,
+            esc(`dancer_${user.id}`),
+            esc(user.email || "—"),
+            esc(user.phone_number || "—"),
+            pill(user.isActive === false ? "Suspended" : "Active", user.isActive === false ? "red" : "green"),
+            `<strong>${records.filter((item) => item.matchStatus === "Matched").length}</strong>`,
+            `<strong>${records.filter((item) => item.activity === "Applied").length}</strong>`,
+            `<div class="actions">${ib("view-user-jobs", "View user and jobs", "eye", `${user.id}|user`)}${ib("edit-user", "Edit user", "pencil-simple", user.id)}</div>`,
           ]);
         }),
-      ) + `</div>`
-    );
-  } catch (err) {
-    return `<div style="color: red; padding: 20px; background: #fee2e2; border: 1px solid #ef4444; border-radius: 8px;"><h3>Error in cmsDancers</h3><pre>${err.stack}</pre></div>`;
-  }
+      )
+    : table(
+        ["Prospect ID", "Name", "Email", "Phone number", "Location", "Lead source", "Status", "Related jobs", "Action"],
+        prospects.map((user) => row([
+          user.id,
+          `<strong>${esc(user.display_name)}</strong>`,
+          esc(user.email),
+          esc(user.phone_number),
+          esc(`${user.city}, ${user.country}`),
+          esc(user.source),
+          pill(user.status, user.status === "Invited" ? "blue" : "amber"),
+          `<strong>${userJobRecords(user, true).length}</strong>`,
+          `<div class="actions">${ib("view-user-jobs", "View prospect and jobs", "eye", `${user.id}|prospect`)}${ib("link-prospect", "Link to existing user", "link", user.id)}</div>`,
+        ])),
+      );
+
+  return heading(
+    "ACCOUNTS · JOB AGENT",
+    "Users & Job Activity",
+    "Manage registered users, new prospects and their relationship with every job in CMS.",
+    btn("add-prospect", icon("plus") + "Add prospect", "", "primary"),
+  ) + `
+    <div class="user-list-tabs">
+      <button class="${view === "users" ? "active" : ""}" onclick="ui.cmsUsersView='users';render();">Existing Users <span>${db.dancers.length}</span></button>
+      <button class="${view === "prospects" ? "active" : ""}" onclick="ui.cmsUsersView='prospects';render();">New Prospects <span>${prospects.length}</span></button>
+    </div>
+    <div class="user-list-toolbar">
+      <input type="search" id="cms-search" aria-label="Search users" placeholder="Search ID, name, username, email or phone" value="${esc(ui.search)}">
+      <select aria-label="Filter user status"><option>All statuses</option><option>Active</option><option>Suspended</option><option>Invited</option><option>New</option></select>
+    </div>
+    ${listTable}`;
 }
 
 function operationsConfig() {
@@ -2156,7 +2159,7 @@ function jobCard(o, inHub = false) {
     // 2. Match Badge
     let matchPill = "";
     if (open) {
-        matchPill = `<span style="background: #d1fae5; color: #047857; font-size: 11px; font-weight: 700; padding: 3px 8px; border-radius: 4px; display: flex; align-items: center; gap: 4px;">✨ ${s.value}% Match</span>`;
+        matchPill = `<span style="background: #d1fae5; color: #047857; font-size: 11px; font-weight: 700; padding: 3px 8px; border-radius: 4px; display: flex; align-items: center; gap: 4px;">✨ ${s.value}% Match${s.est ? ' <span style="opacity: 0.8; font-size: 10px;">* est</span>' : ''}</span>`;
     } else {
         matchPill = `<span style="background: #fee2e2; color: #b91c1c; font-size: 11px; font-weight: 700; padding: 3px 8px; border-radius: 4px;">Closed</span>`;
     }
@@ -2252,6 +2255,7 @@ function jobCard(o, inHub = false) {
     // Build AI Match Reason String
     const matchedParts = s.parts.filter(p => p[2] === true).map(p => p[0]);
     let matchStr = matchedParts.length > 0 ? matchedParts.join(" + ") : "General profile match";
+    if (s.est) matchStr += " (Provisional score due to limited job info)";
     if(s.risks && s.risks.length > 0) matchStr += " (Note: " + s.risks[0] + ")";
 
     let dateStr = "";
@@ -3252,6 +3256,31 @@ document.addEventListener("click", async (event) => {
     render();
   } else if (a === "source-edit") sourceDialog(v);
   else if (a === "job-drawer") jobDrawer(v);
+  else if (a === "view-user-jobs") {
+    const [id, kind] = v.split("|");
+    ui.cmsDancerId = kind === "prospect" ? id : Number(id);
+    ui.cmsUserKind = kind;
+    ui.cmsUserTab = "jobs";
+    render();
+  } else if (a === "user-list") {
+    ui.cmsDancerId = null;
+    ui.cmsUserKind = null;
+    ui.cmsUserTab = "jobs";
+    render();
+  } else if (a === "add-prospect") {
+    dialog(
+      "add-prospect",
+      "Add new prospect",
+      `<div class="form-grid">${field("name", "Name *", "", "text", "required")}${field("email", "Email", "", "email")}${field("phone", "Phone number", "", "tel")}${field("location", "City / country")}${field("source", "Lead source")}${field("notes", "Notes")}</div><small>A prospect can be linked to jobs before a Hammer account exists.</small>`,
+      "Create prospect",
+    );
+  } else if (a === "link-prospect") {
+    toast("Prototype: select an existing CMS user to preserve and transfer this prospect's job history.");
+  } else if (a === "invite-prospect") {
+    toast("Invitation prepared for this prospect.");
+  } else if (a === "edit-user") {
+    toast("Use the existing CMS User Edit screen for account details.");
+  }
   else if (a === "crawl") await crawl();
   else if (a === "crawl-one") {
     if (confirm("Bạn có chắc chắn muốn cào thử nguồn này ngay lập tức?"))
@@ -3659,7 +3688,27 @@ document.addEventListener("submit", (event) => {
     return;
   }
   if (ui.mode === "dancer" && kind !== "age" && !ensureAccess()) return;
-  if (kind === "age") {
+  if (kind === "add-prospect") {
+    const prospects = cmsProspects();
+    const nextNumber = Math.max(0, ...prospects.map((item) => Number(String(item.id).replace("P-", "")) || 0)) + 1;
+    prospects.unshift({
+      id: `P-${String(nextNumber).padStart(3, "0")}`,
+      display_name: v.name.trim(),
+      email: v.email || null,
+      phone_number: v.phone || null,
+      city: v.location || null,
+      country: "",
+      status: "New",
+      source: v.source || "Admin entry",
+      notes: v.notes || null,
+      dance_styles: "",
+    });
+    persist();
+    closeDialog(true);
+    ui.cmsUsersView = "prospects";
+    render();
+    toast("Prospect created.");
+  } else if (kind === "age") {
     const prev = ext().age;
     ext().age = { dob: v.dob, accepted_at: v.agreement ? now() : null };
     if (v.dob > today() || !ageAllowed()) {
