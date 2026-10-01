@@ -1,10 +1,10 @@
 "use strict";
-const STORE = "hammer.phase1.review.v20";
+const STORE = "hammer.phase1.review.v21";
 let db;
 try {
   db = JSON.parse(localStorage.getItem(STORE));
 } catch {}
-if (!db || db.version !== 20) db = HammerSeed();
+if (!db || db.version !== 21) db = HammerSeed();
 
 // Auto-migrate old statuses
 const statusMap = {
@@ -946,9 +946,12 @@ function score(o) {
   ];
   const weight = parts.reduce((n, p) => n + (p[2] === null ? 0 : p[1]), 0),
     points = parts.reduce((n, p) => n + (p[2] ? p[1] : 0), 0);
+  const is_estimated = (weight < 80) || (o.requirements && o.requirements.years_experience && (d.year_experience === undefined || d.year_experience === null || d.year_experience === ''));
+  const missing_dancer_info = is_estimated && weight >= 80;
   return {
     value: Math.round((points / weight) * 100),
-    est: weight < 60,
+    est: is_estimated,
+    missing_dancer_info,
     parts,
     risks: comparable
       ? []
@@ -2159,7 +2162,7 @@ function jobCard(o, inHub = false) {
     // 2. Match Badge
     let matchPill = "";
     if (open) {
-        matchPill = `<span style="background: #d1fae5; color: #047857; font-size: 11px; font-weight: 700; padding: 3px 8px; border-radius: 4px; display: flex; align-items: center; gap: 4px;">✨ ${s.value}% Match${s.est ? ' <span style="opacity: 0.8; font-size: 10px;">* est</span>' : ''}</span>`;
+        matchPill = `<span style="background: #d1fae5; color: #047857; font-size: 11px; font-weight: 700; padding: 3px 8px; border-radius: 4px; display: flex; align-items: center; gap: 4px;">✨ ${s.value}% Match${s.est ? ' <span style="opacity: 0.8; font-size: 10px;">· Estimate</span>' : ''}</span>`;
     } else {
         matchPill = `<span style="background: #fee2e2; color: #b91c1c; font-size: 11px; font-weight: 700; padding: 3px 8px; border-radius: 4px;">Closed</span>`;
     }
@@ -2255,7 +2258,7 @@ function jobCard(o, inHub = false) {
     // Build AI Match Reason String
     const matchedParts = s.parts.filter(p => p[2] === true).map(p => p[0]);
     let matchStr = matchedParts.length > 0 ? matchedParts.join(" + ") : "General profile match";
-    if (s.est) matchStr += " (Provisional score due to limited job info)";
+    if (s.est) matchStr += s.missing_dancer_info ? " (Please complete your profile for a more accurate match score)" : " (Provisional score due to limited job info)";
     if(s.risks && s.risks.length > 0) matchStr += " (Note: " + s.risks[0] + ")";
 
     let dateStr = "";
