@@ -1,10 +1,10 @@
 "use strict";
-const STORE = "hammer.phase1.review.v17";
+const STORE = "hammer.phase1.review.v19";
 let db;
 try {
   db = JSON.parse(localStorage.getItem(STORE));
 } catch {}
-if (!db || db.version !== 17) db = HammerSeed();
+if (!db || db.version !== 19) db = HammerSeed();
 
 // Auto-migrate old statuses
 const statusMap = {
@@ -2387,9 +2387,14 @@ ${(o.requirements && Array.isArray(o.requirements) && o.requirements.length > 0)
             <div style="border: 1px solid #e2e8f0; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.02); overflow: hidden;">
                 <div style="background: #f8fafc; padding: 12px 16px; border-bottom: 1px solid #e2e8f0; display:flex; justify-content: space-between; align-items: center;">
                     <div style="font-weight: 700; font-size: 12px; color: #475569; display:flex; align-items:center; gap:6px; letter-spacing: 0.5px;"><i class="ph ph-magic-wand" style="color: #2563eb; font-size: 16px;"></i> AI PITCH DRAFT</div>
-                    <div style="display:flex; gap: 4px; background: #e2e8f0; padding: 2px; border-radius: 12px;">
-                        <span style="background: white; color: #0f172a; padding: 2px 10px; border-radius: 10px; font-size: 11px; font-weight: 600; box-shadow: 0 1px 2px rgba(0,0,0,0.05); cursor:pointer;">EN</span>
-                        <span style="color: #64748b; padding: 2px 10px; border-radius: 10px; font-size: 11px; font-weight: 600; cursor:pointer;">JP</span>
+                    <div style="display:flex; gap: 12px; align-items: center;">
+                        <div style="display:flex; gap: 4px; background: #e2e8f0; padding: 2px; border-radius: 12px;">
+                            <span style="background: white; color: #0f172a; padding: 2px 10px; border-radius: 10px; font-size: 11px; font-weight: 600; box-shadow: 0 1px 2px rgba(0,0,0,0.05); cursor:pointer;">EN</span>
+                            <span style="color: #64748b; padding: 2px 10px; border-radius: 10px; font-size: 11px; font-weight: 600; cursor:pointer;">JP</span>
+                        </div>
+                        <button onclick="alert('Regenerating draft...')" style="background: white; border: 1px solid #cbd5e1; color: #475569; padding: 4px; border-radius: 6px; display: flex; align-items: center; justify-content: center; cursor: pointer; transition: all 0.15s; box-shadow: 0 1px 2px rgba(0,0,0,0.02);" title="Regenerate draft">
+                            <i class="ph ph-arrows-clockwise" style="font-size: 16px;"></i>
+                        </button>
                     </div>
                 </div>
 
@@ -2400,13 +2405,12 @@ Dear ${esc(o.organization || "Team")},
 
 I am an advanced dancer based in ${esc(o.city || "your city")}. I am very interested in your ${esc(o.title)} listing.
 
-My profile aligns perfectly with your requirements for ${o.dance_styles.join(", ")}.
+My profile aligns perfectly with your requirements for ${(Array.isArray(o.dance_styles) ? o.dance_styles : []).join(", ")}.
 
 Let me know if you need my dance reel.</div>
 
-                    <div style="display:flex; gap: 8px;">
-                        <button onclick="alert('Regenerating draft...')" style="flex:1; border: 1px solid #cbd5e1; background: white; color: #334155; padding: 10px; border-radius: 6px; font-size: 13px; font-weight: 600; display:flex; justify-content:center; align-items:center; gap:6px; cursor:pointer; transition: background 0.15s;"><i class="ph ph-arrows-clockwise" style="font-size: 16px;"></i> Regenerate</button>
-                        <button onclick="alert('Copied to clipboard!')" style="flex:1; border: none; background: #0f172a; color: white; padding: 10px; border-radius: 6px; font-size: 13px; font-weight: 600; display:flex; justify-content:center; align-items:center; gap:6px; cursor:pointer; transition: background 0.15s;"><i class="ph ph-copy" style="font-size: 16px;"></i> Copy & Apply</button>
+                    <div style="display:flex;">
+                        <button onclick="alert('Copied to clipboard!')" style="flex:1; border: none; background: #0f172a; color: white; padding: 12px; border-radius: 8px; font-size: 14px; font-weight: 600; display:flex; justify-content:center; align-items:center; gap:8px; cursor:pointer; box-shadow: 0 2px 4px rgba(0,0,0,0.1);"><i class="ph ph-copy" style="font-size: 18px;"></i> Copy & Apply</button>
                     </div>
                 </div>
             </div>
@@ -2417,32 +2421,9 @@ Let me know if you need my dance reel.</div>
         <!-- Report Section -->
         
         
-        <!-- Progress Tracker (Sticky Bottom) -->
-        <div style="position: sticky; bottom: 0; background: rgba(255, 255, 255, 0.95); backdrop-filter: blur(10px); padding: 16px 20px; border-top: 1px solid #e2e8f0; box-shadow: 0 -4px 12px rgba(0, 0, 0, 0.03); z-index: 20; width: 100%; box-sizing: border-box;">
-            ${h.applied_at ? `
-            <div style="margin-bottom: 12px;">
-                <label style="font-size: 11px; font-weight: 700; color: #64748b; text-transform: uppercase; letter-spacing: 0.5px; display: block; margin-bottom: 6px;">Application Progress</label>
-                <div style="position: relative;">
-                    <select onchange="alert('Status updated to: ' + this.value)" style="width: 100%; padding: 12px 14px; border-radius: 8px; border: 1px solid #cbd5e1; background: #f8fafc; font-size: 14px; font-weight: 600; color: #0f172a; appearance: none; outline: none; cursor: pointer;">
-                        <option value="Waiting for studio response">Waiting for studio response</option>
-                        <option value="Interview / Casting booked">Interview / Casting booked</option>
-                        <option value="Booked & confirmed">Booked & confirmed</option>
-                        <option value="Not a fit / Declined">Not a fit / Declined</option>
-                    </select>
-                    <i class="ph ph-caret-down" style="position: absolute; right: 14px; top: 14px; color: #64748b; pointer-events: none; font-size: 16px;"></i>
-                </div>
-            </div>
-            <div style="display: flex;">
-                ${btn("applied", "Withdraw Application", o.id, "secondary", false, 'style="flex: 1; padding: 10px; font-size: 13px; font-weight: 600; border-radius: 8px; color: #ef4444; border: 1px solid #fecaca; background: #fffcfc; cursor:pointer;"')}
-            </div>
-            ` : `
-            <div style="display: flex; justify-content: space-between; align-items: center;">
-                <div style="font-size: 14px; font-weight: 500; color: #64748b;">Status: <span style="font-weight: 600; color:#0f172a;">Not applied</span></div>
-                ${btn("applied", "Mark as Applied", o.id, "primary", false, 'style="padding: 12px 24px; font-size: 14px; font-weight: 600; border-radius: 8px; background: #0f172a; color: white; border: none; cursor:pointer;"')}
-            </div>
-            `}
+        <!-- Progress Tracker Hidden Temporarily -->
         </div>
-    </div>`;
+    `;
   }
 function profileForm() {
   const d = dancer(), p = ext().profile;
