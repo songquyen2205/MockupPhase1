@@ -1,10 +1,10 @@
 "use strict";
-const STORE = "hammer.phase1.review.v22";
+const STORE = "hammer.phase1.review.v26";
 let db;
 try {
   db = JSON.parse(localStorage.getItem(STORE));
 } catch {}
-if (!db || db.version !== 22) db = HammerSeed();
+if (!db || db.version !== 26) db = HammerSeed();
 
 // Auto-migrate old statuses
 const statusMap = {
@@ -2163,7 +2163,7 @@ function jobCard(o, inHub = false) {
     // 2. Match Badge
     let matchPill = "";
     if (open) {
-        matchPill = `<span style="background: #d1fae5; color: #047857; font-size: 11px; font-weight: 700; padding: 3px 8px; border-radius: 4px; display: flex; align-items: center; gap: 4px;">✨ ${s.value}% Match${s.est ? ' <span title="${s.est_reason}" style="opacity: 0.8; font-size: 10px; cursor: help; border-bottom: 1px dotted currentColor; padding-bottom: 1px;">· Estimate</span>' : ''}</span>`;
+        matchPill = `<span style="background: #d1fae5; color: #047857; font-size: 11px; font-weight: 700; padding: 3px 8px; border-radius: 4px; display: flex; align-items: center; gap: 4px;">✨ ${s.value}%${s.est ? ' * est' : ' Match'}</span>`;
     } else {
         matchPill = `<span style="background: #fee2e2; color: #b91c1c; font-size: 11px; font-weight: 700; padding: 3px 8px; border-radius: 4px;">Closed</span>`;
     }
@@ -2280,7 +2280,7 @@ function jobCard(o, inHub = false) {
         <!-- Badges -->
         <div style="display:flex; justify-content:space-between; align-items:center; padding: 16px 20px 12px 20px;">
             <span style="background: #111827; color: white; font-size: 10px; font-weight: 700; padding: 4px 8px; border-radius: 4px; letter-spacing: 0.5px;">${typeLabel}</span>
-            ${open ? `<span style="border: 1px solid #10b981; color: #10b981; font-size: 11px; font-weight: 600; padding: 2px 8px; border-radius: 4px; background: rgba(16,185,129,0.05);">+ ${s.value}% Match</span>` : `<span style="border: 1px solid #ef4444; color: #ef4444; font-size: 11px; font-weight: 600; padding: 2px 8px; border-radius: 4px; background: rgba(239,68,68,0.05);">Closed</span>`}
+            ${open ? `<span ${s.est ? `onclick="alert('${s.est_reason.replace(/'/g, "\\'")}')" style="cursor: pointer; border: 1px solid #10b981; color: #10b981; font-size: 11px; font-weight: 600; padding: 2px 8px; border-radius: 4px; background: rgba(16,185,129,0.05);"` : `style="border: 1px solid #10b981; color: #10b981; font-size: 11px; font-weight: 600; padding: 2px 8px; border-radius: 4px; background: rgba(16,185,129,0.05);"`}>+ ${s.value}%${s.est ? ' * est' : ' Match'}</span>` : `<span style="border: 1px solid #ef4444; color: #ef4444; font-size: 11px; font-weight: 600; padding: 2px 8px; border-radius: 4px; background: rgba(239,68,68,0.05);">Closed</span>`}
         </div>
 
         <!-- Title -->
