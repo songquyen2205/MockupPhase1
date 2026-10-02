@@ -1,10 +1,10 @@
 "use strict";
-const STORE = "hammer.phase1.review.v32";
+const STORE = "hammer.phase1.review.v33";
 let db;
 try {
   db = JSON.parse(localStorage.getItem(STORE));
 } catch {}
-if (!db || db.version !== 32) db = HammerSeed();
+if (!db || db.version !== 33) db = HammerSeed();
 
 // Auto-migrate old statuses
 const statusMap = {
@@ -1835,7 +1835,7 @@ function cmsDancers() {
   ];
 
   const listTable = table(
-    ["ID", "Dancer Info", "Contact", "Profile Health", "Status", "Matched", "Applied", "Action"],
+    ["ID", "Dancer Info", "Contact", "Profile Health", "Open to work", "Status", "Matched", "Applied", "Action"],
     allRecords.map((user) => {
       const isProspect = user._type === 'prospect';
       const records = userJobRecords(user, isProspect);
@@ -1851,6 +1851,7 @@ function cmsDancers() {
         ? `<span class="text-muted" style="font-size:12px;">No profile</span>`
         : `${user.is_verified ? '<span style="color:#10b981;font-weight:600;"><i class="ph-fill ph-check-circle"></i> Verified</span>' : '<span style="color:#ef4444;font-weight:600;"><i class="ph-fill ph-warning-circle"></i> Unverified</span>'} <span style="color:#d1d5db;margin:0 4px;">/</span> ${user.completeness_score >= 0.8 ? '<span style="color:#10b981;font-weight:600;">' + Math.round(user.completeness_score*100) + '%</span>' : '<span style="color:#f59e0b;font-weight:600;">' + Math.round((user.completeness_score || 0)*100) + '%</span>'}`;
       
+      const openToWorkCol = isProspect ? '<span class="text-muted">Unknown</span>' : (user.availibility ? '<span style="color:#10b981;font-weight:600;"><i class="ph-fill ph-check-circle"></i> Yes</span>' : '<span class="text-muted">No</span>');
       const statusCol = isProspect 
         ? pill(user.status, user.status === "Invited" ? "blue" : "amber")
         : pill(user.isActive === false ? "Suspended" : "Active", user.isActive === false ? "red" : "green");
@@ -1860,6 +1861,7 @@ function cmsDancers() {
         nameCol,
         contactCol,
         profileHealthCol,
+        openToWorkCol,
         statusCol,
         `<strong>${records.filter((item) => item.matchStatus === "Matched").length}</strong>`,
         `<strong>${records.filter((item) => item.activity === "Applied" || item.activity === "Interested").length}</strong>`,
