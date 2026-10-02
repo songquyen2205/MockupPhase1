@@ -1,10 +1,10 @@
 "use strict";
-const STORE = "hammer.phase1.review.v27";
+const STORE = "hammer.phase1.review.v28";
 let db;
 try {
   db = JSON.parse(localStorage.getItem(STORE));
 } catch {}
-if (!db || db.version !== 27) db = HammerSeed();
+if (!db || db.version !== 28) db = HammerSeed();
 
 // Auto-migrate old statuses
 const statusMap = {
@@ -1831,15 +1831,15 @@ function cmsDancers() {
   const users = db.dancers.filter(matches);
   const listTable = view === "users"
     ? table(
-        ["ID", "Name", "User name", "Email", "Phone number", "Status", "Matched jobs", "Applied", "Action"],
+        ["ID", "Dancer Info", "Contact", "Profile Health", "Status", "Matched", "Applied", "Action"],
         users.map((user) => {
           const records = userJobRecords(user);
           return row([
             `#${user.id}`,
-            `<strong>${esc(user.display_name || user.email?.split("@")[0] || "Not provided")}</strong>`,
-            esc(`dancer_${user.id}`),
-            esc(user.email || "—"),
-            esc(user.phone_number || "—"),
+            `<strong>${esc(user.display_name || user.email?.split("@")[0] || "Not provided")}</strong><br/><small class="text-muted">dancer_${user.id}</small>`,
+            `${esc(user.email || "—")}<br/><small class="text-muted">${esc(user.phone_number || "—")}</small>`,
+            `<div>${user.is_verified ? '<span style="color:#10b981;font-weight:600;"><i class="ph-fill ph-check-circle"></i> Verified</span>' : '<span style="color:#ef4444;font-weight:600;"><i class="ph-fill ph-warning-circle"></i> Unverified</span>'}</div>
+             <div style="margin-top: 4px;">${user.completeness_score >= 0.8 ? pill(Math.round(user.completeness_score*100) + "% Updated", "green") : pill(Math.round((user.completeness_score || 0)*100) + "% Updated", "amber")}</div>`,
             pill(user.isActive === false ? "Suspended" : "Active", user.isActive === false ? "red" : "green"),
             `<strong>${records.filter((item) => item.matchStatus === "Matched").length}</strong>`,
             `<strong>${records.filter((item) => item.activity === "Applied").length}</strong>`,
