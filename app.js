@@ -1,10 +1,10 @@
 "use strict";
-const STORE = "hammer.phase1.review.v28";
+const STORE = "hammer.phase1.review.v31";
 let db;
 try {
   db = JSON.parse(localStorage.getItem(STORE));
 } catch {}
-if (!db || db.version !== 28) db = HammerSeed();
+if (!db || db.version !== 31) db = HammerSeed();
 
 // Auto-migrate old statuses
 const statusMap = {
@@ -1826,41 +1826,47 @@ function cmsDancerDetail(id, kind = "user") {
 
 function cmsDancers() {
   if (ui.cmsDancerId) return cmsDancerDetail(ui.cmsDancerId, ui.cmsUserKind || "user");
-  const view = ui.cmsUsersView || "users";
   const prospects = cmsProspects();
   const users = db.dancers.filter(matches);
-  const listTable = view === "users"
-    ? table(
-        ["ID", "Dancer Info", "Contact", "Profile Health", "Status", "Matched", "Applied", "Action"],
-        users.map((user) => {
-          const records = userJobRecords(user);
-          return row([
-            `#${user.id}`,
-            `<strong>${esc(user.display_name || user.email?.split("@")[0] || "Not provided")}</strong><br/><small class="text-muted">dancer_${user.id}</small>`,
-            `${esc(user.email || "—")}<br/><small class="text-muted">${esc(user.phone_number || "—")}</small>`,
-            `<div>${user.is_verified ? '<span style="color:#10b981;font-weight:600;"><i class="ph-fill ph-check-circle"></i> Verified</span>' : '<span style="color:#ef4444;font-weight:600;"><i class="ph-fill ph-warning-circle"></i> Unverified</span>'}</div>
-             <div style="margin-top: 4px;">${user.completeness_score >= 0.8 ? pill(Math.round(user.completeness_score*100) + "% Updated", "green") : pill(Math.round((user.completeness_score || 0)*100) + "% Updated", "amber")}</div>`,
-            pill(user.isActive === false ? "Suspended" : "Active", user.isActive === false ? "red" : "green"),
-            `<strong>${records.filter((item) => item.matchStatus === "Matched").length}</strong>`,
-            `<strong>${records.filter((item) => item.activity === "Applied").length}</strong>`,
-            `<div class="actions">${ib("view-user-jobs", "View user and jobs", "eye", `${user.id}|user`)}${ib("edit-user", "Edit user", "pencil-simple", user.id)}</div>`,
-          ]);
-        }),
-      )
-    : table(
-        ["Prospect ID", "Name", "Email", "Phone number", "Location", "Lead source", "Status", "Related jobs", "Action"],
-        prospects.map((user) => row([
-          user.id,
-          `<strong>${esc(user.display_name)}</strong>`,
-          esc(user.email),
-          esc(user.phone_number),
-          esc(`${user.city}, ${user.country}`),
-          esc(user.source),
-          pill(user.status, user.status === "Invited" ? "blue" : "amber"),
-          `<strong>${userJobRecords(user, true).length}</strong>`,
-          `<div class="actions">${ib("view-user-jobs", "View prospect and jobs", "eye", `${user.id}|prospect`)}${ib("link-prospect", "Link to existing user", "link", user.id)}</div>`,
-        ])),
-      );
+  
+  const allRecords = [
+    ...users.map(u => ({ ...u, _type: 'user', _isNew: false })), 
+    ...prospects.map(p => ({ ...p, _type: 'prospect', _isNew: true }))
+  ];
+
+  const listTable = table(
+    ["ID", "Dancer Info", "Contact", "Profile Health", "Status", "Matched", "Applied", "Action"],
+    allRecords.map((user) => {
+      const isProspect = user._type === 'prospect';
+      const records = userJobRecords(user, isProspect);
+      
+      const idCol = isProspect ? `<span style="color:#6b7280">${user.id}</span>` : `#${user.id}`;
+      
+      const newBadge = user._isNew ? `<span style="background:#ef4444;color:white;font-size:10px;padding:2px 6px;border-radius:4px;margin-left:8px;font-weight:700;">NEW</span>` : '';
+      const nameCol = `<strong>${esc(user.display_name || user.email?.split("@")[0] || "Not provided")}</strong>${newBadge}<br/><small class="text-muted">${isProspect ? `Lead: ${user.source}` : `dancer_${user.id}`}</small>`;
+      
+      const contactCol = `${esc(user.email || "—")}<br/><small class="text-muted">${esc(user.phone_number || "—")}</small>`;
+      
+      const profileHealthCol = isProspect 
+        ? `<span class="text-muted" style="font-size:12px;">No profile</span>`
+        : `${user.is_verified ? '<span style="color:#10b981;font-weight:600;"><i class="ph-fill ph-check-circle"></i> Verified</span>' : '<span style="color:#ef4444;font-weight:600;"><i class="ph-fill ph-warning-circle"></i> Unverified</span>'} <span style="color:#d1d5db;margin:0 4px;">/</span> ${user.completeness_score >= 0.8 ? '<span style="color:#10b981;font-weight:600;">' + Math.round(user.completeness_score*100) + '%</span>' : '<span style="color:#f59e0b;font-weight:600;">' + Math.round((user.completeness_score || 0)*100) + '%</span>'}`;
+      
+      const statusCol = isProspect 
+        ? pill(user.status, user.status === "Invited" ? "blue" : "amber")
+        : pill(user.isActive === false ? "Suspended" : "Active", user.isActive === false ? "red" : "green");
+        
+      return row([
+        idCol,
+        nameCol,
+        contactCol,
+        profileHealthCol,
+        statusCol,
+        `<strong>${records.filter((item) => item.matchStatus === "Matched").length}</strong>`,
+        `<strong>${records.filter((item) => item.activity === "Applied" || item.activity === "Interested").length}</strong>`,
+        `<div class="actions">${ib("view-user-jobs", "View user", "eye", `${user.id}|${user._type}`)}${isProspect ? ib("link-prospect", "Link user", "link", user.id) : ib("edit-user", "Edit user", "pencil-simple", user.id)}</div>`,
+      ]);
+    })
+  );
 
   return heading(
     "ACCOUNTS · JOB AGENT",
@@ -1868,15 +1874,11 @@ function cmsDancers() {
     "Manage registered users, new prospects and their relationship with every job in CMS.",
     btn("add-prospect", icon("plus") + "Add prospect", "", "primary"),
   ) + `
-    <div class="user-list-tabs">
-      <button class="${view === "users" ? "active" : ""}" onclick="ui.cmsUsersView='users';render();">Existing Users <span>${db.dancers.length}</span></button>
-      <button class="${view === "prospects" ? "active" : ""}" onclick="ui.cmsUsersView='prospects';render();">New Prospects <span>${prospects.length}</span></button>
-    </div>
-    <div class="user-list-toolbar">
+    <div class="user-list-toolbar" style="margin-top: 24px;">
       <input type="search" id="cms-search" aria-label="Search users" placeholder="Search ID, name, username, email or phone" value="${esc(ui.search)}">
-      <select aria-label="Filter user status"><option>All statuses</option><option>Active</option><option>Suspended</option><option>Invited</option><option>New</option></select>
     </div>
-    ${listTable}`;
+    ${listTable}
+  `;
 }
 
 function operationsConfig() {
