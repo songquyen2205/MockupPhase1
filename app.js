@@ -1,10 +1,10 @@
 "use strict";
-const STORE = "hammer.phase1.review.v31";
+const STORE = "hammer.phase1.review.v32";
 let db;
 try {
   db = JSON.parse(localStorage.getItem(STORE));
 } catch {}
-if (!db || db.version !== 31) db = HammerSeed();
+if (!db || db.version !== 32) db = HammerSeed();
 
 // Auto-migrate old statuses
 const statusMap = {
@@ -1840,10 +1840,10 @@ function cmsDancers() {
       const isProspect = user._type === 'prospect';
       const records = userJobRecords(user, isProspect);
       
-      const idCol = isProspect ? `<span style="color:#6b7280">${user.id}</span>` : `#${user.id}`;
+      const idCol = `#${user.id}`;
       
       const newBadge = user._isNew ? `<span style="background:#ef4444;color:white;font-size:10px;padding:2px 6px;border-radius:4px;margin-left:8px;font-weight:700;">NEW</span>` : '';
-      const nameCol = `<strong>${esc(user.display_name || user.email?.split("@")[0] || "Not provided")}</strong>${newBadge}<br/><small class="text-muted">${isProspect ? `Lead: ${user.source}` : `dancer_${user.id}`}</small>`;
+      const nameCol = `<strong>${esc(user.display_name || user.email?.split("@")[0] || "Not provided")}</strong>${newBadge}${isProspect ? "" : `<br/><small class="text-muted">dancer_${user.id}</small>`}`;
       
       const contactCol = `${esc(user.email || "—")}<br/><small class="text-muted">${esc(user.phone_number || "—")}</small>`;
       
@@ -4119,3 +4119,4 @@ window.HammerReview = {
 rebuildRecommendations();
 render();
 route();
+
