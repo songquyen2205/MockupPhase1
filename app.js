@@ -1,10 +1,10 @@
 "use strict";
-const STORE = "hammer.phase1.review.v58";
+const STORE = "hammer.phase1.review.v59";
 let db;
 try {
   db = JSON.parse(localStorage.getItem(STORE));
 } catch {}
-if (!db || db.version !== 58) db = HammerSeed();
+if (!db || db.version !== 59) db = HammerSeed();
 
 // Auto-migrate old statuses
 const statusMap = {
@@ -2363,14 +2363,7 @@ ${(o.requirements && Array.isArray(o.requirements) && o.requirements.length > 0)
         <!-- Application Methods -->
         <div style="padding: 24px 20px;">
             <h2 style="font-size: 16px; font-weight: 700; color: #0f172a; margin: 0 0 12px 0;">How to Apply</h2>
-              ${ui.guest ? `
-              <div style="background: #f8fafc; border: 1px dashed #cbd5e1; border-radius: 8px; padding: 24px 16px; text-align: center; margin-bottom: 24px; margin-top: 16px; display:flex; flex-direction:column; align-items:center;">
-                 <i class="ph ph-lock-key" style="font-size: 32px; color: #94a3b8; margin-bottom: 12px;"></i>
-                 <div style="font-weight: 800; font-size: 16px; color: #111; margin-bottom: 6px;">Create an account</div>
-                 <div style="font-size: 14px; color: #64748b; margin-bottom: 16px; max-width: 250px;">Sign in or use an invitation code to view contact information and apply.</div>
-                 <button data-action="generate" style="background: #111; color: #fff; border: none; padding: 12px 20px; border-radius: 8px; font-weight: 600; font-size: 14px; width: 100%; cursor: pointer;">Sign in / Create Account</button>
-              </div>
-              ` : `
+              
 
             ${o.application_instructions ? `<div style="font-size: 14px; line-height: 1.5; color: #475569; margin-bottom: 16px; background: #f8fafc; padding: 12px; border-radius: 6px; border-left: 3px solid #cbd5e1;">${esc(o.application_instructions)}</div>` : ""}
 
@@ -2451,7 +2444,7 @@ Let me know if you need my dance reel.</div>
 
         
         
-`}<!-- Report Section -->
+<!-- Report Section -->
         
         
         <!-- Progress Tracker Hidden Temporarily -->
