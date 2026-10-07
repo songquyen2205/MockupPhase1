@@ -1,10 +1,10 @@
 "use strict";
-const STORE = "hammer.phase1.review.v53";
+const STORE = "hammer.phase1.review.v56";
 let db;
 try {
   db = JSON.parse(localStorage.getItem(STORE));
 } catch {}
-if (!db || db.version !== 53) db = HammerSeed();
+if (!db || db.version !== 56) db = HammerSeed();
 
 // Auto-migrate old statuses
 const statusMap = {
@@ -2363,15 +2363,6 @@ ${(o.requirements && Array.isArray(o.requirements) && o.requirements.length > 0)
         <!-- Application Methods -->
         <div style="padding: 24px 20px;">
             <h2 style="font-size: 16px; font-weight: 700; color: #0f172a; margin: 0 0 12px 0;">How to Apply</h2>
-              ${ui.guest ? `
-              <div style="background: #f8fafc; border: 1px dashed #cbd5e1; border-radius: 8px; padding: 24px 16px; text-align: center; margin-bottom: 24px; margin-top: 16px;">
-                 <i class="ph ph-lock-key" style="font-size: 28px; color: #94a3b8; margin-bottom: 8px;"></i>
-                 <div style="font-weight: 600; font-size: 15px; color: #334155; margin-bottom: 4px;">Sign in to view details</div>
-                 <div style="font-size: 13px; color: #64748b; margin-bottom: 16px;">Contact information and application links are hidden for guests.</div>
-                 <button data-action="generate" style="background: #111; color: #fff; border: none; padding: 12px 20px; border-radius: 6px; font-weight: 600; font-size: 14px; width: 100%; cursor: pointer;">Sign in / Create Account</button>
-              </div>
-              ` : `
-
             ${o.application_instructions ? `<div style="font-size: 14px; line-height: 1.5; color: #475569; margin-bottom: 16px; background: #f8fafc; padding: 12px; border-radius: 6px; border-left: 3px solid #cbd5e1;">${esc(o.application_instructions)}</div>` : ""}
 
             ${(o.contact_email || o.whatsapp_link) ? `<div style="display: flex; flex-direction: column; gap: 12px; margin-bottom: 20px;">
@@ -2384,7 +2375,7 @@ ${(o.requirements && Array.isArray(o.requirements) && o.requirements.length > 0)
                             <div style="font-size: 15px; font-weight: 700; color: #0f172a;">${esc(o.whatsapp_link.replace(/https?:\/\/wa\.me\//, '+'))}</div>
                         </div>
                     </div>
-                    <a href="${esc(o.whatsapp_link)}" target="_blank" style="background: white; border: 1px solid #cbd5e1; padding: 6px 12px; border-radius: 6px; color: #334155; font-size: 13px; font-weight: 600; text-decoration: none; box-shadow: 0 1px 2px rgba(0,0,0,0.05);">Chat</a>
+                    <a ${ui.guest ? 'data-action="generate" href="javascript:void(0)"' : `href="${esc(o.whatsapp_link)}" target="_blank"`} style="background: white; border: 1px solid #cbd5e1; padding: 6px 12px; border-radius: 6px; color: #334155; font-size: 13px; font-weight: 600; text-decoration: none; box-shadow: 0 1px 2px rgba(0,0,0,0.05);">Chat</a>
                 </div>` : ""}
                 ${o.contact_email ? `
                 <div style="display: flex; align-items: center; justify-content: space-between; background: white; border: 1px solid #e2e8f0; border-radius: 8px; padding: 12px 16px; box-shadow: 0 1px 2px rgba(0,0,0,0.02);">
@@ -2395,20 +2386,20 @@ ${(o.requirements && Array.isArray(o.requirements) && o.requirements.length > 0)
                             <div style="font-size: 15px; font-weight: 700; color: #0f172a;">${esc(o.contact_email)}</div>
                         </div>
                     </div>
-                    <button onclick="toast('Copied!')" style="background: white; border: 1px solid #cbd5e1; padding: 6px 12px; border-radius: 6px; color: #334155; font-size: 13px; font-weight: 600; cursor: pointer; box-shadow: 0 1px 2px rgba(0,0,0,0.05);">Copy</button>
+                    <button ${ui.guest ? 'data-action="generate"' : `onclick="toast('Copied!')"`} style="background: white; border: 1px solid #cbd5e1; padding: 6px 12px; border-radius: 6px; color: #334155; font-size: 13px; font-weight: 600; cursor: pointer; box-shadow: 0 1px 2px rgba(0,0,0,0.05);">Copy</button>
                 </div>` : ""}
             </div>` : ""}
 
             ${(o.application_url || o.instagram_dm || o.facebook_link) ? `<div style="display: flex; flex-direction: column; gap: 1px; background: #e2e8f0; border: 1px solid #e2e8f0; border-radius: 8px; overflow: hidden; margin-bottom: 24px;">
-                ${o.application_url ? `<a href="${esc(o.application_url)}" target="_blank" style="display: flex; align-items: center; justify-content: space-between; background: #fff; padding: 14px 16px; text-decoration: none; color: #0f172a; font-weight: 500; font-size: 15px;">
+                ${o.application_url ? `<a ${ui.guest ? 'data-action="generate" href="javascript:void(0)"' : `href="${esc(o.application_url)}" target="_blank"`} style="display: flex; align-items: center; justify-content: space-between; background: #fff; padding: 14px 16px; text-decoration: none; color: #0f172a; font-weight: 500; font-size: 15px;">
                     <div style="display: flex; align-items: center; gap: 12px;"><i class="ph ph-link" style="font-size: 20px; color: #6366f1;"></i> Submit via Portal</div>
                     <i class="ph ph-caret-right" style="color: #94a3b8;"></i>
                 </a>` : ""}
-                ${o.facebook_link ? `<a href="${esc(o.facebook_link)}" target="_blank" style="display: flex; align-items: center; justify-content: space-between; background: #fff; padding: 14px 16px; text-decoration: none; color: #0f172a; font-weight: 500; font-size: 15px;">
+                ${o.facebook_link ? `<a ${ui.guest ? 'data-action="generate" href="javascript:void(0)"' : `href="${esc(o.facebook_link)}" target="_blank"`} style="display: flex; align-items: center; justify-content: space-between; background: #fff; padding: 14px 16px; text-decoration: none; color: #0f172a; font-weight: 500; font-size: 15px;">
                     <div style="display: flex; align-items: center; gap: 12px;"><i class="ph ph-facebook-logo" style="font-size: 20px; color: #1877f2;"></i> Message on Facebook</div>
                     <i class="ph ph-caret-right" style="color: #94a3b8;"></i>
                 </a>` : ""}
-                ${o.instagram_dm ? `<a href="${esc(o.instagram_dm)}" target="_blank" style="display: flex; align-items: center; justify-content: space-between; background: #fff; padding: 14px 16px; text-decoration: none; color: #0f172a; font-weight: 500; font-size: 15px;">
+                ${o.instagram_dm ? `<a ${ui.guest ? 'data-action="generate" href="javascript:void(0)"' : `href="${esc(o.instagram_dm)}" target="_blank"`} style="display: flex; align-items: center; justify-content: space-between; background: #fff; padding: 14px 16px; text-decoration: none; color: #0f172a; font-weight: 500; font-size: 15px;">
                     <div style="display: flex; align-items: center; gap: 12px;"><i class="ph ph-instagram-logo" style="font-size: 20px; color: #e1306c;"></i> Direct Message Instagram</div>
                     <i class="ph ph-caret-right" style="color: #94a3b8;"></i>
                 </a>` : ""}
@@ -2424,7 +2415,7 @@ ${(o.requirements && Array.isArray(o.requirements) && o.requirements.length > 0)
                             <span style="background: white; color: #0f172a; padding: 2px 10px; border-radius: 10px; font-size: 11px; font-weight: 600; box-shadow: 0 1px 2px rgba(0,0,0,0.05); cursor:pointer;">EN</span>
                             <span style="color: #64748b; padding: 2px 10px; border-radius: 10px; font-size: 11px; font-weight: 600; cursor:pointer;">JP</span>
                         </div>
-                        <button onclick="toast('Regenerating draft...')" style="background: white; border: 1px solid #cbd5e1; color: #475569; padding: 4px; border-radius: 6px; display: flex; align-items: center; justify-content: center; cursor: pointer; transition: all 0.15s; box-shadow: 0 1px 2px rgba(0,0,0,0.02);" title="Regenerate draft">
+                        <button ${ui.guest ? 'data-action="generate"' : `onclick="toast('Regenerating draft...')"`} style="background: white; border: 1px solid #cbd5e1; color: #475569; padding: 4px; border-radius: 6px; display: flex; align-items: center; justify-content: center; cursor: pointer; transition: all 0.15s; box-shadow: 0 1px 2px rgba(0,0,0,0.02);" title="Regenerate draft">
                             <i class="ph ph-arrows-clockwise" style="font-size: 16px;"></i>
                         </button>
                     </div>
@@ -2442,7 +2433,7 @@ My profile aligns perfectly with your requirements for ${(Array.isArray(o.dance_
 Let me know if you need my dance reel.</div>
 
                     <div style="display:flex;">
-                        <button onclick="toast('Copied to clipboard!')" style="flex:1; border: none; background: #0f172a; color: white; padding: 12px; border-radius: 8px; font-size: 14px; font-weight: 600; display:flex; justify-content:center; align-items:center; gap:8px; cursor:pointer; box-shadow: 0 2px 4px rgba(0,0,0,0.1);"><i class="ph ph-copy" style="font-size: 18px;"></i> Copy & Apply</button>
+                        <button ${ui.guest ? 'data-action="generate"' : `onclick="toast('Copied to clipboard!')"`} style="flex:1; border: none; background: #0f172a; color: white; padding: 12px; border-radius: 8px; font-size: 14px; font-weight: 600; display:flex; justify-content:center; align-items:center; gap:8px; cursor:pointer; box-shadow: 0 2px 4px rgba(0,0,0,0.1);"><i class="ph ph-copy" style="font-size: 18px;"></i> Copy & Apply</button>
                     </div>
                 </div>
             </div>
@@ -2450,8 +2441,7 @@ Let me know if you need my dance reel.</div>
         </div>
 
         
-        
-`}<!-- Report Section -->
+        <!-- Report Section -->
         
         
         <!-- Progress Tracker Hidden Temporarily -->
@@ -2601,7 +2591,7 @@ function openAge() {
 }
 function ensureAccess() {
     if (ui.guest) {
-      dialog("invite-login", "",  
+      dialog("invite-login", "", 
         `<div style="text-align:center; padding: 10px 0;">
            <h2 style="font-size:24px; font-weight:800; margin-bottom:10px; color:#111;">Create an account</h2>
            <p style="color:#6b7280; margin-bottom:24px; font-size:15px;">Hammer is currently by invite only.</p>
