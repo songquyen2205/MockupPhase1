@@ -1,10 +1,10 @@
 "use strict";
-const STORE = "hammer.phase1.review.v52";
+const STORE = "hammer.phase1.review.v53";
 let db;
 try {
   db = JSON.parse(localStorage.getItem(STORE));
 } catch {}
-if (!db || db.version !== 52) db = HammerSeed();
+if (!db || db.version !== 53) db = HammerSeed();
 
 // Auto-migrate old statuses
 const statusMap = {
@@ -2363,6 +2363,15 @@ ${(o.requirements && Array.isArray(o.requirements) && o.requirements.length > 0)
         <!-- Application Methods -->
         <div style="padding: 24px 20px;">
             <h2 style="font-size: 16px; font-weight: 700; color: #0f172a; margin: 0 0 12px 0;">How to Apply</h2>
+              ${ui.guest ? `
+              <div style="background: #f8fafc; border: 1px dashed #cbd5e1; border-radius: 8px; padding: 24px 16px; text-align: center; margin-bottom: 24px; margin-top: 16px;">
+                 <i class="ph ph-lock-key" style="font-size: 28px; color: #94a3b8; margin-bottom: 8px;"></i>
+                 <div style="font-weight: 600; font-size: 15px; color: #334155; margin-bottom: 4px;">Sign in to view details</div>
+                 <div style="font-size: 13px; color: #64748b; margin-bottom: 16px;">Contact information and application links are hidden for guests.</div>
+                 <button data-action="generate" style="background: #111; color: #fff; border: none; padding: 12px 20px; border-radius: 6px; font-weight: 600; font-size: 14px; width: 100%; cursor: pointer;">Sign in / Create Account</button>
+              </div>
+              ` : `
+
             ${o.application_instructions ? `<div style="font-size: 14px; line-height: 1.5; color: #475569; margin-bottom: 16px; background: #f8fafc; padding: 12px; border-radius: 6px; border-left: 3px solid #cbd5e1;">${esc(o.application_instructions)}</div>` : ""}
 
             ${(o.contact_email || o.whatsapp_link) ? `<div style="display: flex; flex-direction: column; gap: 12px; margin-bottom: 20px;">
@@ -2441,7 +2450,8 @@ Let me know if you need my dance reel.</div>
         </div>
 
         
-        <!-- Report Section -->
+        
+`}<!-- Report Section -->
         
         
         <!-- Progress Tracker Hidden Temporarily -->
@@ -2591,7 +2601,7 @@ function openAge() {
 }
 function ensureAccess() {
     if (ui.guest) {
-      dialog("invite-login", "", 
+      dialog("invite-login", "",  
         `<div style="text-align:center; padding: 10px 0;">
            <h2 style="font-size:24px; font-weight:800; margin-bottom:10px; color:#111;">Create an account</h2>
            <p style="color:#6b7280; margin-bottom:24px; font-size:15px;">Hammer is currently by invite only.</p>
@@ -2599,8 +2609,7 @@ function ensureAccess() {
            <input type="text" placeholder="Invitation code" style="width:100%; padding:14px; border:none; background:#f3f4f6; border-radius:8px; margin-bottom:24px; font-size:15px; outline:none; text-align:center;" />
            <button type="button" onclick="ui.guest=false; closeDialog(); render();" style="width:100%; background:#111; color:#fff; padding:14px; border-radius:8px; font-weight:600; border:none; font-size:15px; cursor:pointer;">Continue</button>
            <div style="margin-top:24px; font-size:14px; color:#6b7280;">Already have an account? <strong style="color:#111; cursor:pointer;" onclick="ui.guest=false; closeDialog(); render();">Login</strong></div>
-         </div>`, "", "", "drawer"
-      );
+         </div>`, "", "", "");
       return false;
     }
   if (ext().agentSuspensions[dancer().id]) {
