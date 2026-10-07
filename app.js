@@ -1,10 +1,10 @@
 "use strict";
-const STORE = "hammer.phase1.review.v61";
+const STORE = "hammer.phase1.review.v62";
 let db;
 try {
   db = JSON.parse(localStorage.getItem(STORE));
 } catch {}
-if (!db || db.version !== 61) db = HammerSeed();
+if (!db || db.version !== 62) db = HammerSeed();
 
 // Auto-migrate old statuses
 const statusMap = {
@@ -882,6 +882,8 @@ function external(url, label) {
     : "Not provided";
 }
 function ageAllowed() {
+    if (ui.guest) return true; // Guests bypass the age gate
+
   const a = ext().age;
   if (!a.dob || !a.accepted_at) return false;
   const d = new Date(a.dob + "T00:00:00Z"),
