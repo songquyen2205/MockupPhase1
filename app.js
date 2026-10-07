@@ -1,10 +1,10 @@
 "use strict";
-const STORE = "hammer.phase1.review.v49";
+const STORE = "hammer.phase1.review.v50";
 let db;
 try {
   db = JSON.parse(localStorage.getItem(STORE));
 } catch {}
-if (!db || db.version !== 49) db = HammerSeed();
+if (!db || db.version !== 50) db = HammerSeed();
 
 // Auto-migrate old statuses
 const statusMap = {
@@ -3361,6 +3361,11 @@ document.addEventListener("click", async (event) => {
         <div style="font-size:26px; font-weight:800; color:#2563eb;">73.5% Match</div>
         <span style="background:#fef9c3; color:#a16207; border:1px solid #fde047; font-size:11px; font-weight:600; padding:4px 10px; border-radius:12px;">* Estimated</span>
       </div>
+      <div style="background: #eff6ff; border: 1px solid #bfdbfe; border-radius: 8px; padding: 14px 16px; margin-bottom: 20px;">
+        <div style="font-size: 11px; font-weight: 800; color: #1e40af; margin-bottom: 6px; display:flex; align-items:center; gap:6px; letter-spacing: 0.5px;"><i class="ph-fill ph-sparkle" style="font-size: 14px;"></i> AI MATCH REASON:</div>
+        <div style="font-size: 13px; color: #3b82f6; font-weight: 500;">Role + Dance Styles + Skill Level.</div>
+      </div>
+
       
       <h4 style="margin-bottom:10px; font-size:13px; font-weight:600; color:#16a34a; display:flex; align-items:center; gap:6px;"><i class="ph-fill ph-check-circle" style="font-size: 16px;"></i> ĐIỂM MẠNH (STRENGTHS)</h4>
       <ul style="padding-left:24px; margin-bottom:20px; color:#374151; line-height:1.6;">
