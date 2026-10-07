@@ -1,10 +1,10 @@
 "use strict";
-const STORE = "hammer.phase1.review.v33";
+const STORE = "hammer.phase1.review.v49";
 let db;
 try {
   db = JSON.parse(localStorage.getItem(STORE));
 } catch {}
-if (!db || db.version !== 33) db = HammerSeed();
+if (!db || db.version !== 49) db = HammerSeed();
 
 // Auto-migrate old statuses
 const statusMap = {
@@ -1730,7 +1730,7 @@ function cmsProspects() {
 }
 
 function userJobRecords(user, isProspect = false) {
-  const jobs = db.ai_opportunities.filter((job) => !job.is_deleted).slice(0, 8);
+  const jobs = db.ai_opportunities.filter((job) => !job.is_deleted && job.status === "published").slice(0, 8);
   const activity = ["Applied", "Viewed", "Saved", "Not viewed", "Applied", "Not viewed", "Viewed", "Saved"];
   return jobs.map((job, index) => ({
     job,
@@ -1768,61 +1768,79 @@ function cmsDancerDetail(id, kind = "user") {
   const name = user.display_name || user.email?.split("@")[0] || `User ${user.id}`;
   const accountStatus = isProspect ? user.status : user.isActive === false ? "Suspended" : "Active";
 
-  const profilePanel = `<div class="user-profile-grid">
-    ${kv([
-      ["Name", name],
-      ["User ID", isProspect ? "Not registered" : `#${user.id}`],
-      ["Email", user.email || "Not provided"],
-      ["Phone number", user.phone_number || "Not provided"],
-      ["Status", accountStatus],
-      ["Location", [user.city, user.country].filter(Boolean).join(", ") || "Not provided"],
-      ["Dance styles", Array.isArray(user.dance_styles) ? user.dance_styles.join(", ") : user.dance_styles],
-      [isProspect ? "Lead source" : "Skill level", isProspect ? user.source : user.skill_level],
-    ])}
-  </div>`;
+  const profilePanel = `
+    <div class="cud-profile-view">
+      <div class="cud-avatar"><img src="https://api.dicebear.com/7.x/avataaars/svg?seed=${user.id}" alt="Avatar"/></div>
+      <div class="cud-info">
+        <div class="cud-field"><span>Name</span><strong>${esc(name)}</strong></div>
+        <div class="cud-field"><span>Username</span><strong>${isProspect ? 'n/a' : 'dancer_' + user.id}</strong></div>
+        <div class="cud-field"><span>Email</span><strong>${esc(user.email || "Not provided")} <i class="ph-fill ph-check-circle" style="color:#10b981;"></i></strong></div>
+        <div class="cud-field"><span>Phone Number</span><strong>${esc(user.phone_number || "Not provided")}</strong></div>
+        <div class="cud-field"><span>Status</span><strong>${esc(accountStatus)} - all functions normal</strong></div>
+        <div class="cud-field"><span>Website</span><strong>n/a</strong></div>
+        <div class="cud-field"><span>Bio</span><strong>n/a</strong></div>
+        <div class="cud-field"><span>Invation Code</span><strong>${isProspect ? 'n/a' : 'vand' + user.id}</strong></div>
+        <div class="cud-field"><span>Interest</span><strong>Followers 0<br/>Following 0</strong></div>
+        <div>${btn("edit-user", "Edit", user.id, "primary")}</div>
+      </div>
+    </div>
+  `;
 
   const jobsPanel = `
-    <div class="user-job-summary">
-      <div><strong>${records.filter((item) => item.matchStatus === "Matched").length}</strong><span>Matched jobs</span></div>
-      <div><strong>${viewed}</strong><span>${isProspect ? "Contacted" : "Viewed or saved"}</span></div>
-      <div><strong>${applied}</strong><span>${isProspect ? "Interested" : "Applied"}</span></div>
-      <div><strong>${records.filter((item) => item.delivery.includes("Not")).length}</strong><span>Not delivered</span></div>
-    </div>
-    <div class="section-heading user-job-heading">
-      <div><h3>Job Activity</h3><small>One record for each relationship between this ${isProspect ? "prospect" : "user"} and a CMS job.</small></div>
-      <select aria-label="Filter job activity"><option>All job activity</option><option>Matched only</option><option>Applied / interested</option><option>Not delivered</option></select>
+    <div class="cud-job-summary">
+      <div style="background:#eff6ff;border-color:#bfdbfe;"><strong style="color:#1d4ed8;">${records.filter((item) => item.matchStatus === "Matched").length}</strong><span style="color:#3b82f6;">Matched jobs</span></div>
+      <div style="background:#f5f3ff;border-color:#ddd6fe;"><strong style="color:#6d28d9;">${viewed}</strong><span style="color:#8b5cf6;">${isProspect ? "Contacted" : "Viewed or saved"}</span></div>
+      <div style="background:#ecfdf5;border-color:#a7f3d0;"><strong style="color:#047857;">${applied}</strong><span style="color:#10b981;">${isProspect ? "Interested" : "Applied"}</span></div>
+      <div style="background:#fef2f2;border-color:#fecaca;"><strong style="color:#b91c1c;">${records.filter((item) => item.delivery.includes("Not")).length}</strong><span style="color:#ef4444;">Not delivered</span></div>
     </div>
     ${table(
-      ["Job", "CMS status", "Match", "Delivery", isProspect ? "Prospect response" : "User activity", "Last update", "Action"],
+      ["Job", "Job status", "Match", "Delivery <i class='ph-fill ph-info' style='color:#f59e0b; cursor:help;' title='DEV NOTE: C?n confirm v?i team Tech xem c� tracking du?c event (impression) hi?n th? th?c t? tr�n app d? d? data ch�nh x�c v? c?t n�y kh�ng?'></i>", isProspect ? "Prospect response" : "User activity", "Last update", "Action"],
       records.map(({ job, score, matchStatus, delivery, activity, updated }) =>
         row([
-          `<strong>#${job.id} · ${esc(job.title)}</strong><small>${esc(job.organization || "Organization not provided")}</small>`,
+          `<strong>#${job.id} - ${esc(job.title)}</strong><small>${esc(job.organization || "Organization not provided")}</small>`,
           pill(statuses.find((status) => status[0] === job.status)?.[1] || job.status, job.status === "published" ? "green" : job.status === "closed" ? "red" : "amber"),
           matchStatus === "Matched" ? `<strong class="match-score">${score}%</strong><small>Style, location and experience</small>` : pill(matchStatus),
           `<span>${esc(delivery)}</span>`,
           userActivityPill(activity),
           esc(updated),
-          ib("job-drawer", "View job", "arrow-square-out", job.id),
+          `<div style="display:flex;gap:6px;">${ib("match-insight", "View match evaluation & scoring reason", "magnifying-glass", job.id)}${ib("push-job", "Send manual push notification", "bell", job.id)}${ib("hide-job", "Hide job from this user", "eye-slash", job.id)}</div>`,
         ]),
       ),
     )}`;
 
   return `
-    <div class="user-detail-topline">
-      ${btn("user-list", icon("arrow-left") + "Back to users")}
-      <div class="actions">${isProspect ? btn("link-prospect", "Link to existing user", user.id) + btn("invite-prospect", "Send invitation", user.id, "primary") : ib("edit-user", "Edit user", "pencil-simple", user.id)}</div>
-    </div>
-    <div class="user-detail-header">
-      <div class="user-avatar">${esc(name.slice(0, 1).toUpperCase())}</div>
-      <div class="user-heading"><div class="actions"><h1>${esc(name)}</h1>${pill(isProspect ? "Prospect" : "Existing user", isProspect ? "amber" : "green")}</div><p>${esc(user.email || user.phone_number || "No contact information")}</p></div>
-      <div class="user-state"><span>Account status</span><strong>${esc(accountStatus)}</strong><small>${isProspect ? "No Hammer account linked" : "Registered Hammer user"}</small></div>
-    </div>
-    <div class="user-detail-tabs">
-      <button class="${tab === "profile" ? "active" : ""}" onclick="ui.cmsUserTab='profile';render();">Profile Details</button>
-      <button class="${tab === "jobs" ? "active" : ""}" onclick="ui.cmsUserTab='jobs';render();">Job Activity <span>${records.length}</span></button>
-    </div>
-    <div class="user-detail-panel">${tab === "profile" ? profilePanel : jobsPanel}</div>`;
+    <div class="cud-page">
+      <h1 style="font-size:24px;font-weight:400;margin-bottom:20px;">User Details</h1>
+      <div class="cud-breadcrumb-bar">
+        <div>Users \\ ${esc(name)}</div>
+        <div style="display:flex;gap:10px;">
+          <button class="cud-btn-gray" onclick="alert('Not implemented')"><i class="ph-fill ph-trash"></i> Delete</button>
+          <button class="cud-btn-gray" onclick="alert('Not implemented')"><i class="ph-fill ph-prohibit"></i> Block</button>
+        </div>
+      </div>
+      <div class="cud-layout">
+        <div class="cud-sidebar">
+          <div class="cud-nav">
+            <button class="${tab === 'profile' ? 'active' : ''}" onclick="ui.cmsUserTab='profile';render();">Profile Details</button>
+            <button class="disabled">Comments</button>
+            <button class="disabled">Videos <i class="ph ph-arrow-square-out"></i></button>
+            <button class="disabled">Purchases <i class="ph ph-arrow-square-out"></i></button>
+            <div style="height:20px;"></div>
+            <button class="disabled">Liked Videos</button>
+            <button class="disabled">Favorites Videos</button>
+            <button class="disabled">Favorites Music</button>
+            <button class="disabled">Favorites Classes</button>
+            <div style="height:20px;"></div>
+            <button class="${tab === 'jobs' ? 'active' : ''}" onclick="ui.cmsUserTab='jobs';render();" style="color:var(--brand);font-weight:600;">Jobs Activity</button>
+          </div>
+        </div>
+        <div class="cud-content">
+          ${tab === 'profile' ? profilePanel : jobsPanel}
+        </div>
+      </div>
+    </div>`;
 }
+
 
 function cmsDancers() {
   if (ui.cmsDancerId) return cmsDancerDetail(ui.cmsDancerId, ui.cmsUserKind || "user");
@@ -2545,6 +2563,23 @@ function dialog(kind, title, body, saveLabel = "", extra = "", shape = "") {
     0,
   );
 }
+function showConfirm(msg, confirmAction, confirmValue) {
+  lastFocus = document.activeElement;
+  ui.dialog = "confirm";
+  ui.dirty = false;
+  $("#overlay-root").innerHTML = `
+    <div class="overlay">
+      <section class="dialog" style="max-width: 400px; padding: 24px 30px; text-align: center; border-radius: 12px; border: none; box-shadow: 0 4px 20px rgba(0,0,0,0.15); background: #fff;">
+        <p style="font-size: 15px; font-weight: 500; color: #333; margin-bottom: 24px; line-height: 1.5;">${esc(msg)}</p>
+        <div style="display: flex; justify-content: center; gap: 12px;">
+          <button class="primary" data-action="${confirmAction}" data-value="${confirmValue}" style="background:#111; border-color:#111; color:#fff; min-width: 100px; padding: 8px 24px; border-radius: 6px; font-weight: 500;">Confirm</button>
+          <button data-action="close" style="background:#fff; border: 1px solid #ddd; color:#333; min-width: 100px; padding: 8px 24px; border-radius: 6px; font-weight: 500;">Cancel</button>
+        </div>
+      </section>
+    </div>
+  `;
+  document.body.style.overflow = "hidden";
+}
 function closeDialog(force = false) {
   if (ui.dirty && !force && !confirm("Discard unsaved changes?")) return false;
   $("#overlay-root").innerHTML = "";
@@ -3264,6 +3299,104 @@ document.addEventListener("click", async (event) => {
     render();
   } else if (a === "source-edit") sourceDialog(v);
   else if (a === "job-drawer") jobDrawer(v);
+    else if (a === "match-insight") {
+      const insightHtml = `
+
+<div style="display:flex; flex-direction:column; gap:24px; font-size:14px; color:#333; margin-top: 10px;">
+  
+  <!-- USER TRACKING SECTION -->
+  <div style="border: 1px solid #e5e7eb; border-radius: 8px; overflow: hidden; box-shadow: 0 1px 3px rgba(0,0,0,0.05);">
+    <div style="background: #f9fafb; padding: 14px 16px; border-bottom: 1px solid #e5e7eb; font-weight: 600; color: #111827; display: flex; align-items: center; gap: 8px; font-size: 13px; letter-spacing: 0.5px;">
+      <i class="ph-fill ph-git-commit" style="color: #6366f1; font-size: 16px;"></i> TIẾP TRÌNH ỨNG TUYỂN (PIPELINE)
+    </div>
+    <div style="padding: 20px 16px; background: #fff;">
+      
+      <!-- Line Process -->
+      <div style="display: flex; justify-content: space-between; position: relative; margin-bottom: 30px;">
+        <div style="position: absolute; top: 12px; left: 10%; right: 10%; height: 2px; background: #e5e7eb; z-index: 1;"></div>
+        <div style="position: absolute; top: 12px; left: 10%; width: 25%; height: 2px; background: #10b981; z-index: 1;"></div>
+        
+        <div style="position: relative; z-index: 2; display: flex; flex-direction: column; align-items: center; gap: 8px; width: 25%;">
+          <div style="width: 24px; height: 24px; border-radius: 50%; background: #10b981; color: #fff; display: flex; align-items: center; justify-content: center; font-size: 12px; font-weight: bold;"><i class="ph-bold ph-check"></i></div>
+          <div style="font-size: 11px; font-weight: 700; color: #10b981; text-align: center; text-transform: uppercase;">Saved<br><span style="font-size:9px;font-weight:500;color:#6b7280;text-transform:none;">Đã lưu/Xem</span></div>
+        </div>
+        
+        <div style="position: relative; z-index: 2; display: flex; flex-direction: column; align-items: center; gap: 8px; width: 25%;">
+          <div style="width: 24px; height: 24px; border-radius: 50%; background: #3b82f6; border: 2px solid #3b82f6; color: #fff; display: flex; align-items: center; justify-content: center; font-size: 12px; font-weight: bold;">2</div>
+          <div style="font-size: 11px; font-weight: 700; color: #2563eb; text-align: center; text-transform: uppercase;">Applied<br><span style="font-size:9px;font-weight:500;color:#6b7280;text-transform:none;">Đã ứng tuyển</span></div>
+        </div>
+
+        <div style="position: relative; z-index: 2; display: flex; flex-direction: column; align-items: center; gap: 8px; width: 25%;">
+          <div style="width: 24px; height: 24px; border-radius: 50%; background: #fff; border: 2px solid #e5e7eb; color: #9ca3af; display: flex; align-items: center; justify-content: center; font-size: 12px; font-weight: bold;">3</div>
+          <div style="font-size: 11px; font-weight: 600; color: #6b7280; text-align: center; text-transform: uppercase;">Audition<br><span style="font-size:9px;font-weight:500;color:#9ca3af;text-transform:none;">Casting Booked</span></div>
+        </div>
+
+        <div style="position: relative; z-index: 2; display: flex; flex-direction: column; align-items: center; gap: 8px; width: 25%;">
+          <div style="width: 24px; height: 24px; border-radius: 50%; background: #fff; border: 2px solid #e5e7eb; color: #9ca3af; display: flex; align-items: center; justify-content: center; font-size: 12px; font-weight: bold;">4</div>
+          <div style="font-size: 11px; font-weight: 600; color: #6b7280; text-align: center; text-transform: uppercase;">Booked<br><span style="font-size:9px;font-weight:500;color:#9ca3af;text-transform:none;">Confirmed</span></div>
+        </div>
+      </div>
+
+      <div style="display:flex; flex-direction:column; gap:8px;">
+        <label style="font-size:11px; font-weight:700; color:#374151; letter-spacing:0.5px;">CẬP NHẬT TRẠNG THÁI (UPDATE PROGRESS)</label>
+        <select style="padding:10px 12px; border:1px solid #d1d5db; border-radius:6px; font-size:14px; color:#111; outline:none; background:#f9fafb; font-weight:500;">
+          <option>Saved (Đã lưu/Xem)</option>
+          <option selected>Applied - Waiting for response (Đã ứng tuyển)</option>
+          <option>Interview / Casting booked (Đã gọi Casting)</option>
+          <option>Booked & confirmed (Đã chốt show)</option>
+          <option>Not a fit / Declined (Từ chối/Trượt)</option>
+        </select>
+        <div style="font-size:11px; color:#6b7280; margin-top:2px;">Cập nhật lần cuối: Hôm nay, 09:42 AM</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- AI MATCH SECTION -->
+  <div style="border: 1px solid #e5e7eb; border-radius: 8px; overflow: hidden; box-shadow: 0 1px 3px rgba(0,0,0,0.05);">
+    <div style="background: #eff6ff; padding: 14px 16px; border-bottom: 1px solid #bfdbfe; font-weight: 600; color: #1e3a8a; display: flex; align-items: center; gap: 8px; font-size: 13px; letter-spacing: 0.5px;">
+      <i class="ph-fill ph-robot" style="color: #3b82f6; font-size: 16px;"></i> KẾt QUẢ ĐÁNH GIÁ (AI EVALUATION)
+    </div>
+    <div style="padding: 16px; background: #fff;">
+      <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:16px; padding-bottom: 16px; border-bottom: 1px dashed #e5e7eb;">
+        <div style="font-size:26px; font-weight:800; color:#2563eb;">73.5% Match</div>
+        <span style="background:#fef9c3; color:#a16207; border:1px solid #fde047; font-size:11px; font-weight:600; padding:4px 10px; border-radius:12px;">* Estimated</span>
+      </div>
+      
+      <h4 style="margin-bottom:10px; font-size:13px; font-weight:600; color:#16a34a; display:flex; align-items:center; gap:6px;"><i class="ph-fill ph-check-circle" style="font-size: 16px;"></i> ĐIỂM MẠNH (STRENGTHS)</h4>
+      <ul style="padding-left:24px; margin-bottom:20px; color:#374151; line-height:1.6;">
+        <li style="margin-bottom:4px;">Vai trò mong muốn trùng khớp vị trí tuyển dụng.</li>
+        <li style="margin-bottom:4px;">Các thể loại múa chính khớp hoàn toàn (<strong>Contemporary, Ballet</strong>).</li>
+        <li style="margin-bottom:4px;">Cấp độ chuyên môn <strong>[Advanced]</strong> đạt hoặc vượt yêu cầu.</li>
+      </ul>
+
+      <h4 style="margin-bottom:10px; font-size:13px; font-weight:600; color:#dc2626; display:flex; align-items:center; gap:6px;"><i class="ph-fill ph-x-circle" style="font-size: 16px;"></i> THIẾU HỤT (GAPS)</h4>
+      <ul style="padding-left:24px; margin-bottom:20px; color:#374151; line-height:1.6;">
+        <li style="margin-bottom:4px;">Còn thiếu thể loại <strong>[Hip-hop]</strong> theo yêu cầu.</li>
+        <li style="margin-bottom:4px;">Kinh nghiệm thực tế (1 năm) còn xa so với yêu cầu (4 năm).</li>
+        <li style="margin-bottom:4px;">Thiếu ngoại ngữ <strong>[Korean]</strong>.</li>
+      </ul>
+    </div>
+  </div>
+
+</div>
+
+`;
+      dialog("insight", "AI Match Evaluation", insightHtml, "", "", "drawer");
+    }
+    else if (a === "push-job") {
+      showConfirm("Send a manual Push Notification to this user for Job #" + v + "?", "do-push-job", v);
+    }
+    else if (a === "do-push-job") {
+      closeDialog();
+      toast("Push notification queued successfully.");
+    }
+    else if (a === "hide-job") {
+      showConfirm("Hide Job #" + v + " from this user's matching feed?", "do-hide-job", v);
+    }
+    else if (a === "do-hide-job") {
+      closeDialog();
+      toast("Job #" + v + " hidden from user.");
+    }
   else if (a === "view-user-jobs") {
     const [id, kind] = v.split("|");
     ui.cmsDancerId = kind === "prospect" ? id : Number(id);
