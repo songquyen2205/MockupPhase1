@@ -1,10 +1,10 @@
 "use strict";
-const STORE = "hammer.phase1.review.v50";
+const STORE = "hammer.phase1.review.v52";
 let db;
 try {
   db = JSON.parse(localStorage.getItem(STORE));
 } catch {}
-if (!db || db.version !== 50) db = HammerSeed();
+if (!db || db.version !== 52) db = HammerSeed();
 
 // Auto-migrate old statuses
 const statusMap = {
@@ -1986,14 +1986,7 @@ function renderDancer() {
     title = "",
     tools = "",
     below = "";
-  if (ui.guest)
-    return `<div class="dancer-stage">
   
-  
-  
-  
-  
-  <section class="mobile-app"><div class="mobile-top"><h1>Job opportunities</h1></div>${empty("Sign in to continue", "Find opportunities and manage your applications.", btn("sign-in", "Sign in", "", "primary"))}</section></div>`;
   if (!ageAllowed() || ext().agentSuspensions[dancer().id]) {
     if (ext().agentSuspensions[dancer().id]) {
         return `<div class="dancer-stage">
@@ -2597,10 +2590,19 @@ function openAge() {
   // Do nothing. Age gate is now handled inline within renderDancer()
 }
 function ensureAccess() {
-  if (ui.guest) {
-    render();
-    return false;
-  }
+    if (ui.guest) {
+      dialog("invite-login", "", 
+        `<div style="text-align:center; padding: 10px 0;">
+           <h2 style="font-size:24px; font-weight:800; margin-bottom:10px; color:#111;">Create an account</h2>
+           <p style="color:#6b7280; margin-bottom:24px; font-size:15px;">Hammer is currently by invite only.</p>
+           <p style="font-size:14px; margin-bottom:16px; color:#374151;">Ask your friends on Hammer to send you an invitation code</p>
+           <input type="text" placeholder="Invitation code" style="width:100%; padding:14px; border:none; background:#f3f4f6; border-radius:8px; margin-bottom:24px; font-size:15px; outline:none; text-align:center;" />
+           <button type="button" onclick="ui.guest=false; closeDialog(); render();" style="width:100%; background:#111; color:#fff; padding:14px; border-radius:8px; font-weight:600; border:none; font-size:15px; cursor:pointer;">Continue</button>
+           <div style="margin-top:24px; font-size:14px; color:#6b7280;">Already have an account? <strong style="color:#111; cursor:pointer;" onclick="ui.guest=false; closeDialog(); render();">Login</strong></div>
+         </div>`, "", "", "drawer"
+      );
+      return false;
+    }
   if (ext().agentSuspensions[dancer().id]) {
     render();
     return false;
@@ -3187,7 +3189,7 @@ document.addEventListener("click", async (event) => {
   }
   if (
     ui.mode === "dancer" &&
-    !["mode", "reset", "age", "close", "sign-in"].includes(a) &&
+    !["mode", "reset", "age", "close", "sign-in", "job", "mobile", "feed-search"].includes(a) &&
     !ensureAccess()
   )
     return;
