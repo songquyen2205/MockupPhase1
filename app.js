@@ -1,10 +1,10 @@
 "use strict";
-const STORE = "hammer.phase1.review.v60";
+const STORE = "hammer.phase1.review.v61";
 let db;
 try {
   db = JSON.parse(localStorage.getItem(STORE));
 } catch {}
-if (!db || db.version !== 60) db = HammerSeed();
+if (!db || db.version !== 61) db = HammerSeed();
 
 // Auto-migrate old statuses
 const statusMap = {
@@ -2361,8 +2361,19 @@ ${(o.requirements && Array.isArray(o.requirements) && o.requirements.length > 0)
         <div style="height: 8px; background: #f8fafc; border-top: 1px solid #f1f5f9; border-bottom: 1px solid #f1f5f9; width: 100%;"></div>
 
         <!-- Application Methods -->
-        <div style="padding: 24px 20px;">
-            <h2 style="font-size: 16px; font-weight: 700; color: #0f172a; margin: 0 0 12px 0;">How to Apply</h2>
+        
+              ${ui.guest ? `
+              <div style="background: #f8fafc; border-top: 1px solid #f1f5f9; padding: 32px 20px; text-align: center; display:flex; flex-direction:column; align-items:center;">
+                 <i class="ph ph-lock-key" style="font-size: 28px; color: #94a3b8; margin-bottom: 12px;"></i>
+                 <div style="font-weight: 700; font-size: 16px; color: #0f172a; margin-bottom: 6px;">How to Apply</div>
+                 <div style="font-size: 14px; color: #64748b; margin-bottom: 20px;">Sign in to view organizer contact information and application links.</div>
+                 <button data-action="generate" style="background: #111; color: #fff; border: none; padding: 12px 24px; border-radius: 8px; font-weight: 600; font-size: 14px; cursor: pointer;">Sign in to continue</button>
+              </div>
+              ` : `
+              <div style="padding: 24px 20px;">
+              ${h2EndMarker}
+              
+
               
 
             ${o.application_instructions ? `<div style="font-size: 14px; line-height: 1.5; color: #475569; margin-bottom: 16px; background: #f8fafc; padding: 12px; border-radius: 6px; border-left: 3px solid #cbd5e1;">${esc(o.application_instructions)}</div>` : ""}
@@ -2444,7 +2455,10 @@ Let me know if you need my dance reel.</div>
 
         
         
-<!-- Report Section -->
+
+
+              </div>
+              `}<!-- Report Section -->
         
         
         <!-- Progress Tracker Hidden Temporarily -->
