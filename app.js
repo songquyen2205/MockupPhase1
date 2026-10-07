@@ -1,10 +1,10 @@
 "use strict";
-const STORE = "hammer.phase1.review.v57";
+const STORE = "hammer.phase1.review.v58";
 let db;
 try {
   db = JSON.parse(localStorage.getItem(STORE));
 } catch {}
-if (!db || db.version !== 57) db = HammerSeed();
+if (!db || db.version !== 58) db = HammerSeed();
 
 // Auto-migrate old statuses
 const statusMap = {
@@ -2624,9 +2624,10 @@ function ensureAccess() {
   return true;
 }
 function showJob(id) {
-  ui.mode = "dancer";
-  ui.pendingJob = Number(id);
-  if (!ensureAccess()) return;
+    ui.mode = "dancer";
+    ui.pendingJob = Number(id);
+    // REMOVED ensureAccess so guests can view job details
+
   ui.job = Number(id);
   ui.mobile = "detail";
   ui.pendingJob = null;
