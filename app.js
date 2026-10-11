@@ -1,10 +1,10 @@
 "use strict";
-const STORE = "hammer.phase1.review.v62";
+const STORE = "hammer.phase1.review.v63";
 let db;
 try {
   db = JSON.parse(localStorage.getItem(STORE));
 } catch {}
-if (!db || db.version !== 62) db = HammerSeed();
+if (!db || db.version !== 63) db = HammerSeed();
 
 // Auto-migrate old statuses
 const statusMap = {
@@ -2042,7 +2042,7 @@ function renderDancer() {
       (!dancer().availibility
         ? '<div class="notice">New job alerts are paused. You can still browse and apply.</div>'
         : "") +
-      `<div class="section-heading"><h3>Recommended opportunities</h3><small>${list.length} jobs</small></div>` +
+      `<div class="section-heading"><h3>${ui.guest ? "All opportunities" : "Recommended opportunities"}</h3><small>${list.length} jobs</small></div>` +
       (list.length
         ? list.map(jobCard).join("")
         : empty(
@@ -2177,13 +2177,17 @@ function jobCard(o, inHub = false) {
     
     const typePill = `<span style="background: ${typeBg}; color: ${typeColor}; font-size: 10px; font-weight: 700; padding: 4px 8px; border-radius: 4px; text-transform: uppercase;">${typeLabel}</span>`;
 
-    // 2. Match Badge
-    let matchPill = "";
-    if (open) {
-        matchPill = `<span style="background: #d1fae5; color: #047857; font-size: 11px; font-weight: 700; padding: 3px 8px; border-radius: 4px; display: flex; align-items: center; gap: 4px;">✨ ${s.value}%${s.est ? ' * est' : ' Match'}</span>`;
-    } else {
-        matchPill = `<span style="background: #fee2e2; color: #b91c1c; font-size: 11px; font-weight: 700; padding: 3px 8px; border-radius: 4px;">Closed</span>`;
-    }
+          // 2. Match Badge (hidden for guests)
+      let matchPill = "";
+      if (!ui.guest) {
+          if (open) {
+              matchPill = `<span style="background: #d1fae5; color: #047857; font-size: 11px; font-weight: 700; padding: 3px 8px; border-radius: 4px; display: flex; align-items: center; gap: 4px;">✨ ${s.value}%${s.est ? ' * est' : ' Match'}</span>`;
+          } else {
+              matchPill = `<span style="background: #fee2e2; color: #b91c1c; font-size: 11px; font-weight: 700; padding: 3px 8px; border-radius: 4px;">Closed</span>`;
+          }
+      } else if (!open) {
+          matchPill = `<span style="background: #fee2e2; color: #b91c1c; font-size: 11px; font-weight: 700; padding: 3px 8px; border-radius: 4px;">Closed</span>`;
+      }
 
     // 3. Org & Location
     const loc = o.city ? `${o.city}${o.country ? ", " + o.country : ""}` : "Worldwide";
@@ -2295,12 +2299,12 @@ function jobCard(o, inHub = false) {
     <div style="background: white; margin: -24px -20px; padding-top: 10px; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; color: #111827;">
         
         <!-- Badges -->
-        <div style="display:flex; justify-content:space-between; align-items:center; padding: 16px 20px 12px 20px;">
-            <span style="background: #111827; color: white; font-size: 10px; font-weight: 700; padding: 4px 8px; border-radius: 4px; letter-spacing: 0.5px;">${typeLabel}</span>
-            ${open ? `<span ${s.est ? `onclick="toast('${s.est_reason.replace(/'/g, "\\'")}')" style="cursor: pointer; border: 1px solid #10b981; color: #10b981; font-size: 11px; font-weight: 600; padding: 2px 8px; border-radius: 4px; background: rgba(16,185,129,0.05);"` : `style="border: 1px solid #10b981; color: #10b981; font-size: 11px; font-weight: 600; padding: 2px 8px; border-radius: 4px; background: rgba(16,185,129,0.05);"`}>+ ${s.value}%${s.est ? ' * est' : ' Match'}</span>` : `<span style="border: 1px solid #ef4444; color: #ef4444; font-size: 11px; font-weight: 600; padding: 2px 8px; border-radius: 4px; background: rgba(239,68,68,0.05);">Closed</span>`}
-        </div>
-
-        <!-- Title -->
+          <div style="display:flex; justify-content:space-between; align-items:center; padding: 16px 20px 12px 20px;">
+              <span style="background: #111827; color: white; font-size: 10px; font-weight: 700; padding: 4px 8px; border-radius: 4px; letter-spacing: 0.5px;">${typeLabel}</span>
+              ${!ui.guest ? (open ? `<span ${s.est ? `onclick="toast('${s.est_reason.replace(/'/g, "\\'")}')" style="cursor: pointer; border: 1px solid #10b981; color: #10b981; font-size: 11px; font-weight: 600; padding: 2px 8px; border-radius: 4px; background: rgba(16,185,129,0.05);"` : `style="border: 1px solid #10b981; color: #10b981; font-size: 11px; font-weight: 600; padding: 2px 8px; border-radius: 4px; background: rgba(16,185,129,0.05);"`}>+ ${s.value}%${s.est ? ' * est' : ' Match'}</span>` : `<span style="border: 1px solid #ef4444; color: #ef4444; font-size: 11px; font-weight: 600; padding: 2px 8px; border-radius: 4px; background: rgba(239,68,68,0.05);">Closed</span>`) : (!open ? `<span style="border: 1px solid #ef4444; color: #ef4444; font-size: 11px; font-weight: 600; padding: 2px 8px; border-radius: 4px; background: rgba(239,68,68,0.05);">Closed</span>` : "")}
+          </div>
+  
+          <!-- Title -->
         <div style="padding: 0 20px 20px 20px;">
             <h1 style="font-size: 24px; font-weight: 800; line-height: 1.25; margin: 0 0 8px 0; color: #0f172a;">${esc(o.title)}</h1>
             <p style="font-size: 14px; color: #64748b; margin: 0;">${esc(o.organization || "Private")} &bull; ${esc(loc)}</p>
@@ -2330,17 +2334,19 @@ function jobCard(o, inHub = false) {
             </div>
         </div>
 
-        <!-- AI Match Box -->
-        <div style="padding: 0 20px 24px 20px;">
-            <div style="background: #eff6ff; border: 1px solid #bfdbfe; border-radius: 8px; padding: 16px;">
-                <div style="font-size: 12px; font-weight: 800; color: #1e40af; margin-bottom: 6px; display:flex; align-items:center; gap:6px;"><i class="ph-fill ph-sparkle"></i> AI MATCH REASON:</div>
-                <div style="font-size: 14px; color: #2563eb; line-height: 1.5;">${esc(matchStr)}.</div>
-            </div>
-        </div>
+        ${!ui.guest ? `
+          <!-- AI Match Box -->
+          <div style="padding: 0 20px 24px 20px;">
+              <div style="background: #eff6ff; border: 1px solid #bfdbfe; border-radius: 8px; padding: 16px;">
+                  <div style="font-size: 12px; font-weight: 800; color: #1e40af; margin-bottom: 6px; display:flex; align-items:center; gap:6px;"><i class="ph-fill ph-sparkle"></i> AI MATCH REASON:</div>
+                  <div style="font-size: 14px; color: #2563eb; line-height: 1.5;">${esc(matchStr)}.</div>
+              </div>
+          </div>
 
-        <div style="height: 8px; background: #f8fafc; border-top: 1px solid #f1f5f9; border-bottom: 1px solid #f1f5f9; width: 100%;"></div>
-
-        <!-- Job Description -->
+          <div style="height: 8px; background: #f8fafc; border-top: 1px solid #f1f5f9; border-bottom: 1px solid #f1f5f9; width: 100%;"></div>
+          ` : ""}
+  
+          <!-- Job Description -->
         <div style="padding: 24px 20px;">
             <h2 style="font-size: 16px; font-weight: 700; color: #0f172a; margin: 0 0 12px 0;">Job Description</h2>
             <div style="font-size: 15px; line-height: 1.6; color: #334155; margin-bottom: 24px; white-space: pre-wrap;">${esc(o.description)}</div>
