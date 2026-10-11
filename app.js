@@ -1,10 +1,10 @@
 "use strict";
-const STORE = "hammer.phase1.review.v64";
+const STORE = "hammer.phase1.review.v65";
 let db;
 try {
   db = JSON.parse(localStorage.getItem(STORE));
 } catch {}
-if (!db || db.version !== 64) db = HammerSeed();
+if (!db || db.version !== 65) db = HammerSeed();
 
 // Auto-migrate old statuses
 const statusMap = {
@@ -2196,28 +2196,75 @@ function mobileNav() {
   
   <section class="mobile-app"><div class="mobile-top"><h1>Job opportunities</h1></div>${empty("Job Agent access is paused", "Contact Hammer support to review your access.")}</section></div>`;
     }
-    return `<div class="dancer-stage">
-  
-  
-  
-  
-  
-  <section class="mobile-app">
-      <div class="mobile-top"><h1>Confirm you are 18 or older</h1></div>
-      <div class="mobile-body">
-        <form id="dialog-form" data-kind="age">
-          <p class="muted compact">Hammer is dedicated to helping professional dancers find legitimate work opportunities. To use the Job Agent, you must be 18 or older.</p>
-          <div class="divider"></div>
-          ${field("dob", "Date of birth *", ext().age.dob || "", "date", 'required max="' + today() + '"')}
-          <label class="check-row" style="margin-top: 1.5rem; align-items: flex-start;">
-            <input name="agreement" type="checkbox" required>
-            <span style="line-height: 1.4;">I confirm my date of birth is accurate and I understand Hammer uses this to provide professional work opportunities.</span>
-          </label>
-          <div class="error-text" id="dialog-error" role="alert"></div>
-          <button class="primary wide-button" type="submit" style="margin-top: 2rem;">Confirm & continue</button>
-        </form>
-      </div>
-    </section></div>`;
+    return `<div class="dancer-stage" style="display:flex; justify-content:center; align-items:center; min-height:100%; background:#f3f4f6; padding: 20px 0;">
+      <section class="mobile-app" style="background:#ffffff; border-radius: 1.5rem; box-shadow: 0 20px 40px -15px rgba(0,0,0,0.15); border: 1px solid #e5e7eb; overflow:hidden; display:flex; flex-direction:column; max-width: 400px; width:100%;">
+        
+        <!-- Top App Bar / Header -->
+        <div style="padding: 32px 24px 16px 24px; background: #ffffff;">
+          <div style="width: 48px; height: 48px; background: #2563eb; color: #ffffff; border-radius: 14px; display: flex; align-items: center; justify-content: center; font-weight: 800; font-size: 24px; margin-bottom: 20px; box-shadow: 0 4px 12px rgba(37,99,235,0.25);">
+            H
+          </div>
+          <h1 style="font-size: 24px; font-weight: 800; color: #111827; margin: 0 0 8px 0; line-height: 1.25;">Almost there! ??</h1>
+          <p style="font-size: 14px; color: #6b7280; margin: 0; line-height: 1.5;">We just need a couple of details to set up your Hammer profile and Job Agent.</p>
+        </div>
+
+        <!-- Main Form Content -->
+        <div style="padding: 16px 24px 24px 24px; display: flex; flex-direction: column; flex: 1;">
+          <form id="dialog-form" data-kind="age" style="display: flex; flex-direction: column; gap: 20px; height: 100%;">
+            
+            <!-- Date of Birth Input -->
+            <div style="display: flex; flex-direction: column; gap: 6px;">
+              <label for="dob" style="font-size: 14px; font-weight: 600; color: #374151;">Date of Birth</label>
+              <input 
+                type="date" 
+                id="dob" 
+                name="dob" 
+                value="${esc(ext().age.dob || '')}" 
+                max="${today()}"
+                required 
+                style="width: 100%; padding: 12px 14px; background: #f9fafb; border: 1px solid #e5e7eb; border-radius: 12px; font-size: 15px; color: #1f2937; outline: none; transition: all 0.2s;"
+              >
+              <p style="font-size: 12px; color: #9ca3af; margin: 0;">You must be at least 18 years old to accept gig bookings.</p>
+            </div>
+
+            <!-- Disclaimer Checkbox -->
+            <div style="display: flex; align-items: flex-start; gap: 12px; background: #eff6ff; padding: 16px; border-radius: 12px; border: 1px solid #dbeafe;">
+              <div style="display: flex; align-items: center; margin-top: 2px;">
+                <input 
+                  id="agreement" 
+                  name="agreement" 
+                  type="checkbox" 
+                  required 
+                  style="width: 18px; height: 18px; accent-color: #2563eb; cursor: pointer;"
+                >
+              </div>
+              <div style="font-size: 13px; line-height: 1.4;">
+                <label for="agreement" style="font-weight: 500; color: #374151; cursor: pointer;">
+                  I agree to the terms of the 
+                </label>
+                <button type="button" data-action="open-disclaimer-modal" style="color: #2563eb; font-weight: 600; text-decoration: underline; background: none; border: none; padding: 0; cursor: pointer; font-size: 13px;">
+                  Job Agent Disclaimer
+                </button>
+                <p style="color: #6b7280; font-size: 12px; margin: 4px 0 0 0;">Required to activate automatic job matches.</p>
+              </div>
+            </div>
+
+            <div class="error-text" id="dialog-error" role="alert" style="color: #ef4444; font-size: 13px; font-weight: 500;"></div>
+
+            <!-- Bottom Action Area -->
+            <div style="margin-top: auto; padding-top: 16px;">
+              <button 
+                id="continueBtn" 
+                type="submit" 
+                style="width: 100%; padding: 14px 20px; border-radius: 12px; font-weight: 600; font-size: 16px; border: none; background: #2563eb; color: #ffffff; cursor: pointer; box-shadow: 0 4px 14px rgba(37,99,235,0.3); transition: all 0.2s;"
+              >
+                Continue
+              </button>
+            </div>
+          </form>
+        </div>
+      </section>
+    </div>`;
   }
   if (ui.mobile === "feed") {
     title = "";
@@ -2827,7 +2874,37 @@ function formError(message) {
   $("#dialog-error").textContent = message;
   $("#dialog-error").scrollIntoView({ block: "nearest" });
 }
-function openAge() {
+
+  function openDisclaimerModal() {
+    const html = `
+      <div style="text-align: left; padding: 4px 2px;">
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom: 16px;">
+          <h2 style="font-size: 18px; font-weight: 700; color: #111827; margin: 0;">Job Agent Disclaimer</h2>
+        </div>
+        
+        <div style="font-size: 13px; color: #4b5563; line-height: 1.5; display: flex; flex-direction: column; gap: 12px;">
+          <p style="margin: 0;">
+            Job Agent automatically matches you with studios that need instructors. Before you opt in, please review these basic rules:
+          </p>
+          <ul style="margin: 0; padding-left: 20px; display: flex; flex-direction: column; gap: 8px; color: #374151;">
+            <li><strong>We are a platform, not an agency:</strong> Hammer connects you to teaching opportunities, but we do not act as your employer or manager.</li>
+            <li><strong>Bookings are not guaranteed:</strong> We will notify you when a class matches your profile, but we cannot promise a set schedule or fixed income.</li>
+            <li><strong>Your studio, your terms:</strong> Once you accept a class, your working relationship is directly with that studio. Hammer is not responsible for delayed payments, late cancellations, or any on-site issues.</li>
+          </ul>
+          <p style="font-weight: 600; color: #1f2937; margin: 4px 0 0 0;">
+            By checking the box, you agree that Hammer is simply here to make the introduction.
+          </p>
+        </div>
+
+        <button type="button" data-action="agree-disclaimer-from-modal" style="width: 100%; margin-top: 20px; padding: 12px 18px; background: #2563eb; color: white; border: none; border-radius: 12px; font-weight: 600; font-size: 14px; cursor: pointer; box-shadow: 0 2px 8px rgba(37,99,235,0.25);">
+          Got it, I agree!
+        </button>
+      </div>
+    `;
+    dialog("disclaimer-dialog", "", html, "", "", "");
+  }
+
+  function openAge() {
   // Do nothing. Age gate is now handled inline within renderDancer()
 }
 function ensureAccess() {
@@ -3430,7 +3507,7 @@ document.addEventListener("click", async (event) => {
   }
   if (
     ui.mode === "dancer" &&
-    !["mode", "reset", "age", "close", "sign-in", "job", "mobile", "feed-search", "continue-onboarding", "login-returning", "open-quick-setup", "dismiss-onboarding-hook", "dismiss-nudge", "toggle-open-to-work", "submit-quick-setup"].includes(a) &&
+    !["mode", "reset", "age", "close", "sign-in", "job", "mobile", "feed-search", "continue-onboarding", "login-returning", "open-quick-setup", "dismiss-onboarding-hook", "dismiss-nudge", "toggle-open-to-work", "submit-quick-setup", "open-disclaimer-modal", "agree-disclaimer-from-modal"].includes(a) &&
     !ensureAccess()
   )
     return;
@@ -3564,6 +3641,15 @@ document.addEventListener("click", async (event) => {
       ui.mobile = "feed";
       render();
       toast("?? H? so d� k�ch ho?t! AI d� t�m th?y c�c show ph� h?p cho b?n.");
+      return;
+    } else if (a === "open-disclaimer-modal") {
+      openDisclaimerModal();
+      return;
+    } else if (a === "agree-disclaimer-from-modal") {
+      closeDialog();
+      const cb = document.getElementById("agreement") || document.getElementById("quick-age-confirm");
+      if (cb) cb.checked = true;
+      toast("Disclaimer agreed!");
       return;
     } else if (a === "open-quick-setup") {
       openQuickSetupModal();
