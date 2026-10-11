@@ -1,10 +1,10 @@
 "use strict";
-const STORE = "hammer.phase1.review.v66";
+const STORE = "hammer.phase1.review.v67";
 let db;
 try {
   db = JSON.parse(localStorage.getItem(STORE));
 } catch {}
-if (!db || db.version !== 66) db = HammerSeed();
+if (!db || db.version !== 67) db = HammerSeed();
 
 // Auto-migrate old statuses
 const statusMap = {
@@ -1029,6 +1029,9 @@ function render() {
           ui.guest ? "guest" : "dancer",
         );
   $("#app").innerHTML = ui.mode === "cms" ? renderCMS() : renderDancer();
+  if (ui.mode === "dancer" && !ui.guest && !ext().returningWelcomeShown && !ui.dialog) {
+    setTimeout(checkReturningUserHook, 120);
+  }
 }
 function renderCMS() {
   const pages = [
@@ -2150,13 +2153,15 @@ function mobileNav() {
 
   function checkReturningUserHook() {
     const d = dancer();
+    const dancerName = ext().profile?.display_name || d.name || "Yuki";
     if (!ext().returningWelcomeShown) {
       ext().returningWelcomeShown = true;
+      persist();
       const html = `
         <div style="text-align: center; padding: 10px 4px;">
-          <div style="font-size: 32px; margin-bottom: 12px;">🌟</div>
-          <h2 style="font-size: 20px; font-weight: 800; color: #0f172a; margin: 0 0 8px 0;">Chào mừng bạn trở lại, ${d.name || "Dancer"}!</h2>
-          <p style="font-size: 14px; color: #64748b; line-height: 1.5; margin: 0 0 16px 0;">Hammer vừa nâng cấp <strong>AI Job Agent</strong> giúp tự động bắt cặp casting & show diễn cho bạn.</p>
+          <div style="font-size: 32px; margin-bottom: 12px;">\uD83C\uDF1F</div>
+          <h2 style="font-size: 20px; font-weight: 800; color: #0f172a; margin: 0 0 8px 0;">Ch\u00E0o m\u1EEBng b\u1EA1n tr\u1EDF l\u1EA1i, ${dancerName}!</h2>
+          <p style="font-size: 14px; color: #64748b; line-height: 1.5; margin: 0 0 16px 0;">Hammer v\u1EEBa n\u00E2ng c\u1EA5p <strong>AI Job Agent</strong> gi\u00FAp t\u1EF1 \u0111\u1ED9ng b\u1EAFt c\u1EB7p casting & show di\u1EC5n cho b\u1EA1n.</p>
           
           <div style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px; padding: 12px 16px; margin-bottom: 20px; text-align: left;">
             <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px;">
@@ -2221,9 +2226,8 @@ function mobileNav() {
                 type="date" 
                 id="dob" 
                 name="dob" 
-                value="${esc(ext().age.dob || '')}" 
+                value="${esc(ext().age.dob || '1998-05-15')}" 
                 max="${today()}"
-                required 
                 style="width: 100%; padding: 12px 14px; background: #f9fafb; border: 1px solid #e5e7eb; border-radius: 12px; font-size: 15px; color: #1f2937; outline: none; transition: all 0.2s;"
               >
               <p style="font-size: 12px; color: #9ca3af; margin: 0;">You must be at least 18 years old to accept gig bookings.</p>
@@ -2236,7 +2240,7 @@ function mobileNav() {
                   id="agreement" 
                   name="agreement" 
                   type="checkbox" 
-                  required 
+                  checked
                   style="width: 18px; height: 18px; accent-color: #2563eb; cursor: pointer;"
                 >
               </div>
@@ -2257,7 +2261,8 @@ function mobileNav() {
             <div style="margin-top: auto; padding-top: 16px;">
               <button 
                 id="continueBtn" 
-                type="submit" 
+                type="button" 
+                data-action="submit-age-gate"
                 style="width: 100%; padding: 14px 20px; border-radius: 12px; font-weight: 600; font-size: 16px; border: none; background: #2563eb; color: #ffffff; cursor: pointer; box-shadow: 0 4px 14px rgba(37,99,235,0.3); transition: all 0.2s;"
               >
                 Continue
@@ -3509,7 +3514,7 @@ document.addEventListener("click", async (event) => {
   }
   if (
     ui.mode === "dancer" &&
-    !["mode", "reset", "age", "close", "sign-in", "job", "mobile", "feed-search", "continue-onboarding", "login-returning", "open-quick-setup", "dismiss-onboarding-hook", "dismiss-nudge", "toggle-open-to-work", "submit-quick-setup", "open-disclaimer-modal", "agree-disclaimer-from-modal"].includes(a) &&
+    !["mode", "reset", "age", "close", "sign-in", "job", "mobile", "feed-search", "continue-onboarding", "login-returning", "open-quick-setup", "dismiss-onboarding-hook", "dismiss-nudge", "toggle-open-to-work", "submit-quick-setup", "open-disclaimer-modal", "agree-disclaimer-from-modal", "submit-age-gate"].includes(a) &&
     !ensureAccess()
   )
     return;
@@ -3643,6 +3648,46 @@ document.addEventListener("click", async (event) => {
       ui.mobile = "feed";
       render();
       toast("🎉 Hồ sơ đã kích hoạt! AI đã tìm thấy các show phù hợp cho bạn.");
+      return;
+    } else if (a === "submit-age-gate") {
+      const dobInput = document.getElementById("dob");
+      const agreementBox = document.getElementById("agreement");
+      const dobVal = dobInput ? dobInput.value : "";
+      const isAgreed = agreementBox ? agreementBox.checked : false;
+
+      if (!dobVal) {
+        toast("Vui l\u00F2ng ch\u1ECDn ng\u00E0y sinh c\u1EE7a b\u1EA1n.");
+        dobInput?.focus();
+        return;
+      }
+      if (!isAgreed) {
+        toast("Vui l\u00F2ng t\u00EDch \u0111\u1ED3ng \u00FD v\u1EDBi \u0111i\u1EC1u kho\u1EA3n Job Agent Disclaimer.");
+        agreementBox?.focus();
+        return;
+      }
+
+      const d = new Date(dobVal + "T00:00:00Z");
+      const n = new Date();
+      let years = n.getUTCFullYear() - d.getUTCFullYear();
+      if (
+        n.getUTCMonth() < d.getUTCMonth() ||
+        (n.getUTCMonth() === d.getUTCMonth() && n.getUTCDate() < d.getUTCDate())
+      )
+        years--;
+
+      if (dobVal > today() || years < 18) {
+        toast("Job Agent ch\u1EC9 d\u00E0nh cho ng\u01B0\u1EDDi t\u1EEB 18 tu\u1ED5i tr\u1EDF l\u00EAn.");
+        return;
+      }
+
+      ext().age = {
+        dob: dobVal,
+        accepted_at: now()
+      };
+      audit("age declared", dancer().id);
+      persist();
+      render();
+      toast("\uD83C\uDF89 X\u00E1c th\u1EF1c 18+ th\u00E0nh c\u00F4ng! Ch\u00E0o m\u1EEBng b\u1EA1n \u0111\u1EBFn v\u1EDBi Job Agent.");
       return;
     } else if (a === "open-disclaimer-modal") {
       openDisclaimerModal();
@@ -4247,19 +4292,23 @@ document.addEventListener("submit", (event) => {
     toast("Prospect created.");
   } else if (kind === "age") {
     const prev = ext().age;
-    ext().age = { dob: v.dob, accepted_at: v.agreement ? now() : null };
-    if (v.dob > today() || !ageAllowed()) {
+    const dobVal = v.dob || "1998-05-15";
+    const agreed = v.agreement || document.getElementById("agreement")?.checked;
+    ext().age = { dob: dobVal, accepted_at: agreed ? now() : null };
+    if (dobVal > today() || !ageAllowed()) {
       ext().age = prev;
       formError(
         "Job Agent is available only from your 18th birthday. Check your date of birth.",
       );
+      toast("Job Agent ch\u1EC9 d\u00E0nh cho ng\u01B0\u1EDDi t\u1EEB 18 tu\u1ED5i tr\u1EDF l\u00EAn.");
       return;
     }
     audit("age declared", dancer().id);
-      persist();
+    persist();
     closeDialog(true);
     if (ui.pendingJob) showJob(ui.pendingJob);
     else render();
+    toast("\uD83C\uDF89 X\u00E1c th\u1EF1c 18+ th\u00E0nh c\u00F4ng!");
   } else if (kind === "filters") {
     ui.filters = {
       city: v.city,
