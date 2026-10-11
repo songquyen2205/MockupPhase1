@@ -1,10 +1,10 @@
 "use strict";
-const STORE = "hammer.phase1.review.v65";
+const STORE = "hammer.phase1.review.v66";
 let db;
 try {
   db = JSON.parse(localStorage.getItem(STORE));
 } catch {}
-if (!db || db.version !== 65) db = HammerSeed();
+if (!db || db.version !== 66) db = HammerSeed();
 
 // Auto-migrate old statuses
 const statusMap = {
@@ -1990,32 +1990,32 @@ function mobileNav() {
     const html = `
       <div style="text-align: center; padding: 12px 4px 6px 4px;">
         <div style="width: 56px; height: 56px; margin: 0 auto 16px auto; background: linear-gradient(135deg, #dbeafe 0%, #ede9fe 100%); border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 28px; box-shadow: 0 4px 12px rgba(59,130,246,0.15);">
-          ??
+          🤖
         </div>
-        <h2 style="font-size: 20px; font-weight: 800; color: #0f172a; margin: 0 0 8px 0; line-height: 1.3;">S?n s�ng d? AI san show cho b?n?</h2>
-        <p style="font-size: 14px; color: #64748b; line-height: 1.5; margin: 0 0 20px 0;">�?ng b? l? c�c bu?i Casting, Workshop & Show di?n d?c quy?n ph� h?p v?i phong c�ch c?a b?n tr�n Hammer.</p>
+        <h2 style="font-size: 20px; font-weight: 800; color: #0f172a; margin: 0 0 8px 0; line-height: 1.3;">Sẵn sàng để AI săn show cho bạn?</h2>
+        <p style="font-size: 14px; color: #64748b; line-height: 1.5; margin: 0 0 20px 0;">Đừng bỏ lỡ các buổi Casting, Workshop & Show diễn độc quyền phù hợp với phong cách của bạn trên Hammer.</p>
 
         <div style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 10px; padding: 14px 16px; margin-bottom: 24px; text-align: left; display: grid; gap: 12px;">
           <div style="display: flex; gap: 10px; align-items: center;">
             <div style="width: 28px; height: 28px; border-radius: 6px; background: #eff6ff; color: #2563eb; display:flex; align-items:center; justify-content:center; font-size: 15px; flex-shrink: 0;"><i class="ph-fill ph-target"></i></div>
-            <div style="font-size: 13px; color: #334155;"><strong>Match chu?n phong c�ch:</strong> T? d?ng l?c show theo d�ng th? lo?i nh?y & kinh nghi?m.</div>
+            <div style="font-size: 13px; color: #334155;"><strong>Match chuẩn phong cách:</strong> Tự động lọc show theo đúng thể loại nhảy & kinh nghiệm.</div>
           </div>
           <div style="display: flex; gap: 10px; align-items: center;">
             <div style="width: 28px; height: 28px; border-radius: 6px; background: #ecfdf5; color: #059669; display:flex; align-items:center; justify-content:center; font-size: 15px; flex-shrink: 0;"><i class="ph-fill ph-currency-dollar"></i></div>
-            <div style="font-size: 13px; color: #334155;"><strong>Th� lao minh b?ch:</strong> Ch? k?t n?i co h?i c� tr? ph� r� r�ng ($300 - $3,000+).</div>
+            <div style="font-size: 13px; color: #334155;"><strong>Thù lao minh bạch:</strong> Chỉ kết nối cơ hội có trả phí rõ ràng ($300 - $3,000+).</div>
           </div>
           <div style="display: flex; gap: 10px; align-items: center;">
             <div style="width: 28px; height: 28px; border-radius: 6px; background: #faf5ff; color: #9333ea; display:flex; align-items:center; justify-content:center; font-size: 15px; flex-shrink: 0;"><i class="ph-fill ph-paper-plane-tilt"></i></div>
-            <div style="font-size: 13px; color: #334155;"><strong>N?p don 1-ch?m:</strong> K?t n?i tr?c ti?p d?n Studio v� Organizer to�n c?u.</div>
+            <div style="font-size: 13px; color: #334155;"><strong>Nộp đơn 1-chạm:</strong> Kết nối trực tiếp đến Studio và Organizer toàn cầu.</div>
           </div>
         </div>
 
         <button type="button" data-action="open-quick-setup" style="width: 100%; background: #0f172a; color: white; border: none; padding: 14px 20px; border-radius: 8px; font-weight: 700; font-size: 15px; cursor: pointer; display:flex; align-items:center; justify-content:center; gap:8px; box-shadow: 0 4px 12px rgba(15,23,42,0.2);">
-          <span>B?t Job Agent ngay (Ch? 30s)</span> <i class="ph-bold ph-arrow-right"></i>
+          <span>Bật Job Agent ngay (Chỉ 30s)</span> <i class="ph-bold ph-arrow-right"></i>
         </button>
 
         <button type="button" data-action="dismiss-onboarding-hook" style="margin-top: 14px; background: none; border: none; color: #64748b; font-size: 13px; font-weight: 500; cursor: pointer; text-decoration: underline;">
-          �? sau, t�i mu?n lu?t xem tru?c
+          Để sau, tôi muốn lướt xem trước
         </button>
       </div>
     `;
@@ -2042,12 +2042,12 @@ function mobileNav() {
     const html = `
       <div id="quick-setup-box" style="display:flex; flex-direction:column; gap:16px;">
         <div style="text-align:center; margin-bottom: 4px;">
-          <h2 style="font-size: 20px; font-weight: 800; color: #0f172a; margin: 0 0 4px 0;">Thi?t l?p h? so san show ?</h2>
-          <p style="font-size: 13px; color: #64748b; margin: 0;">AI s? d?a v�o th�ng tin n�y d? t�nh % Match cho t?ng bu?i casting.</p>
+          <h2 style="font-size: 20px; font-weight: 800; color: #0f172a; margin: 0 0 4px 0;">Thiết lập hồ sơ săn show ✨</h2>
+          <p style="font-size: 13px; color: #64748b; margin: 0;">AI sẽ dựa vào thông tin này để tính % Match cho từng buổi casting.</p>
         </div>
 
         <div>
-          <label style="display:block; font-size: 13px; font-weight: 700; color: #334155; margin-bottom: 8px;">1. Phong c�ch nh?y ch�nh c?a b?n (Ch?n 1 ho?c nhi?u)</label>
+          <label style="display:block; font-size: 13px; font-weight: 700; color: #334155; margin-bottom: 8px;">1. Phong cách nhảy chính của bạn (Chọn 1 hoặc nhiều)</label>
           <div id="quick-style-container" style="display:flex; flex-wrap:wrap; gap:8px;">
             ${styleChips}
           </div>
@@ -2056,38 +2056,41 @@ function mobileNav() {
 
         <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
           <div>
-            <label style="display:block; font-size: 13px; font-weight: 700; color: #334155; margin-bottom: 6px;">2. Khu v?c ho?t d?ng</label>
+            <label style="display:block; font-size: 13px; font-weight: 700; color: #334155; margin-bottom: 6px;">2. Khu vực hoạt động</label>
             <select id="quick-city-input" style="width:100%; padding: 10px 12px; border: 1px solid #cbd5e1; border-radius: 8px; font-size: 14px; background: white; outline: none;">
               ${cityOptions}
             </select>
           </div>
           <div>
-            <label style="display:block; font-size: 13px; font-weight: 700; color: #334155; margin-bottom: 6px;">3. C�t-x� t?i thi?u ($)</label>
+            <label style="display:block; font-size: 13px; font-weight: 700; color: #334155; margin-bottom: 6px;">3. Cát-xê tối thiểu ($)</label>
             <input type="number" id="quick-rate-input" value="${minRate}" min="50" step="50" style="width:100%; padding: 10px 12px; border: 1px solid #cbd5e1; border-radius: 8px; font-size: 14px; outline: none;" placeholder="300" />
           </div>
         </div>
 
-        <!-- 18+ Verification -->
-        <div style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px; padding: 14px;">
-          <div style="font-size: 13px; font-weight: 700; color: #1e293b; margin-bottom: 6px; display:flex; align-items:center; gap:6px;">
-            <i class="ph-fill ph-shield-check" style="color: #10b981;"></i> X�c th?c d? tu?i vu c�ng (18+)
+        <!-- Date of Birth & Disclaimer (New Design) -->
+        <div style="background: #eff6ff; border: 1px solid #dbeafe; border-radius: 12px; padding: 16px;">
+          <div style="display:flex; align-items:center; gap:8px; margin-bottom: 12px;">
+            <div style="width: 26px; height: 26px; background: #2563eb; color: #fff; border-radius: 8px; display:flex; align-items:center; justify-content:center; font-weight: 800; font-size: 14px;">H</div>
+            <div style="font-size: 14px; font-weight: 700; color: #1e3a8a;">Date of Birth & Disclaimer</div>
           </div>
-          <p style="font-size: 12px; color: #64748b; line-height: 1.4; margin: 0 0 10px 0;">C�c show di?n tr? th� lao v� casting chuy�n nghi?p tr�n Hammer y�u c?u vu c�ng t? 18 tu?i tr? l�n.</p>
-          <div style="display:flex; align-items:center; gap:10px; margin-bottom: 10px;">
-            <label style="font-size: 12px; font-weight: 600; color: #475569;">Ng�y sinh:</label>
-            <input type="date" id="quick-dob-input" value="${defaultDob}" max="${today()}" required style="padding: 6px 10px; border: 1px solid #cbd5e1; border-radius: 6px; font-size: 13px; outline:none;" />
+          <div style="display:flex; flex-direction:column; gap:4px; margin-bottom: 12px;">
+            <label style="font-size: 12px; font-weight: 600; color: #374151;">Date of Birth:</label>
+            <input type="date" id="quick-dob-input" value="${defaultDob}" max="${today()}" required style="width:100%; padding: 8px 12px; background:#fff; border: 1px solid #cbd5e1; border-radius: 8px; font-size: 13px; outline:none;" />
+            <span style="font-size: 11px; color: #64748b;">You must be at least 18 years old to accept gig bookings.</span>
           </div>
-          <label style="display:flex; align-items:flex-start; gap:8px; font-size: 12px; color: #334155; cursor:pointer;">
-            <input type="checkbox" id="quick-age-confirm" checked style="margin-top: 2px;" />
-            <span>T�i x�c nh?n ng�y sinh ch�nh x�c v� d? 18 tu?i d? tham gia casting.</span>
-          </label>
+          <div style="display:flex; align-items:flex-start; gap:8px;">
+            <input type="checkbox" id="quick-age-confirm" checked style="margin-top: 3px; accent-color: #2563eb;" />
+            <div style="font-size: 12px; line-height: 1.4; color: #374151;">
+              I agree to the terms of the <button type="button" data-action="open-disclaimer-modal" style="color: #2563eb; font-weight: 600; text-decoration: underline; background:none; border:none; padding:0; cursor:pointer; font-size: 12px;">Job Agent Disclaimer</button>.
+            </div>
+          </div>
         </div>
 
         <!-- Open to Work Toggle -->
         <div style="display:flex; justify-content:space-between; align-items:center; padding: 12px 14px; background: #ecfdf5; border: 1px solid #a7f3d0; border-radius: 8px;">
           <div>
-            <div style="font-size: 13px; font-weight: 700; color: #065f46;">S?n s�ng nh?n show ngay (Open to Work)</div>
-            <div style="font-size: 11px; color: #047857;">Cho ph�p Studio t�m th?y profile c?a b?n</div>
+            <div style="font-size: 13px; font-weight: 700; color: #065f46;">Sẵn sàng nhận show ngay (Open to Work)</div>
+            <div style="font-size: 11px; color: #047857;">Cho phép Studio tìm thấy profile của bạn</div>
           </div>
           <label style="position:relative; display:inline-block; width: 44px; height: 24px; cursor:pointer;">
             <input type="checkbox" id="quick-open-to-work" checked style="opacity:0; width:0; height:0;" />
@@ -2097,7 +2100,7 @@ function mobileNav() {
         </div>
 
         <button type="button" data-action="submit-quick-setup" style="width: 100%; background: #0f172a; color: white; border: none; padding: 14px 20px; border-radius: 8px; font-weight: 700; font-size: 15px; cursor: pointer; display:flex; align-items:center; justify-content:center; gap:8px; box-shadow: 0 4px 12px rgba(15,23,42,0.2);">
-          <span>K�ch ho?t & San Show ngay ?</span>
+          <span>Kích hoạt & Săn Show ngay ✨</span>
         </button>
       </div>
     `;
@@ -2151,26 +2154,26 @@ function mobileNav() {
       ext().returningWelcomeShown = true;
       const html = `
         <div style="text-align: center; padding: 10px 4px;">
-          <div style="font-size: 32px; margin-bottom: 12px;">??</div>
-          <h2 style="font-size: 20px; font-weight: 800; color: #0f172a; margin: 0 0 8px 0;">Ch�o m?ng b?n tr? l?i, ${d.name || "Dancer"}!</h2>
-          <p style="font-size: 14px; color: #64748b; line-height: 1.5; margin: 0 0 16px 0;">Hammer v?a n�ng c?p <strong>AI Job Agent</strong> gi�p t? d?ng b?t c?p casting & show di?n cho b?n.</p>
+          <div style="font-size: 32px; margin-bottom: 12px;">🌟</div>
+          <h2 style="font-size: 20px; font-weight: 800; color: #0f172a; margin: 0 0 8px 0;">Chào mừng bạn trở lại, ${d.name || "Dancer"}!</h2>
+          <p style="font-size: 14px; color: #64748b; line-height: 1.5; margin: 0 0 16px 0;">Hammer vừa nâng cấp <strong>AI Job Agent</strong> giúp tự động bắt cặp casting & show diễn cho bạn.</p>
           
           <div style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px; padding: 12px 16px; margin-bottom: 20px; text-align: left;">
             <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px;">
-              <span style="font-size: 12px; font-weight: 700; color: #334155;">�? ho�n thi?n h? so san show:</span>
+              <span style="font-size: 12px; font-weight: 700; color: #334155;">Độ hoàn thiện hồ sơ săn show:</span>
               <span style="font-size: 12px; font-weight: 800; color: #2563eb;">65%</span>
             </div>
             <div style="height: 6px; background: #e2e8f0; border-radius: 3px; overflow: hidden;">
               <div style="width: 65%; height: 100%; background: #2563eb; border-radius: 3px;"></div>
             </div>
-            <div style="font-size: 11px; color: #64748b; margin-top: 6px;">Ho�n thi?n n?t th? lo?i & m?c th� lao d? AI d?t d? ch�nh x�c 100%!</div>
+            <div style="font-size: 11px; color: #64748b; margin-top: 6px;">Hoàn thiện nốt thể loại & mức thù lao để AI đạt độ chính xác 100%!</div>
           </div>
 
           <button type="button" data-action="open-quick-setup" style="width: 100%; background: #0f172a; color: white; border: none; padding: 12px 20px; border-radius: 8px; font-weight: 700; font-size: 14px; cursor: pointer; margin-bottom: 10px;">
-            Ho�n thi?n h? so ngay (30s) ?
+            Hoàn thiện hồ sơ ngay (30s) ✨
           </button>
           <button type="button" data-action="dismiss-onboarding-hook" style="background: none; border: none; color: #64748b; font-size: 13px; cursor: pointer;">
-            �? sau, v�o xem job tru?c
+            Để sau, vào xem job trước
           </button>
         </div>
       `;
@@ -2179,7 +2182,6 @@ function mobileNav() {
       render();
     }
   }
-
   function renderDancer() {
   let body = "",
     title = "",
@@ -2204,7 +2206,7 @@ function mobileNav() {
           <div style="width: 48px; height: 48px; background: #2563eb; color: #ffffff; border-radius: 14px; display: flex; align-items: center; justify-content: center; font-weight: 800; font-size: 24px; margin-bottom: 20px; box-shadow: 0 4px 12px rgba(37,99,235,0.25);">
             H
           </div>
-          <h1 style="font-size: 24px; font-weight: 800; color: #111827; margin: 0 0 8px 0; line-height: 1.25;">Almost there! ??</h1>
+          <h1 style="font-size: 24px; font-weight: 800; color: #111827; margin: 0 0 8px 0; line-height: 1.25;">Almost there! \uD83C\uDF89</h1>
           <p style="font-size: 14px; color: #6b7280; margin: 0; line-height: 1.5;">We just need a couple of details to set up your Hammer profile and Job Agent.</p>
         </div>
 
@@ -2294,13 +2296,13 @@ function mobileNav() {
               return card + `
               <div style="background: linear-gradient(135deg, #f0fdf4 0%, #eff6ff 100%); border: 1px solid #bae6fd; border-radius: 8px; padding: 14px 16px; margin-bottom: 12px; position:relative;">
                 <div style="display:flex; gap:10px; align-items:flex-start;">
-                  <span style="font-size: 22px;">??</span>
+                  <span style="font-size: 22px;">💡</span>
                   <div style="flex:1;">
-                    <div style="font-weight: 700; font-size: 13px; color: #0369a1; margin-bottom: 4px;">D?o n�y b?n c� n�ng c�t-x� hay d?i style m?i?</div>
-                    <div style="font-size: 12px; color: #475569; line-height: 1.4; margin-bottom: 10px;">C?p nh?t l?i m?c th� lao & phong c�ch nh?y d? AI gh�p d�ng c�c show m?i nh?t th�ng n�y.</div>
+                    <div style="font-weight: 700; font-size: 13px; color: #0369a1; margin-bottom: 4px;">Dạo này bạn có nâng cát-xê hay đổi style mới?</div>
+                    <div style="font-size: 12px; color: #475569; line-height: 1.4; margin-bottom: 10px;">Cập nhật lại mức thù lao & phong cách nhảy để AI ghép đúng các show mới nhất tháng này.</div>
                     <div style="display:flex; gap:8px;">
-                      <button data-action="open-quick-setup" style="background:#0284c7; color:white; border:none; padding:6px 12px; border-radius:6px; font-size:12px; font-weight:600; cursor:pointer;">C?p nh?t nhanh (30s)</button>
-                      <button data-action="dismiss-nudge" style="background:white; border: 1px solid #cbd5e1; color:#64748b; padding:6px 10px; border-radius:6px; font-size:12px; font-weight:500; cursor:pointer;">Th�ng tin v?n chu?n</button>
+                      <button data-action="open-quick-setup" style="background:#0284c7; color:white; border:none; padding:6px 12px; border-radius:6px; font-size:12px; font-weight:600; cursor:pointer;">Cập nhật nhanh (30s)</button>
+                      <button data-action="dismiss-nudge" style="background:white; border: 1px solid #cbd5e1; color:#64748b; padding:6px 10px; border-radius:6px; font-size:12px; font-weight:500; cursor:pointer;">Thông tin vẫn chuẩn</button>
                     </div>
                   </div>
                 </div>
@@ -3614,7 +3616,7 @@ document.addEventListener("click", async (event) => {
     } else if (a === "submit-quick-setup") {
       const ageConfirm = document.getElementById("quick-age-confirm")?.checked;
       if (!ageConfirm) {
-        toast("Vui l�ng x�c nh?n b?n d? 18 tu?i d? k�ch ho?t Job Agent.");
+        toast("Vui lòng xác nhận bạn đủ 18 tuổi để kích hoạt Job Agent.");
         return;
       }
       const d = dancer();
@@ -3640,7 +3642,7 @@ document.addEventListener("click", async (event) => {
       ui.guest = false;
       ui.mobile = "feed";
       render();
-      toast("?? H? so d� k�ch ho?t! AI d� t�m th?y c�c show ph� h?p cho b?n.");
+      toast("🎉 Hồ sơ đã kích hoạt! AI đã tìm thấy các show phù hợp cho bạn.");
       return;
     } else if (a === "open-disclaimer-modal") {
       openDisclaimerModal();
@@ -3657,18 +3659,18 @@ document.addEventListener("click", async (event) => {
     } else if (a === "dismiss-onboarding-hook") {
       closeDialog();
       render();
-      toast("B?n c� th? c?p nh?t Job Profile b?t k? l�c n�o!");
+      toast("B\u1EA1n c\u00F3 th\u1EC3 c\u1EADp nh\u1EADt Job Profile b\u1EA5t k\u1EF3 l\u00FAc n\u00E0o!");
       return;
     } else if (a === "dismiss-nudge") {
       ext().nudgeDismissed = true;
       render();
-      toast("�� ghi nh?n! H? so c?a b?n gi? nguy�n.");
+      toast("\u0110\u00E3 ghi nh\u1EADn! H\u1ED3 s\u01A1 c\u1EE7a b\u1EA1n gi\u1EEF nguy\u00EAn.");
       return;
     } else if (a === "toggle-open-to-work") {
       const d = dancer();
       d.availibility = !d.availibility;
       render();
-      toast(d.availibility ? "?? �� b?t Open to Work! B?n s? nh?n du?c th�ng b�o show m?i." : "?? �� t?m d?ng Open to Work.");
+      toast(d.availibility ? "\uD83D\uDFE2 \u0110\u00E3 b\u1EADt Open to Work! B\u1EA1n s\u1EBD nh\u1EADn \u0111\u01B0\u1EE3c th\u00F4ng b\u00E1o show m\u1EDBi." : "\u23F8\uFE0F \u0110\u00E3 t\u1EA1m d\u1EEBng Open to Work.");
       return;
     } else if (a === "open-alert") {
     ui.alertJob = null;
