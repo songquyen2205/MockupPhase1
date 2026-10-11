@@ -1,10 +1,10 @@
 "use strict";
-const STORE = "hammer.phase1.review.v63";
+const STORE = "hammer.phase1.review.v64";
 let db;
 try {
   db = JSON.parse(localStorage.getItem(STORE));
 } catch {}
-if (!db || db.version !== 63) db = HammerSeed();
+if (!db || db.version !== 64) db = HammerSeed();
 
 // Auto-migrate old statuses
 const statusMap = {
@@ -1983,7 +1983,204 @@ function mobileNav() {
     <div style="flex:1; display:flex; align-items:center;"><button class="create-btn" disabled><i class="ph ph-plus"></i></button></div>
     </nav>`;
 }
-function renderDancer() {
+
+  // === ONBOARDING & RETURNING USER HOOKS ===
+  function openOnboardingHook() {
+    const d = dancer();
+    const html = `
+      <div style="text-align: center; padding: 12px 4px 6px 4px;">
+        <div style="width: 56px; height: 56px; margin: 0 auto 16px auto; background: linear-gradient(135deg, #dbeafe 0%, #ede9fe 100%); border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 28px; box-shadow: 0 4px 12px rgba(59,130,246,0.15);">
+          ??
+        </div>
+        <h2 style="font-size: 20px; font-weight: 800; color: #0f172a; margin: 0 0 8px 0; line-height: 1.3;">S?n s�ng d? AI san show cho b?n?</h2>
+        <p style="font-size: 14px; color: #64748b; line-height: 1.5; margin: 0 0 20px 0;">�?ng b? l? c�c bu?i Casting, Workshop & Show di?n d?c quy?n ph� h?p v?i phong c�ch c?a b?n tr�n Hammer.</p>
+
+        <div style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 10px; padding: 14px 16px; margin-bottom: 24px; text-align: left; display: grid; gap: 12px;">
+          <div style="display: flex; gap: 10px; align-items: center;">
+            <div style="width: 28px; height: 28px; border-radius: 6px; background: #eff6ff; color: #2563eb; display:flex; align-items:center; justify-content:center; font-size: 15px; flex-shrink: 0;"><i class="ph-fill ph-target"></i></div>
+            <div style="font-size: 13px; color: #334155;"><strong>Match chu?n phong c�ch:</strong> T? d?ng l?c show theo d�ng th? lo?i nh?y & kinh nghi?m.</div>
+          </div>
+          <div style="display: flex; gap: 10px; align-items: center;">
+            <div style="width: 28px; height: 28px; border-radius: 6px; background: #ecfdf5; color: #059669; display:flex; align-items:center; justify-content:center; font-size: 15px; flex-shrink: 0;"><i class="ph-fill ph-currency-dollar"></i></div>
+            <div style="font-size: 13px; color: #334155;"><strong>Th� lao minh b?ch:</strong> Ch? k?t n?i co h?i c� tr? ph� r� r�ng ($300 - $3,000+).</div>
+          </div>
+          <div style="display: flex; gap: 10px; align-items: center;">
+            <div style="width: 28px; height: 28px; border-radius: 6px; background: #faf5ff; color: #9333ea; display:flex; align-items:center; justify-content:center; font-size: 15px; flex-shrink: 0;"><i class="ph-fill ph-paper-plane-tilt"></i></div>
+            <div style="font-size: 13px; color: #334155;"><strong>N?p don 1-ch?m:</strong> K?t n?i tr?c ti?p d?n Studio v� Organizer to�n c?u.</div>
+          </div>
+        </div>
+
+        <button type="button" data-action="open-quick-setup" style="width: 100%; background: #0f172a; color: white; border: none; padding: 14px 20px; border-radius: 8px; font-weight: 700; font-size: 15px; cursor: pointer; display:flex; align-items:center; justify-content:center; gap:8px; box-shadow: 0 4px 12px rgba(15,23,42,0.2);">
+          <span>B?t Job Agent ngay (Ch? 30s)</span> <i class="ph-bold ph-arrow-right"></i>
+        </button>
+
+        <button type="button" data-action="dismiss-onboarding-hook" style="margin-top: 14px; background: none; border: none; color: #64748b; font-size: 13px; font-weight: 500; cursor: pointer; text-decoration: underline;">
+          �? sau, t�i mu?n lu?t xem tru?c
+        </button>
+      </div>
+    `;
+    dialog("onboarding-hook", "", html, "", "", "");
+  }
+
+  function openQuickSetupModal() {
+    closeDialog();
+    const d = dancer();
+    const allStyles = ["Hip-Hop", "Popping", "Locking", "Breaking", "Waacking", "House", "Jazz", "Contemporary", "Ballet", "K-Pop", "Choreography", "Heels"];
+    const curStyles = (d.dance_styles || "Hip-Hop,Choreography").split(",").map(s => s.trim().toLowerCase());
+    
+    const styleChips = allStyles.map(st => {
+      const active = curStyles.includes(st.toLowerCase());
+      return `<span class="quick-style-chip" data-style="${st}" style="padding: 6px 14px; border-radius: 20px; font-size: 12px; font-weight: 600; cursor: pointer; border: 1px solid ${active ? '#2563eb' : '#cbd5e1'}; background: ${active ? '#eff6ff' : '#fff'}; color: ${active ? '#1d4ed8' : '#475569'}; transition: all 0.15s;">${st}</span>`;
+    }).join("");
+
+    const cities = ["Tokyo", "Singapore", "Ho Chi Minh City", "Osaka", "Seoul", "Bangkok", "Other"];
+    const cityOptions = cities.map(c => `<option value="${c}" ${(d.city || "Tokyo") === c ? "selected" : ""}>${c}</option>`).join("");
+
+    const minRate = d.min_compensation || 300;
+    const defaultDob = ext().age.dob || "2000-01-01";
+
+    const html = `
+      <div id="quick-setup-box" style="display:flex; flex-direction:column; gap:16px;">
+        <div style="text-align:center; margin-bottom: 4px;">
+          <h2 style="font-size: 20px; font-weight: 800; color: #0f172a; margin: 0 0 4px 0;">Thi?t l?p h? so san show ?</h2>
+          <p style="font-size: 13px; color: #64748b; margin: 0;">AI s? d?a v�o th�ng tin n�y d? t�nh % Match cho t?ng bu?i casting.</p>
+        </div>
+
+        <div>
+          <label style="display:block; font-size: 13px; font-weight: 700; color: #334155; margin-bottom: 8px;">1. Phong c�ch nh?y ch�nh c?a b?n (Ch?n 1 ho?c nhi?u)</label>
+          <div id="quick-style-container" style="display:flex; flex-wrap:wrap; gap:8px;">
+            ${styleChips}
+          </div>
+          <input type="hidden" id="quick-styles-input" value="${d.dance_styles || "Hip-Hop,Choreography"}" />
+        </div>
+
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
+          <div>
+            <label style="display:block; font-size: 13px; font-weight: 700; color: #334155; margin-bottom: 6px;">2. Khu v?c ho?t d?ng</label>
+            <select id="quick-city-input" style="width:100%; padding: 10px 12px; border: 1px solid #cbd5e1; border-radius: 8px; font-size: 14px; background: white; outline: none;">
+              ${cityOptions}
+            </select>
+          </div>
+          <div>
+            <label style="display:block; font-size: 13px; font-weight: 700; color: #334155; margin-bottom: 6px;">3. C�t-x� t?i thi?u ($)</label>
+            <input type="number" id="quick-rate-input" value="${minRate}" min="50" step="50" style="width:100%; padding: 10px 12px; border: 1px solid #cbd5e1; border-radius: 8px; font-size: 14px; outline: none;" placeholder="300" />
+          </div>
+        </div>
+
+        <!-- 18+ Verification -->
+        <div style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px; padding: 14px;">
+          <div style="font-size: 13px; font-weight: 700; color: #1e293b; margin-bottom: 6px; display:flex; align-items:center; gap:6px;">
+            <i class="ph-fill ph-shield-check" style="color: #10b981;"></i> X�c th?c d? tu?i vu c�ng (18+)
+          </div>
+          <p style="font-size: 12px; color: #64748b; line-height: 1.4; margin: 0 0 10px 0;">C�c show di?n tr? th� lao v� casting chuy�n nghi?p tr�n Hammer y�u c?u vu c�ng t? 18 tu?i tr? l�n.</p>
+          <div style="display:flex; align-items:center; gap:10px; margin-bottom: 10px;">
+            <label style="font-size: 12px; font-weight: 600; color: #475569;">Ng�y sinh:</label>
+            <input type="date" id="quick-dob-input" value="${defaultDob}" max="${today()}" required style="padding: 6px 10px; border: 1px solid #cbd5e1; border-radius: 6px; font-size: 13px; outline:none;" />
+          </div>
+          <label style="display:flex; align-items:flex-start; gap:8px; font-size: 12px; color: #334155; cursor:pointer;">
+            <input type="checkbox" id="quick-age-confirm" checked style="margin-top: 2px;" />
+            <span>T�i x�c nh?n ng�y sinh ch�nh x�c v� d? 18 tu?i d? tham gia casting.</span>
+          </label>
+        </div>
+
+        <!-- Open to Work Toggle -->
+        <div style="display:flex; justify-content:space-between; align-items:center; padding: 12px 14px; background: #ecfdf5; border: 1px solid #a7f3d0; border-radius: 8px;">
+          <div>
+            <div style="font-size: 13px; font-weight: 700; color: #065f46;">S?n s�ng nh?n show ngay (Open to Work)</div>
+            <div style="font-size: 11px; color: #047857;">Cho ph�p Studio t�m th?y profile c?a b?n</div>
+          </div>
+          <label style="position:relative; display:inline-block; width: 44px; height: 24px; cursor:pointer;">
+            <input type="checkbox" id="quick-open-to-work" checked style="opacity:0; width:0; height:0;" />
+            <span style="position:absolute; top:0; left:0; right:0; bottom:0; background-color:#10b981; border-radius:24px; transition:.2s;" id="quick-toggle-bg"></span>
+            <span style="position:absolute; content:''; height:18px; width:18px; left:22px; bottom:3px; background-color:white; border-radius:50%; transition:.2s;" id="quick-toggle-knob"></span>
+          </label>
+        </div>
+
+        <button type="button" data-action="submit-quick-setup" style="width: 100%; background: #0f172a; color: white; border: none; padding: 14px 20px; border-radius: 8px; font-weight: 700; font-size: 15px; cursor: pointer; display:flex; align-items:center; justify-content:center; gap:8px; box-shadow: 0 4px 12px rgba(15,23,42,0.2);">
+          <span>K�ch ho?t & San Show ngay ?</span>
+        </button>
+      </div>
+    `;
+    dialog("quick-setup", "", html, "", "", "");
+
+    // Attach click events for chips
+    setTimeout(() => {
+      const container = document.getElementById("quick-style-container");
+      const hiddenInput = document.getElementById("quick-styles-input");
+      if (container && hiddenInput) {
+        container.querySelectorAll(".quick-style-chip").forEach(chip => {
+          chip.addEventListener("click", () => {
+            const st = chip.getAttribute("data-style");
+            let selected = hiddenInput.value.split(",").map(s => s.trim()).filter(Boolean);
+            if (selected.map(s => s.toLowerCase()).includes(st.toLowerCase())) {
+              selected = selected.filter(s => s.toLowerCase() !== st.toLowerCase());
+              chip.style.borderColor = "#cbd5e1";
+              chip.style.background = "#fff";
+              chip.style.color = "#475569";
+            } else {
+              selected.push(st);
+              chip.style.borderColor = "#2563eb";
+              chip.style.background = "#eff6ff";
+              chip.style.color = "#1d4ed8";
+            }
+            hiddenInput.value = selected.join(",");
+          });
+        });
+      }
+
+      const toggleCheck = document.getElementById("quick-open-to-work");
+      const toggleBg = document.getElementById("quick-toggle-bg");
+      const toggleKnob = document.getElementById("quick-toggle-knob");
+      if (toggleCheck && toggleBg && toggleKnob) {
+        toggleCheck.addEventListener("change", () => {
+          if (toggleCheck.checked) {
+            toggleBg.style.backgroundColor = "#10b981";
+            toggleKnob.style.left = "22px";
+          } else {
+            toggleBg.style.backgroundColor = "#94a3b8";
+            toggleKnob.style.left = "4px";
+          }
+        });
+      }
+    }, 50);
+  }
+
+  function checkReturningUserHook() {
+    const d = dancer();
+    if (!ext().returningWelcomeShown) {
+      ext().returningWelcomeShown = true;
+      const html = `
+        <div style="text-align: center; padding: 10px 4px;">
+          <div style="font-size: 32px; margin-bottom: 12px;">??</div>
+          <h2 style="font-size: 20px; font-weight: 800; color: #0f172a; margin: 0 0 8px 0;">Ch�o m?ng b?n tr? l?i, ${d.name || "Dancer"}!</h2>
+          <p style="font-size: 14px; color: #64748b; line-height: 1.5; margin: 0 0 16px 0;">Hammer v?a n�ng c?p <strong>AI Job Agent</strong> gi�p t? d?ng b?t c?p casting & show di?n cho b?n.</p>
+          
+          <div style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px; padding: 12px 16px; margin-bottom: 20px; text-align: left;">
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px;">
+              <span style="font-size: 12px; font-weight: 700; color: #334155;">�? ho�n thi?n h? so san show:</span>
+              <span style="font-size: 12px; font-weight: 800; color: #2563eb;">65%</span>
+            </div>
+            <div style="height: 6px; background: #e2e8f0; border-radius: 3px; overflow: hidden;">
+              <div style="width: 65%; height: 100%; background: #2563eb; border-radius: 3px;"></div>
+            </div>
+            <div style="font-size: 11px; color: #64748b; margin-top: 6px;">Ho�n thi?n n?t th? lo?i & m?c th� lao d? AI d?t d? ch�nh x�c 100%!</div>
+          </div>
+
+          <button type="button" data-action="open-quick-setup" style="width: 100%; background: #0f172a; color: white; border: none; padding: 12px 20px; border-radius: 8px; font-weight: 700; font-size: 14px; cursor: pointer; margin-bottom: 10px;">
+            Ho�n thi?n h? so ngay (30s) ?
+          </button>
+          <button type="button" data-action="dismiss-onboarding-hook" style="background: none; border: none; color: #64748b; font-size: 13px; cursor: pointer;">
+            �? sau, v�o xem job tru?c
+          </button>
+        </div>
+      `;
+      dialog("returning-hook", "", html, "", "", "");
+    } else {
+      render();
+    }
+  }
+
+  function renderDancer() {
   let body = "",
     title = "",
     tools = "",
@@ -2042,9 +2239,28 @@ function renderDancer() {
       (!dancer().availibility
         ? '<div class="notice">New job alerts are paused. You can still browse and apply.</div>'
         : "") +
-      `<div class="section-heading"><h3>${ui.guest ? "All opportunities" : "Recommended opportunities"}</h3><small>${list.length} jobs</small></div>` +
+      `<div class="section-heading" style="display:flex; justify-content:space-between; align-items:center;"><div><h3>${ui.guest ? "All opportunities" : "Recommended opportunities"}</h3><small>${list.length} jobs</small></div>${!ui.guest ? `<button data-action="toggle-open-to-work" style="display:flex; align-items:center; gap:6px; background:${dancer().availibility ? "#ecfdf5" : "#f3f4f6"}; border:1px solid ${dancer().availibility ? "#a7f3d0" : "#d1d5db"}; color:${dancer().availibility ? "#047857" : "#6b7280"}; border-radius:12px; padding:3px 10px; font-size:11px; font-weight:600; cursor:pointer;"><span style="width:6px; height:6px; border-radius:50%; background:${dancer().availibility ? "#10b981" : "#9ca3af"};"></span>${dancer().availibility ? "Open to Work: ON" : "Open to Work: OFF"}</button>` : ""}</div>` +
       (list.length
-        ? list.map(jobCard).join("")
+        ? list.map((item, idx) => {
+            const card = jobCard(item);
+            if (idx === 1 && !ui.guest && !ext().nudgeDismissed) {
+              return card + `
+              <div style="background: linear-gradient(135deg, #f0fdf4 0%, #eff6ff 100%); border: 1px solid #bae6fd; border-radius: 8px; padding: 14px 16px; margin-bottom: 12px; position:relative;">
+                <div style="display:flex; gap:10px; align-items:flex-start;">
+                  <span style="font-size: 22px;">??</span>
+                  <div style="flex:1;">
+                    <div style="font-weight: 700; font-size: 13px; color: #0369a1; margin-bottom: 4px;">D?o n�y b?n c� n�ng c�t-x� hay d?i style m?i?</div>
+                    <div style="font-size: 12px; color: #475569; line-height: 1.4; margin-bottom: 10px;">C?p nh?t l?i m?c th� lao & phong c�ch nh?y d? AI gh�p d�ng c�c show m?i nh?t th�ng n�y.</div>
+                    <div style="display:flex; gap:8px;">
+                      <button data-action="open-quick-setup" style="background:#0284c7; color:white; border:none; padding:6px 12px; border-radius:6px; font-size:12px; font-weight:600; cursor:pointer;">C?p nh?t nhanh (30s)</button>
+                      <button data-action="dismiss-nudge" style="background:white; border: 1px solid #cbd5e1; color:#64748b; padding:6px 10px; border-radius:6px; font-size:12px; font-weight:500; cursor:pointer;">Th�ng tin v?n chu?n</button>
+                    </div>
+                  </div>
+                </div>
+              </div>`;
+            }
+            return card;
+          }).join("")
         : empty(
             "No matching opportunities",
             "Adjust your filters to see more jobs.",
@@ -2622,8 +2838,8 @@ function ensureAccess() {
            <p style="color:#6b7280; margin-bottom:24px; font-size:15px;">Hammer is currently by invite only.</p>
            <p style="font-size:14px; margin-bottom:16px; color:#374151;">Ask your friends on Hammer to send you an invitation code</p>
            <input type="text" placeholder="Invitation code" style="width:100%; padding:14px; border:none; background:#f3f4f6; border-radius:8px; margin-bottom:24px; font-size:15px; outline:none; text-align:center;" />
-           <button type="button" onclick="ui.guest=false; closeDialog(); render();" style="width:100%; background:#111; color:#fff; padding:14px; border-radius:8px; font-weight:600; border:none; font-size:15px; cursor:pointer;">Continue</button>
-           <div style="margin-top:24px; font-size:14px; color:#6b7280;">Already have an account? <strong style="color:#111; cursor:pointer;" onclick="ui.guest=false; closeDialog(); render();">Login</strong></div>
+           <button type="button" data-action="continue-onboarding" style="width:100%; background:#111; color:#fff; padding:14px; border-radius:8px; font-weight:600; border:none; font-size:15px; cursor:pointer;">Continue</button>
+           <div style="margin-top:24px; font-size:14px; color:#6b7280;">Already have an account? <strong style="color:#111; cursor:pointer;" data-action="login-returning">Login</strong></div>
          </div>`, "", "", "");
       return false;
     }
@@ -3214,7 +3430,7 @@ document.addEventListener("click", async (event) => {
   }
   if (
     ui.mode === "dancer" &&
-    !["mode", "reset", "age", "close", "sign-in", "job", "mobile", "feed-search"].includes(a) &&
+    !["mode", "reset", "age", "close", "sign-in", "job", "mobile", "feed-search", "continue-onboarding", "login-returning", "open-quick-setup", "dismiss-onboarding-hook", "dismiss-nudge", "toggle-open-to-work", "submit-quick-setup"].includes(a) &&
     !ensureAccess()
   )
     return;
@@ -3308,7 +3524,67 @@ document.addEventListener("click", async (event) => {
     }
     ui.alertJob = target.id;
     render();
-  } else if (a === "open-alert") {
+  } else if (a === "continue-onboarding") {
+      ui.guest = false;
+      closeDialog();
+      openOnboardingHook();
+      return;
+    } else if (a === "login-returning") {
+      ui.guest = false;
+      closeDialog();
+      checkReturningUserHook();
+      return;
+    } else if (a === "submit-quick-setup") {
+      const ageConfirm = document.getElementById("quick-age-confirm")?.checked;
+      if (!ageConfirm) {
+        toast("Vui l�ng x�c nh?n b?n d? 18 tu?i d? k�ch ho?t Job Agent.");
+        return;
+      }
+      const d = dancer();
+      const stylesVal = document.getElementById("quick-styles-input")?.value || "Hip-Hop";
+      const cityVal = document.getElementById("quick-city-input")?.value || "Tokyo";
+      const rateVal = parseInt(document.getElementById("quick-rate-input")?.value) || 300;
+      const dobVal = document.getElementById("quick-dob-input")?.value || "2000-01-01";
+      const openWork = document.getElementById("quick-open-to-work")?.checked !== false;
+
+      d.dance_styles = stylesVal;
+      d.city = cityVal;
+      d.min_compensation = rateVal;
+      d.availibility = openWork;
+      
+      ext().age = {
+        dob: dobVal,
+        accepted_at: new Date().toISOString()
+      };
+      ext().onboardingCompleted = true;
+      ext().nudgeDismissed = true;
+      
+      closeDialog();
+      ui.guest = false;
+      ui.mobile = "feed";
+      render();
+      toast("?? H? so d� k�ch ho?t! AI d� t�m th?y c�c show ph� h?p cho b?n.");
+      return;
+    } else if (a === "open-quick-setup") {
+      openQuickSetupModal();
+      return;
+    } else if (a === "dismiss-onboarding-hook") {
+      closeDialog();
+      render();
+      toast("B?n c� th? c?p nh?t Job Profile b?t k? l�c n�o!");
+      return;
+    } else if (a === "dismiss-nudge") {
+      ext().nudgeDismissed = true;
+      render();
+      toast("�� ghi nh?n! H? so c?a b?n gi? nguy�n.");
+      return;
+    } else if (a === "toggle-open-to-work") {
+      const d = dancer();
+      d.availibility = !d.availibility;
+      render();
+      toast(d.availibility ? "?? �� b?t Open to Work! B?n s? nh?n du?c th�ng b�o show m?i." : "?? �� t?m d?ng Open to Work.");
+      return;
+    } else if (a === "open-alert") {
     ui.alertJob = null;
     showJob(v);
   } else if (a === "copy-link") {
