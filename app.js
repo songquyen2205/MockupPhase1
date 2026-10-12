@@ -2080,97 +2080,46 @@ function mobileNav() {
   
   <section class="mobile-app"><div class="mobile-top"><h1>Job opportunities</h1></div>${empty("Job Agent access is paused", "Contact Hammer support to review your access.")}</section></div>`;
     }
-    return `<div class="dancer-stage" style="display:flex; justify-content:center; align-items:center; min-height:100%; background:#f3f4f6; padding: 20px 0;">
-      <section class="mobile-app" style="background:#ffffff; border-radius: 1.5rem; box-shadow: 0 20px 40px -15px rgba(0,0,0,0.15); border: 1px solid #e5e7eb; overflow:hidden; display:flex; flex-direction:column; max-width: 400px; width:100%;">
-        
-        <!-- Top App Bar / Header -->
-        <div style="padding: 28px 24px 14px 24px; background: #ffffff;">
-          <div style="width: 44px; height: 44px; background: #2563eb; color: #ffffff; border-radius: 12px; display: flex; align-items: center; justify-content: center; font-weight: 800; font-size: 22px; margin-bottom: 14px; box-shadow: 0 4px 12px rgba(37,99,235,0.25);">
-            H
+    return `<div class="dancer-stage age-gate-stage">
+      <section class="mobile-app age-gate-app">
+        <header class="age-gate-header">
+          <span class="age-brand-mark" aria-hidden="true">H</span>
+          <h1>Welcome to Hammer AI Jobs!</h1>
+          <p class="age-intro">Never miss casting calls, workshops, and studio gigs tailored to your dance styles.</p>
+        </header>
+
+        <ul class="age-benefits" aria-label="Hammer AI Jobs features">
+          <li><i class="ph ph-target" aria-hidden="true"></i><span><strong>Style-Matched:</strong> Gigs tailored to your styles &amp; roles.</span></li>
+          <li><i class="ph ph-shield-check" aria-hidden="true"></i><span><strong>Verified Sources:</strong> Reviewed casting calls with pay info.</span></li>
+          <li><i class="ph ph-chat-circle-dots" aria-hidden="true"></i><span><strong>AI Pitch Drafts:</strong> Ready-made introduction emails for 1-click apply.</span></li>
+        </ul>
+
+        <form id="dialog-form" class="age-gate-form" data-kind="age">
+          <div class="age-dob-field">
+            <label for="dob">Date of Birth <b>*</b></label>
+            <input type="date" id="dob" name="dob" value="${esc(ext().age?.dob || '')}" max="${today()}" required>
+            <small>You must be at least 18 years old to explore and apply for dance opportunities.</small>
           </div>
-          <h1 style="font-size: 21px; font-weight: 800; color: #111827; margin: 0 0 6px 0; line-height: 1.25;">Welcome to Hammer AI Jobs!</h1>
-          <p style="font-size: 13px; color: #6b7280; margin: 0 0 16px 0; line-height: 1.45;">Never miss casting calls, workshops, and studio gigs tailored to your dance styles.</p>
 
-          <!-- 3 Value Props -->
-          <div style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 10px; padding: 12px 14px; display: grid; gap: 10px; text-align: left;">
-            <div style="display: flex; gap: 10px; align-items: center;">
-              <div style="width: 26px; height: 26px; border-radius: 6px; background: #eff6ff; color: #2563eb; display:flex; align-items:center; justify-content:center; font-size: 14px; flex-shrink: 0;"><i class="ph-fill ph-target"></i></div>
-              <div style="font-size: 12.5px; color: #334155;"><strong>Style-Matched:</strong> Gigs tailored to your styles & roles.</div>
-            </div>
-            <div style="display: flex; gap: 10px; align-items: center;">
-              <div style="width: 26px; height: 26px; border-radius: 6px; background: #ecfdf5; color: #059669; display:flex; align-items:center; justify-content:center; font-size: 14px; flex-shrink: 0;"><i class="ph-fill ph-shield-check"></i></div>
-              <div style="font-size: 12.5px; color: #334155;"><strong>Verified Sources:</strong> Reviewed casting calls with pay info.</div>
-            </div>
-            <div style="display: flex; gap: 10px; align-items: center;">
-              <div style="width: 26px; height: 26px; border-radius: 6px; background: #faf5ff; color: #9333ea; display:flex; align-items:center; justify-content:center; font-size: 14px; flex-shrink: 0;"><i class="ph-fill ph-chat-circle-dots"></i></div>
-              <div style="font-size: 12.5px; color: #334155;"><strong>AI Pitch Drafts:</strong> Ready-made introduction emails for 1-click apply.</div>
+          <div class="age-consent">
+            <input id="agreement" name="agreement" type="checkbox">
+            <div>
+              <label for="agreement">I agree to the terms of the</label>
+              <button type="button" data-action="open-disclaimer-modal" class="age-disclaimer-link">Job Agent Disclaimer</button>
+              <small>Required to explore and apply for dance opportunities.</small>
             </div>
           </div>
-        </div>
 
-        <!-- Main Form Content -->
-        <div style="padding: 16px 24px 24px 24px; display: flex; flex-direction: column; flex: 1;">
-          <form id="dialog-form" data-kind="age" style="display: flex; flex-direction: column; gap: 18px; height: 100%;">
-            
-            <!-- Date of Birth Input -->
-            <div style="display: flex; flex-direction: column; gap: 6px;">
-              <label for="dob" style="font-size: 13.5px; font-weight: 700; color: #374151;">Date of Birth *</label>
-              <input 
-                type="date" 
-                id="dob" 
-                name="dob" 
-                value="${esc(ext().age?.dob || '')}" 
-                max="${today()}"
-                style="width: 100%; padding: 12px 14px; background: #f9fafb; border: 1px solid #e5e7eb; border-radius: 12px; font-size: 15px; color: #1f2937; outline: none; transition: all 0.2s;"
-              >
-              <p style="font-size: 12px; color: #9ca3af; margin: 0;">You must be at least 18 years old to explore and apply for dance opportunities.</p>
-            </div>
-
-            <!-- Disclaimer Checkbox -->
-            <div style="display: flex; align-items: flex-start; gap: 12px; background: #eff6ff; padding: 14px 16px; border-radius: 12px; border: 1px solid #dbeafe;">
-              <div style="display: flex; align-items: center; margin-top: 2px;">
-                <input 
-                  id="agreement" 
-                  name="agreement" 
-                  type="checkbox" 
-                  style="width: 18px; height: 18px; accent-color: #2563eb; cursor: pointer;"
-                >
-              </div>
-              <div style="font-size: 13px; line-height: 1.4;">
-                <label for="agreement" style="font-weight: 500; color: #374151; cursor: pointer;">
-                  I agree to the terms of the 
-                </label>
-                <button type="button" data-action="open-disclaimer-modal" style="color: #2563eb; font-weight: 600; text-decoration: underline; background: none; border: none; padding: 0; cursor: pointer; font-size: 13px;">
-                  Job Agent Disclaimer
-                </button>
-                <p style="color: #6b7280; font-size: 11.5px; margin: 3px 0 0 0;">Required to explore and apply for dance opportunities.</p>
-              </div>
-            </div>
-
-            <div class="error-text" id="dialog-error" role="alert" style="color: #ef4444; font-size: 13px; font-weight: 500;"></div>
-
-            <!-- Bottom Action Area (Next to profile setup OR Skip & browse jobs) -->
-            <div style="margin-top: auto; padding-top: 16px; display: flex; flex-direction: column; gap: 12px;">
-              <button 
-                id="nextProfileBtn" 
-                type="button" 
-                data-action="submit-age-gate-next"
-                style="width: 100%; padding: 13px 20px; border-radius: 12px; font-weight: 700; font-size: 15px; border: none; background: #0f172a; color: #ffffff; cursor: pointer; box-shadow: 0 4px 14px rgba(15,23,42,0.2); transition: all 0.2s; display:flex; align-items:center; justify-content:center; gap:8px;"
-              >
-                <span>Continue to Profile Setup</span> <i class="ph-bold ph-arrow-right"></i>
-              </button>
-
-              <button 
-                id="skipBrowseBtn" 
-                type="button" 
-                data-action="submit-age-gate-skip"
-                style="width: 100%; padding: 10px; background: none; border: none; color: #64748b; font-size: 13.5px; font-weight: 600; cursor: pointer; text-decoration: underline;"
-              >
-                Skip & browse jobs first
-              </button>
-            </div>
-          </form>
-        </div>
+          <div class="error-text age-gate-error" id="dialog-error" role="alert"></div>
+          <div class="age-gate-actions">
+            <button id="nextProfileBtn" type="button" data-action="submit-age-gate-next" class="age-primary-action">
+              Continue to Profile Setup <i class="ph ph-arrow-right" aria-hidden="true"></i>
+            </button>
+            <button id="skipBrowseBtn" type="button" data-action="submit-age-gate-skip" class="age-secondary-action">
+              Skip &amp; browse jobs first
+            </button>
+          </div>
+        </form>
         <div id="mobile-overlay-root">${ui.dialog && ui.dialogState ? renderMobileDialogHTML(ui.dialogState) : ""}</div>
       </section>
     </div>`;
@@ -2270,20 +2219,47 @@ function mobileNav() {
       </button>
     `;
 
+    if (!ui.hub) ui.hub = "applied";
+
+    const appliedStatus = ui.hubAppliedStatus || "all";
+    const filteredAppliedJobs = appliedJobs.filter((o) => {
+      if (appliedStatus === "all") return true;
+      const p = ext().history[o.id]?.progress || "pending";
+      return p === appliedStatus;
+    });
+
+    const isAppliedActive = ui.hub === "applied";
+    const appliedPillBg = isAppliedActive ? "#0f172a" : "#ffffff";
+    const appliedPillColor = isAppliedActive ? "#ffffff" : "#475569";
+    const appliedPillBorder = isAppliedActive ? "1px solid #0f172a" : "1px solid #e2e8f0";
+
+    const appliedStatusSelect = isAppliedActive
+      ? `
+        <div style="position:relative; display:inline-flex; align-items:center;">
+          <select data-action="filter-hub-applied-status" style="appearance:none; -webkit-appearance:none; background:#ffffff; border:1px solid #cbd5e1; border-radius:20px; padding:6px 28px 6px 12px; font-size:12px; font-weight:700; color:#1e293b; outline:none; cursor:pointer; box-shadow:0 1px 2px rgba(0,0,0,0.03);">
+            <option value="all" ${appliedStatus === "all" ? "selected" : ""}>All Stages (${counts.applied})</option>
+            <option value="pending" ${appliedStatus === "pending" ? "selected" : ""}>Pending Response</option>
+            <option value="interview" ${appliedStatus === "interview" ? "selected" : ""}>Interview / Casting</option>
+            <option value="booked" ${appliedStatus === "booked" ? "selected" : ""}>Booked / Confirmed</option>
+            <option value="rejected" ${appliedStatus === "rejected" ? "selected" : ""}>Declined</option>
+          </select>
+          <i class="ph-bold ph-caret-down" style="position:absolute; right:10px; pointer-events:none; font-size:11px; color:#64748b;"></i>
+        </div>
+      `
+      : "";
+
     below = `
-      <div class="tabs" style="display:flex; gap:8px; overflow-x:auto; padding:6px 0 10px 0; -webkit-overflow-scrolling:touch; margin-bottom:4px;">
-        ${[
-          ["all", `All (${counts.all})`],
-          ["saved", `Saved (${counts.saved})`],
-          ["drafted", `Drafts (${counts.drafted})`],
-          ["applied", `Applied (${counts.applied})`]
-        ].map(([key, label]) => {
-          const isActive = (ui.hub === key) || (!ui.hub && key === "all");
-          const bg = isActive ? "#0f172a" : "#ffffff";
-          const color = isActive ? "#ffffff" : "#475569";
-          const border = isActive ? "1px solid #0f172a" : "1px solid #e2e8f0";
-          return `<button data-action="hub" data-value="${key}" style="background:${bg}; color:${color}; border:${border}; border-radius:20px; padding:6px 14px; font-size:12.5px; font-weight:700; white-space:nowrap; cursor:pointer; transition:all 0.15s; box-shadow:0 1px 2px rgba(0,0,0,0.03);">${label}</button>`;
-        }).join("")}
+      <div class="tabs" style="display:flex; align-items:center; gap:8px; overflow-x:auto; padding:6px 0 10px 0; -webkit-overflow-scrolling:touch; margin-bottom:4px;">
+        <button data-action="hub" data-value="all" style="background:${(ui.hub === 'all' || !ui.hub) ? '#0f172a' : '#ffffff'}; color:${(ui.hub === 'all' || !ui.hub) ? '#ffffff' : '#475569'}; border:${(ui.hub === 'all' || !ui.hub) ? '1px solid #0f172a' : '1px solid #e2e8f0'}; border-radius:20px; padding:6px 14px; font-size:12.5px; font-weight:700; white-space:nowrap; cursor:pointer; transition:all 0.15s; box-shadow:0 1px 2px rgba(0,0,0,0.03);">
+          All (${counts.all})
+        </button>
+        <button data-action="hub" data-value="saved" style="background:${ui.hub === 'saved' ? '#0f172a' : '#ffffff'}; color:${ui.hub === 'saved' ? '#ffffff' : '#475569'}; border:${ui.hub === 'saved' ? '1px solid #0f172a' : '1px solid #e2e8f0'}; border-radius:20px; padding:6px 14px; font-size:12.5px; font-weight:700; white-space:nowrap; cursor:pointer; transition:all 0.15s; box-shadow:0 1px 2px rgba(0,0,0,0.03);">
+          Saved (${counts.saved})
+        </button>
+        <button data-action="hub" data-value="applied" style="background:${appliedPillBg}; color:${appliedPillColor}; border:${appliedPillBorder}; border-radius:20px; padding:6px 14px; font-size:12.5px; font-weight:700; white-space:nowrap; cursor:pointer; transition:all 0.15s; box-shadow:0 1px 2px rgba(0,0,0,0.03);">
+          Applied (${counts.applied})
+        </button>
+        ${appliedStatusSelect}
       </div>
     `;
 
@@ -2293,7 +2269,7 @@ function mobileNav() {
         : ui.hub === "drafted"
           ? draftedJobs
           : ui.hub === "applied"
-            ? appliedJobs
+            ? filteredAppliedJobs
             : allHistoryJobs
     );
 
@@ -4598,6 +4574,11 @@ document.addEventListener("change", (event) => {
       rejected: "Application Declined",
     };
     toast(`Progress updated: ${labels[val] || val}`);
+    return;
+  }
+  if (t.dataset.action === "filter-hub-applied-status") {
+    ui.hubAppliedStatus = t.value;
+    render();
     return;
   }
   if (t.dataset.limitFor) {
