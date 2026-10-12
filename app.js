@@ -2084,13 +2084,28 @@ function mobileNav() {
       <section class="mobile-app" style="background:#ffffff; border-radius: 1.5rem; box-shadow: 0 20px 40px -15px rgba(0,0,0,0.15); border: 1px solid #e5e7eb; overflow:hidden; display:flex; flex-direction:column; max-width: 400px; width:100%;">
         
         <!-- Top App Bar / Header -->
-        <div style="padding: 32px 24px 16px 24px; background: #ffffff;">
-          <div style="width: 48px; height: 48px; background: #2563eb; color: #ffffff; border-radius: 14px; display: flex; align-items: center; justify-content: center; font-weight: 800; font-size: 24px; margin-bottom: 16px; box-shadow: 0 4px 12px rgba(37,99,235,0.25);">
+        <div style="padding: 28px 24px 14px 24px; background: #ffffff;">
+          <div style="width: 44px; height: 44px; background: #2563eb; color: #ffffff; border-radius: 12px; display: flex; align-items: center; justify-content: center; font-weight: 800; font-size: 22px; margin-bottom: 14px; box-shadow: 0 4px 12px rgba(37,99,235,0.25);">
             H
           </div>
-          <div style="font-size: 13px; font-weight: 700; color: #2563eb; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 4px;">Welcome back, ${esc(dancer().name || 'Yuki')}!</div>
-          <h1 style="font-size: 22px; font-weight: 800; color: #111827; margin: 0 0 8px 0; line-height: 1.25;">Discover Hammer AI Jobs</h1>
-          <p style="font-size: 13.5px; color: #6b7280; margin: 0; line-height: 1.5;">Hammer now aggregates dance opportunities, studio casting calls, and audition listings. Verify your age to activate Job Agent and explore matching opportunities.</p>
+          <h1 style="font-size: 21px; font-weight: 800; color: #111827; margin: 0 0 6px 0; line-height: 1.25;">Welcome to Hammer AI Jobs!</h1>
+          <p style="font-size: 13px; color: #6b7280; margin: 0 0 16px 0; line-height: 1.45;">Never miss casting calls, workshops, and studio gigs tailored to your dance styles.</p>
+
+          <!-- 3 Value Props -->
+          <div style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 10px; padding: 12px 14px; display: grid; gap: 10px; text-align: left;">
+            <div style="display: flex; gap: 10px; align-items: center;">
+              <div style="width: 26px; height: 26px; border-radius: 6px; background: #eff6ff; color: #2563eb; display:flex; align-items:center; justify-content:center; font-size: 14px; flex-shrink: 0;"><i class="ph-fill ph-target"></i></div>
+              <div style="font-size: 12.5px; color: #334155;"><strong>Style-Matched:</strong> Gigs tailored to your styles & roles.</div>
+            </div>
+            <div style="display: flex; gap: 10px; align-items: center;">
+              <div style="width: 26px; height: 26px; border-radius: 6px; background: #ecfdf5; color: #059669; display:flex; align-items:center; justify-content:center; font-size: 14px; flex-shrink: 0;"><i class="ph-fill ph-shield-check"></i></div>
+              <div style="font-size: 12.5px; color: #334155;"><strong>Verified Sources:</strong> Reviewed casting calls with pay info.</div>
+            </div>
+            <div style="display: flex; gap: 10px; align-items: center;">
+              <div style="width: 26px; height: 26px; border-radius: 6px; background: #faf5ff; color: #9333ea; display:flex; align-items:center; justify-content:center; font-size: 14px; flex-shrink: 0;"><i class="ph-fill ph-chat-circle-dots"></i></div>
+              <div style="font-size: 12.5px; color: #334155;"><strong>AI Pitch Drafts:</strong> Ready-made introduction emails for 1-click apply.</div>
+            </div>
+          </div>
         </div>
 
         <!-- Main Form Content -->
@@ -4004,15 +4019,10 @@ document.addEventListener("click", async (event) => {
     }
     ui.alertJob = target.id;
     render();
-  } else if (a === "continue-onboarding") {
+  } else if (a === "continue-onboarding" || a === "login-returning") {
       ui.guest = false;
       closeDialog();
-      openOnboardingHook();
-      return;
-    } else if (a === "login-returning") {
-      ui.guest = false;
-      closeDialog();
-      checkReturningUserHook();
+      render();
       return;
     } else if (a === "submit-quick-setup") {
       const isAlreadyVerified = ageAllowed();
