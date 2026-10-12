@@ -2229,17 +2229,9 @@ function mobileNav() {
     });
 
     const isAppliedActive = ui.hub === "applied";
-    const appliedPillBg = isAppliedActive ? "#0f172a" : "#ffffff";
-    const appliedPillColor = isAppliedActive ? "#ffffff" : "#475569";
-    const appliedPillBorder = isAppliedActive ? "1px solid #0f172a" : "1px solid #e2e8f0";
-
-    const statusLabels = {
-      all: `Applied (${counts.applied})`,
-      pending: "Pending Response",
-      interview: "Interview / Casting",
-      booked: "Booked / Confirmed",
-      rejected: "Declined"
-    };
+    const appliedPillBg = isAppliedActive ? "#ffffff" : "#ffffff";
+    const appliedPillColor = isAppliedActive ? "#0f172a" : "#475569";
+    const appliedPillBorder = isAppliedActive ? "1.5px solid #0f172a" : "1px solid #cbd5e1";
 
     below = `
       <div class="tabs" style="display:flex; align-items:center; gap:8px; overflow-x:auto; padding:6px 0 10px 0; -webkit-overflow-scrolling:touch; margin-bottom:4px;">
@@ -2250,14 +2242,14 @@ function mobileNav() {
           Saved (${counts.saved})
         </button>
         <div style="position:relative; display:inline-flex; align-items:center;">
-          <select data-action="filter-hub-applied-status" style="appearance:none; -webkit-appearance:none; background:${appliedPillBg}; color:${appliedPillColor}; border:${appliedPillBorder}; border-radius:20px; padding:6px 28px 6px 14px; font-size:12.5px; font-weight:700; white-space:nowrap; cursor:pointer; transition:all 0.15s; box-shadow:0 1px 2px rgba(0,0,0,0.03); outline:none;">
-            <option value="all" ${appliedStatus === "all" ? "selected" : ""}>Applied (${counts.applied})</option>
-            <option value="pending" ${appliedStatus === "pending" ? "selected" : ""}>Applied: Pending</option>
-            <option value="interview" ${appliedStatus === "interview" ? "selected" : ""}>Applied: Interview</option>
-            <option value="booked" ${appliedStatus === "booked" ? "selected" : ""}>Applied: Booked</option>
-            <option value="rejected" ${appliedStatus === "rejected" ? "selected" : ""}>Applied: Declined</option>
+          <select data-action="filter-hub-applied-status" style="appearance:none; -webkit-appearance:none; background:#ffffff; color:#0f172a; border:${appliedPillBorder}; border-radius:20px; padding:6px 28px 6px 14px; font-size:12.5px; font-weight:700; white-space:nowrap; cursor:pointer; transition:all 0.15s; box-shadow:0 1px 2px rgba(0,0,0,0.03); outline:none;">
+            <option value="all" style="background:#ffffff; color:#0f172a;" ${appliedStatus === "all" ? "selected" : ""}>Applied (${counts.applied})</option>
+            <option value="pending" style="background:#ffffff; color:#0f172a;" ${appliedStatus === "pending" ? "selected" : ""}>Pending</option>
+            <option value="interview" style="background:#ffffff; color:#0f172a;" ${appliedStatus === "interview" ? "selected" : ""}>Interview</option>
+            <option value="booked" style="background:#ffffff; color:#0f172a;" ${appliedStatus === "booked" ? "selected" : ""}>Booked</option>
+            <option value="rejected" style="background:#ffffff; color:#0f172a;" ${appliedStatus === "rejected" ? "selected" : ""}>Declined</option>
           </select>
-          <i class="ph-bold ph-caret-down" style="position:absolute; right:11px; pointer-events:none; font-size:11px; color:${appliedPillColor};"></i>
+          <i class="ph-bold ph-caret-down" style="position:absolute; right:11px; pointer-events:none; font-size:11px; color:#0f172a;"></i>
         </div>
       </div>
     `;
