@@ -3077,6 +3077,23 @@ function profileForm() {
         </div>
       </details>
 
+      <!-- 6. AGE VERIFICATION & DOB UPDATE BLOCK -->
+      <div style="margin-bottom:24px; padding:16px; background:#f8fafc; border:1px solid #e2e8f0; border-radius:12px;">
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
+          <h4 style="font-size:14px; font-weight:700; color:#374151; margin:0; display:flex; align-items:center; gap:6px;">
+            <i class="ph ph-shield-check" style="font-size:17px; color:#059669;"></i> Age & Verification
+          </h4>
+          <span style="background:#ecfdf5; color:#059669; border:1px solid #a7f3d0; font-size:10.5px; font-weight:700; padding:2px 8px; border-radius:10px;">
+            18+ Verified
+          </span>
+        </div>
+        <p style="font-size:12px; color:#64748b; margin:0 0 12px 0; line-height:1.4;">
+          Your date of birth confirms eligibility to apply for dance opportunities. You can update it anytime below.
+        </p>
+        <label class="form-label" style="font-size:11px; font-weight:600; color:#475569; margin-bottom:4px; display:block;">Date of Birth</label>
+        <input type="date" name="dob" id="profile-dob" value="${esc(ext().age?.dob || '')}" style="width:100%; padding:9px 12px; border:1px solid #cbd5e1; border-radius:8px; font-size:13px; background:#fff; outline:none;" />
+      </div>
+
       <div class="error-text" id="profile-error" role="alert"></div>
       <button class="primary wide-button" type="submit" style="padding:14px; font-size:15px; font-weight:700; border-radius:8px; background:#0f172a; color:#fff; width:100%; cursor:pointer; box-shadow:0 2px 6px rgba(0,0,0,0.15);">Save & View Jobs</button>
     </form>
@@ -5102,8 +5119,26 @@ document.addEventListener("submit", (event) => {
       return;
     }
 
-    // If age was not previously allowed, check if age exists
-    if (!ageAllowed()) {
+    // Update Date of Birth if submitted from profile form
+    if (v.dob) {
+      const d = new Date(v.dob + "T00:00:00Z");
+      const n = new Date();
+      let years = n.getUTCFullYear() - d.getUTCFullYear();
+      if (
+        n.getUTCMonth() < d.getUTCMonth() ||
+        (n.getUTCMonth() === d.getUTCMonth() && n.getUTCDate() < d.getUTCDate())
+      ) {
+        years--;
+      }
+      if (years < 18) {
+        error.textContent = "You must be at least 18 years old to access Hammer AI Jobs.";
+        return;
+      }
+      ext().age = {
+        dob: v.dob,
+        accepted_at: ext().age?.accepted_at || now(),
+      };
+    } else if (!ageAllowed()) {
       error.textContent = "Please complete Age Verification first.";
       return;
     }
