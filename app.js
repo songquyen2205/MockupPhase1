@@ -2264,13 +2264,10 @@ function mobileNav() {
 
     title = btn("mobile", "‹ Job History", "feed", "link", false, 'style="color:#111827; font-weight:800; font-size:17px; text-decoration:none; padding:0; background:none; border:none; cursor:pointer;"');
     tools = `
-      <div style="display:flex; align-items:center; gap:8px;">
-        <span style="background:#0f172a; color:#fff; font-size:11px; font-weight:700; padding:4px 10px; border-radius:14px;">${counts.all} ${counts.all === 1 ? 'Job' : 'Jobs'}</span>
-        <button data-action="mobile" data-value="submit" style="display:inline-flex; align-items:center; gap:5px; background:#f0fdf4; border:1px solid #bbf7d0; border-radius:18px; padding:6px 12px; font-size:12px; font-weight:700; color:#15803d; cursor:pointer; box-shadow:0 1px 2px rgba(0,0,0,0.03);">
-          <i class="ph-bold ph-plus-circle" style="font-size:15px; color:#16a34a;"></i>
-          <span>Submit Link</span>
-        </button>
-      </div>
+      <button data-action="mobile" data-value="submit" style="display:inline-flex; align-items:center; gap:5px; background:#f0fdf4; border:1px solid #bbf7d0; border-radius:18px; padding:6px 12px; font-size:12px; font-weight:700; color:#15803d; cursor:pointer; box-shadow:0 1px 2px rgba(0,0,0,0.03);">
+        <i class="ph-bold ph-plus-circle" style="font-size:15px; color:#16a34a;"></i>
+        <span>Submit Link</span>
+      </button>
     `;
 
     below = `
