@@ -3088,10 +3088,25 @@ function profileForm() {
           </span>
         </div>
         <p style="font-size:12px; color:#64748b; margin:0 0 12px 0; line-height:1.4;">
-          Your date of birth confirms eligibility to apply for dance opportunities. You can update it anytime below.
+          Your date of birth confirms eligibility to apply for dance opportunities. You can review or update it below.
         </p>
-        <label class="form-label" style="font-size:11px; font-weight:600; color:#475569; margin-bottom:4px; display:block;">Date of Birth</label>
-        <input type="date" name="dob" id="profile-dob" value="${esc(ext().age?.dob || '')}" style="width:100%; padding:9px 12px; border:1px solid #cbd5e1; border-radius:8px; font-size:13px; background:#fff; outline:none;" />
+        <div style="margin-bottom:12px;">
+          <label class="form-label" style="font-size:11px; font-weight:600; color:#475569; margin-bottom:4px; display:block;">Date of Birth</label>
+          <input type="date" name="dob" id="profile-dob" value="${esc(ext().age?.dob || '')}" style="width:100%; padding:9px 12px; border:1px solid #cbd5e1; border-radius:8px; font-size:13px; background:#fff; outline:none;" />
+        </div>
+
+        <!-- Disclaimer & Agreement Confirmation Row -->
+        <div style="display:flex; align-items:flex-start; gap:10px; background:#fff; padding:10px 12px; border-radius:8px; border:1px solid #e2e8f0;">
+          <input id="profile-agreement" name="agreement" type="checkbox" checked style="width:16px; height:16px; accent-color:#2563eb; cursor:pointer; margin-top:2px;">
+          <div style="font-size:12.5px; line-height:1.4; color:#374151;">
+            <label for="profile-agreement" style="cursor:pointer; font-weight:500;">
+              I agree to the terms of the 
+            </label>
+            <button type="button" data-action="open-disclaimer-modal" style="color:#2563eb; font-weight:600; text-decoration:underline; background:none; border:none; padding:0; cursor:pointer; font-size:12.5px;">
+              Job Agent Disclaimer
+            </button>
+          </div>
+        </div>
       </div>
 
       <div class="error-text" id="profile-error" role="alert"></div>
@@ -5119,6 +5134,13 @@ document.addEventListener("submit", (event) => {
       return;
     }
 
+    // Check disclaimer agreement checkbox if present in form
+    const agreementBox = document.getElementById("profile-agreement");
+    if (agreementBox && !agreementBox.checked) {
+      error.textContent = "Please agree to the Job Agent Disclaimer terms.";
+      return;
+    }
+
     // Update Date of Birth if submitted from profile form
     if (v.dob) {
       const d = new Date(v.dob + "T00:00:00Z");
@@ -5136,7 +5158,7 @@ document.addEventListener("submit", (event) => {
       }
       ext().age = {
         dob: v.dob,
-        accepted_at: ext().age?.accepted_at || now(),
+        accepted_at: now(),
       };
     } else if (!ageAllowed()) {
       error.textContent = "Please complete Age Verification first.";
