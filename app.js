@@ -1,10 +1,10 @@
 "use strict";
-const STORE = "hammer.phase1.review.v67";
+const STORE = "hammer.phase1.review.v79";
 let db;
 try {
   db = JSON.parse(localStorage.getItem(STORE));
 } catch {}
-if (!db || db.version !== 67) db = HammerSeed();
+if (!db || db.version !== 79) db = HammerSeed();
 
 // Auto-migrate old statuses
 const statusMap = {
@@ -40,7 +40,7 @@ const ui = {
   search: "",
   status: "",
   feedSearch: "",
-  filters: { city: "", type: "", radius: null, duration: 365, min: 0 },
+  filters: { country: "", city: "", style: "", role: "", skill_level: "", radius: null, include_intl_online: false, min: 0 },
   running: false,
   dialog: null,
   metrics: null,
@@ -116,8 +116,8 @@ const statuses = [
   ["suspended", "🟡 Tạm ẩn"],
   ["closed", "🔴 Đã đóng"],
 ];
-const countries = ["Japan", "Singapore"];
-const cities = ["Tokyo", "Osaka", "Kyoto", "Singapore"];
+const countries = ["Japan", "Singapore", "Vietnam", "South Korea", "Australia", "United States"];
+const cities = ["Tokyo", "Osaka", "Kyoto", "Singapore", "Seoul", "Hanoi", "Melbourne"];
 const normalizeKeyword = (value) =>
   String(value ?? "")
     .trim()
@@ -1993,32 +1993,32 @@ function mobileNav() {
     const html = `
       <div style="text-align: center; padding: 12px 4px 6px 4px;">
         <div style="width: 56px; height: 56px; margin: 0 auto 16px auto; background: linear-gradient(135deg, #dbeafe 0%, #ede9fe 100%); border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 28px; box-shadow: 0 4px 12px rgba(59,130,246,0.15);">
-          🤖
+          🎯
         </div>
-        <h2 style="font-size: 20px; font-weight: 800; color: #0f172a; margin: 0 0 8px 0; line-height: 1.3;">Sẵn sàng để AI săn show cho bạn?</h2>
-        <p style="font-size: 14px; color: #64748b; line-height: 1.5; margin: 0 0 20px 0;">Đừng bỏ lỡ các buổi Casting, Workshop & Show diễn độc quyền phù hợp với phong cách của bạn trên Hammer.</p>
+        <h2 style="font-size: 20px; font-weight: 800; color: #0f172a; margin: 0 0 8px 0; line-height: 1.3;">Get Discovered with Job Agent</h2>
+        <p style="font-size: 14px; color: #64748b; line-height: 1.5; margin: 0 0 20px 0;">Never miss casting calls, workshops, and studio gigs tailored to your dance styles.</p>
 
         <div style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 10px; padding: 14px 16px; margin-bottom: 24px; text-align: left; display: grid; gap: 12px;">
           <div style="display: flex; gap: 10px; align-items: center;">
             <div style="width: 28px; height: 28px; border-radius: 6px; background: #eff6ff; color: #2563eb; display:flex; align-items:center; justify-content:center; font-size: 15px; flex-shrink: 0;"><i class="ph-fill ph-target"></i></div>
-            <div style="font-size: 13px; color: #334155;"><strong>Match chuẩn phong cách:</strong> Tự động lọc show theo đúng thể loại nhảy & kinh nghiệm.</div>
+            <div style="font-size: 13px; color: #334155;"><strong>Style-Matched:</strong> Curated gigs based on your dance styles & preferred roles.</div>
           </div>
           <div style="display: flex; gap: 10px; align-items: center;">
-            <div style="width: 28px; height: 28px; border-radius: 6px; background: #ecfdf5; color: #059669; display:flex; align-items:center; justify-content:center; font-size: 15px; flex-shrink: 0;"><i class="ph-fill ph-currency-dollar"></i></div>
-            <div style="font-size: 13px; color: #334155;"><strong>Thù lao minh bạch:</strong> Chỉ kết nối cơ hội có trả phí rõ ràng ($300 - $3,000+).</div>
+            <div style="width: 28px; height: 28px; border-radius: 6px; background: #ecfdf5; color: #059669; display:flex; align-items:center; justify-content:center; font-size: 15px; flex-shrink: 0;"><i class="ph-fill ph-shield-check"></i></div>
+            <div style="font-size: 13px; color: #334155;"><strong>Verified Sources:</strong> Opportunities reviewed by Hammer, with compensation info when available.</div>
           </div>
           <div style="display: flex; gap: 10px; align-items: center;">
-            <div style="width: 28px; height: 28px; border-radius: 6px; background: #faf5ff; color: #9333ea; display:flex; align-items:center; justify-content:center; font-size: 15px; flex-shrink: 0;"><i class="ph-fill ph-paper-plane-tilt"></i></div>
-            <div style="font-size: 13px; color: #334155;"><strong>Nộp đơn 1-chạm:</strong> Kết nối trực tiếp đến Studio và Organizer toàn cầu.</div>
+            <div style="width: 28px; height: 28px; border-radius: 6px; background: #faf5ff; color: #9333ea; display:flex; align-items:center; justify-content:center; font-size: 15px; flex-shrink: 0;"><i class="ph-fill ph-chat-circle-dots"></i></div>
+            <div style="font-size: 13px; color: #334155;"><strong>AI Pitch Drafts:</strong> Direct application details with ready-made introduction drafts for quick copying.</div>
           </div>
         </div>
 
         <button type="button" data-action="open-quick-setup" style="width: 100%; background: #0f172a; color: white; border: none; padding: 14px 20px; border-radius: 8px; font-weight: 700; font-size: 15px; cursor: pointer; display:flex; align-items:center; justify-content:center; gap:8px; box-shadow: 0 4px 12px rgba(15,23,42,0.2);">
-          <span>Bật Job Agent ngay (Chỉ 30s)</span> <i class="ph-bold ph-arrow-right"></i>
+          <span>Set Up Profile & Preferences (30s)</span> <i class="ph-bold ph-arrow-right"></i>
         </button>
 
         <button type="button" data-action="dismiss-onboarding-hook" style="margin-top: 14px; background: none; border: none; color: #64748b; font-size: 13px; font-weight: 500; cursor: pointer; text-decoration: underline;">
-          Để sau, tôi muốn lướt xem trước
+          Explore as Guest first
         </button>
       </div>
     `;
@@ -2027,128 +2027,8 @@ function mobileNav() {
 
   function openQuickSetupModal() {
     closeDialog();
-    const d = dancer();
-    const allStyles = ["Hip-Hop", "Popping", "Locking", "Breaking", "Waacking", "House", "Jazz", "Contemporary", "Ballet", "K-Pop", "Choreography", "Heels"];
-    const curStyles = (d.dance_styles || "Hip-Hop,Choreography").split(",").map(s => s.trim().toLowerCase());
-    
-    const styleChips = allStyles.map(st => {
-      const active = curStyles.includes(st.toLowerCase());
-      return `<span class="quick-style-chip" data-style="${st}" style="padding: 6px 14px; border-radius: 20px; font-size: 12px; font-weight: 600; cursor: pointer; border: 1px solid ${active ? '#2563eb' : '#cbd5e1'}; background: ${active ? '#eff6ff' : '#fff'}; color: ${active ? '#1d4ed8' : '#475569'}; transition: all 0.15s;">${st}</span>`;
-    }).join("");
-
-    const cities = ["Tokyo", "Singapore", "Ho Chi Minh City", "Osaka", "Seoul", "Bangkok", "Other"];
-    const cityOptions = cities.map(c => `<option value="${c}" ${(d.city || "Tokyo") === c ? "selected" : ""}>${c}</option>`).join("");
-
-    const minRate = d.min_compensation || 300;
-    const defaultDob = ext().age.dob || "2000-01-01";
-
-    const html = `
-      <div id="quick-setup-box" style="display:flex; flex-direction:column; gap:16px;">
-        <div style="text-align:center; margin-bottom: 4px;">
-          <h2 style="font-size: 20px; font-weight: 800; color: #0f172a; margin: 0 0 4px 0;">Thiết lập hồ sơ săn show ✨</h2>
-          <p style="font-size: 13px; color: #64748b; margin: 0;">AI sẽ dựa vào thông tin này để tính % Match cho từng buổi casting.</p>
-        </div>
-
-        <div>
-          <label style="display:block; font-size: 13px; font-weight: 700; color: #334155; margin-bottom: 8px;">1. Phong cách nhảy chính của bạn (Chọn 1 hoặc nhiều)</label>
-          <div id="quick-style-container" style="display:flex; flex-wrap:wrap; gap:8px;">
-            ${styleChips}
-          </div>
-          <input type="hidden" id="quick-styles-input" value="${d.dance_styles || "Hip-Hop,Choreography"}" />
-        </div>
-
-        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
-          <div>
-            <label style="display:block; font-size: 13px; font-weight: 700; color: #334155; margin-bottom: 6px;">2. Khu vực hoạt động</label>
-            <select id="quick-city-input" style="width:100%; padding: 10px 12px; border: 1px solid #cbd5e1; border-radius: 8px; font-size: 14px; background: white; outline: none;">
-              ${cityOptions}
-            </select>
-          </div>
-          <div>
-            <label style="display:block; font-size: 13px; font-weight: 700; color: #334155; margin-bottom: 6px;">3. Cát-xê tối thiểu ($)</label>
-            <input type="number" id="quick-rate-input" value="${minRate}" min="50" step="50" style="width:100%; padding: 10px 12px; border: 1px solid #cbd5e1; border-radius: 8px; font-size: 14px; outline: none;" placeholder="300" />
-          </div>
-        </div>
-
-        <!-- Date of Birth & Disclaimer (New Design) -->
-        <div style="background: #eff6ff; border: 1px solid #dbeafe; border-radius: 12px; padding: 16px;">
-          <div style="display:flex; align-items:center; gap:8px; margin-bottom: 12px;">
-            <div style="width: 26px; height: 26px; background: #2563eb; color: #fff; border-radius: 8px; display:flex; align-items:center; justify-content:center; font-weight: 800; font-size: 14px;">H</div>
-            <div style="font-size: 14px; font-weight: 700; color: #1e3a8a;">Date of Birth & Disclaimer</div>
-          </div>
-          <div style="display:flex; flex-direction:column; gap:4px; margin-bottom: 12px;">
-            <label style="font-size: 12px; font-weight: 600; color: #374151;">Date of Birth:</label>
-            <input type="date" id="quick-dob-input" value="${defaultDob}" max="${today()}" required style="width:100%; padding: 8px 12px; background:#fff; border: 1px solid #cbd5e1; border-radius: 8px; font-size: 13px; outline:none;" />
-            <span style="font-size: 11px; color: #64748b;">You must be at least 18 years old to accept gig bookings.</span>
-          </div>
-          <div style="display:flex; align-items:flex-start; gap:8px;">
-            <input type="checkbox" id="quick-age-confirm" checked style="margin-top: 3px; accent-color: #2563eb;" />
-            <div style="font-size: 12px; line-height: 1.4; color: #374151;">
-              I agree to the terms of the <button type="button" data-action="open-disclaimer-modal" style="color: #2563eb; font-weight: 600; text-decoration: underline; background:none; border:none; padding:0; cursor:pointer; font-size: 12px;">Job Agent Disclaimer</button>.
-            </div>
-          </div>
-        </div>
-
-        <!-- Open to Work Toggle -->
-        <div style="display:flex; justify-content:space-between; align-items:center; padding: 12px 14px; background: #ecfdf5; border: 1px solid #a7f3d0; border-radius: 8px;">
-          <div>
-            <div style="font-size: 13px; font-weight: 700; color: #065f46;">Sẵn sàng nhận show ngay (Open to Work)</div>
-            <div style="font-size: 11px; color: #047857;">Cho phép Studio tìm thấy profile của bạn</div>
-          </div>
-          <label style="position:relative; display:inline-block; width: 44px; height: 24px; cursor:pointer;">
-            <input type="checkbox" id="quick-open-to-work" checked style="opacity:0; width:0; height:0;" />
-            <span style="position:absolute; top:0; left:0; right:0; bottom:0; background-color:#10b981; border-radius:24px; transition:.2s;" id="quick-toggle-bg"></span>
-            <span style="position:absolute; content:''; height:18px; width:18px; left:22px; bottom:3px; background-color:white; border-radius:50%; transition:.2s;" id="quick-toggle-knob"></span>
-          </label>
-        </div>
-
-        <button type="button" data-action="submit-quick-setup" style="width: 100%; background: #0f172a; color: white; border: none; padding: 14px 20px; border-radius: 8px; font-weight: 700; font-size: 15px; cursor: pointer; display:flex; align-items:center; justify-content:center; gap:8px; box-shadow: 0 4px 12px rgba(15,23,42,0.2);">
-          <span>Kích hoạt & Săn Show ngay ✨</span>
-        </button>
-      </div>
-    `;
-    dialog("quick-setup", "", html, "", "", "");
-
-    // Attach click events for chips
-    setTimeout(() => {
-      const container = document.getElementById("quick-style-container");
-      const hiddenInput = document.getElementById("quick-styles-input");
-      if (container && hiddenInput) {
-        container.querySelectorAll(".quick-style-chip").forEach(chip => {
-          chip.addEventListener("click", () => {
-            const st = chip.getAttribute("data-style");
-            let selected = hiddenInput.value.split(",").map(s => s.trim()).filter(Boolean);
-            if (selected.map(s => s.toLowerCase()).includes(st.toLowerCase())) {
-              selected = selected.filter(s => s.toLowerCase() !== st.toLowerCase());
-              chip.style.borderColor = "#cbd5e1";
-              chip.style.background = "#fff";
-              chip.style.color = "#475569";
-            } else {
-              selected.push(st);
-              chip.style.borderColor = "#2563eb";
-              chip.style.background = "#eff6ff";
-              chip.style.color = "#1d4ed8";
-            }
-            hiddenInput.value = selected.join(",");
-          });
-        });
-      }
-
-      const toggleCheck = document.getElementById("quick-open-to-work");
-      const toggleBg = document.getElementById("quick-toggle-bg");
-      const toggleKnob = document.getElementById("quick-toggle-knob");
-      if (toggleCheck && toggleBg && toggleKnob) {
-        toggleCheck.addEventListener("change", () => {
-          if (toggleCheck.checked) {
-            toggleBg.style.backgroundColor = "#10b981";
-            toggleKnob.style.left = "22px";
-          } else {
-            toggleBg.style.backgroundColor = "#94a3b8";
-            toggleKnob.style.left = "4px";
-          }
-        });
-      }
-    }, 50);
+    ui.mobile = "profile";
+    render();
   }
 
   function checkReturningUserHook() {
@@ -2159,26 +2039,26 @@ function mobileNav() {
       persist();
       const html = `
         <div style="text-align: center; padding: 10px 4px;">
-          <div style="font-size: 32px; margin-bottom: 12px;">\uD83C\uDF1F</div>
-          <h2 style="font-size: 20px; font-weight: 800; color: #0f172a; margin: 0 0 8px 0;">Ch\u00E0o m\u1EEBng b\u1EA1n tr\u1EDF l\u1EA1i, ${dancerName}!</h2>
-          <p style="font-size: 14px; color: #64748b; line-height: 1.5; margin: 0 0 16px 0;">Hammer v\u1EEBa n\u00E2ng c\u1EA5p <strong>AI Job Agent</strong> gi\u00FAp t\u1EF1 \u0111\u1ED9ng b\u1EAFt c\u1EB7p casting & show di\u1EC5n cho b\u1EA1n.</p>
+          <div style="font-size: 32px; margin-bottom: 12px;">🌟</div>
+          <h2 style="font-size: 20px; font-weight: 800; color: #0f172a; margin: 0 0 8px 0;">Welcome back, ${dancerName}!</h2>
+          <p style="font-size: 14px; color: #64748b; line-height: 1.5; margin: 0 0 16px 0;">Hammer now includes <strong>AI Job Agent</strong> to match you with studio classes and casting calls automatically.</p>
           
           <div style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px; padding: 12px 16px; margin-bottom: 20px; text-align: left;">
             <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px;">
-              <span style="font-size: 12px; font-weight: 700; color: #334155;">Độ hoàn thiện hồ sơ săn show:</span>
+              <span style="font-size: 12px; font-weight: 700; color: #334155;">Job profile completion:</span>
               <span style="font-size: 12px; font-weight: 800; color: #2563eb;">65%</span>
             </div>
             <div style="height: 6px; background: #e2e8f0; border-radius: 3px; overflow: hidden;">
               <div style="width: 65%; height: 100%; background: #2563eb; border-radius: 3px;"></div>
             </div>
-            <div style="font-size: 11px; color: #64748b; margin-top: 6px;">Hoàn thiện nốt thể loại & mức thù lao để AI đạt độ chính xác 100%!</div>
+            <div style="font-size: 11px; color: #64748b; margin-top: 6px;">Fine-tune your styles, roles & rate to unlock 100% accurate matches!</div>
           </div>
 
           <button type="button" data-action="open-quick-setup" style="width: 100%; background: #0f172a; color: white; border: none; padding: 12px 20px; border-radius: 8px; font-weight: 700; font-size: 14px; cursor: pointer; margin-bottom: 10px;">
-            Hoàn thiện hồ sơ ngay (30s) ✨
+            Update Profile & Preferences (30s) ✨
           </button>
           <button type="button" data-action="dismiss-onboarding-hook" style="background: none; border: none; color: #64748b; font-size: 13px; cursor: pointer;">
-            Để sau, vào xem job trước
+            Maybe later, browse jobs first
           </button>
         </div>
       `;
@@ -2211,8 +2091,8 @@ function mobileNav() {
           <div style="width: 48px; height: 48px; background: #2563eb; color: #ffffff; border-radius: 14px; display: flex; align-items: center; justify-content: center; font-weight: 800; font-size: 24px; margin-bottom: 20px; box-shadow: 0 4px 12px rgba(37,99,235,0.25);">
             H
           </div>
-          <h1 style="font-size: 24px; font-weight: 800; color: #111827; margin: 0 0 8px 0; line-height: 1.25;">Almost there! \uD83C\uDF89</h1>
-          <p style="font-size: 14px; color: #6b7280; margin: 0; line-height: 1.5;">We just need a couple of details to set up your Hammer profile and Job Agent.</p>
+          <h1 style="font-size: 22px; font-weight: 800; color: #111827; margin: 0 0 8px 0; line-height: 1.25;">Age Verification (18+) 🛡️</h1>
+          <p style="font-size: 14px; color: #6b7280; margin: 0; line-height: 1.5;">Hammer aggregates dance opportunities, casting calls, and audition listings. Dancers explore, connect, and apply directly with organizers. Please verify that you are 18 or older to browse and participate.</p>
         </div>
 
         <!-- Main Form Content -->
@@ -2221,16 +2101,16 @@ function mobileNav() {
             
             <!-- Date of Birth Input -->
             <div style="display: flex; flex-direction: column; gap: 6px;">
-              <label for="dob" style="font-size: 14px; font-weight: 600; color: #374151;">Date of Birth</label>
+              <label for="dob" style="font-size: 14px; font-weight: 600; color: #374151;">Date of Birth *</label>
               <input 
                 type="date" 
                 id="dob" 
                 name="dob" 
-                value="${esc(ext().age.dob || '1998-05-15')}" 
+                value="${esc(ext().age?.dob || '')}" 
                 max="${today()}"
                 style="width: 100%; padding: 12px 14px; background: #f9fafb; border: 1px solid #e5e7eb; border-radius: 12px; font-size: 15px; color: #1f2937; outline: none; transition: all 0.2s;"
               >
-              <p style="font-size: 12px; color: #9ca3af; margin: 0;">You must be at least 18 years old to accept gig bookings.</p>
+              <p style="font-size: 12px; color: #9ca3af; margin: 0;">You must be at least 18 years old to explore and apply for dance opportunities.</p>
             </div>
 
             <!-- Disclaimer Checkbox -->
@@ -2240,7 +2120,6 @@ function mobileNav() {
                   id="agreement" 
                   name="agreement" 
                   type="checkbox" 
-                  checked
                   style="width: 18px; height: 18px; accent-color: #2563eb; cursor: pointer;"
                 >
               </div>
@@ -2251,7 +2130,7 @@ function mobileNav() {
                 <button type="button" data-action="open-disclaimer-modal" style="color: #2563eb; font-weight: 600; text-decoration: underline; background: none; border: none; padding: 0; cursor: pointer; font-size: 13px;">
                   Job Agent Disclaimer
                 </button>
-                <p style="color: #6b7280; font-size: 12px; margin: 4px 0 0 0;">Required to activate automatic job matches.</p>
+                <p style="color: #6b7280; font-size: 12px; margin: 4px 0 0 0;">Required to explore and apply for dance opportunities.</p>
               </div>
             </div>
 
@@ -2270,30 +2149,45 @@ function mobileNav() {
             </div>
           </form>
         </div>
+        <div id="mobile-overlay-root">${ui.dialog && ui.dialogState ? renderMobileDialogHTML(ui.dialogState) : ""}</div>
       </section>
     </div>`;
   }
   if (ui.mobile === "feed") {
     title = "";
     tools = "";
-    below = `<div style="display:flex; justify-content:space-between; align-items:center; width:100%; font-size:16px; font-weight:bold;">
-        <div style="width:24px;"></div>
-        <div style="display:flex; gap:16px; color:#000;">
-          <span style="opacity:0.5;">Following</span>
-          <span>Jobs (AI)</span>
+    const myJobsCount = Object.values(ext().history || {}).filter(
+      (h) => h && (h.saved || Object.keys(h.drafts || {}).length || h.applied_at),
+    ).length;
+
+    below = `
+      <!-- 1. Heading row: Job List + 2 Quick Action Buttons -->
+      <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px;">
+        <h1 style="font-size:22px; font-weight:800; color:#0f172a; margin:0; letter-spacing:-0.4px;">Job List</h1>
+        <div style="display:flex; align-items:center; gap:8px;">
+          <button data-action="mobile" data-value="hub" style="display:inline-flex; align-items:center; gap:5px; background:#fff; border:1px solid #cbd5e1; border-radius:20px; padding:6px 12px; font-size:12px; font-weight:600; color:#1e293b; cursor:pointer; box-shadow:0 1px 2px rgba(0,0,0,0.03); transition:all 0.15s;">
+            <i class="ph-bold ph-bookmarks" style="font-size:15px; color:#2563eb;"></i>
+            <span>My Jobs</span>
+            ${myJobsCount ? `<span style="background:#2563eb; color:#fff; font-size:10px; font-weight:700; padding:1px 6px; border-radius:10px;">${myJobsCount}</span>` : ""}
+          </button>
+          <button data-action="mobile" data-value="profile" style="display:inline-flex; align-items:center; gap:5px; background:#fff; border:1px solid #cbd5e1; border-radius:20px; padding:6px 12px; font-size:12px; font-weight:600; color:#1e293b; cursor:pointer; box-shadow:0 1px 2px rgba(0,0,0,0.03); transition:all 0.15s;">
+            <i class="ph-bold ph-sliders" style="font-size:15px; color:#6366f1;"></i>
+            <span>Edit Profile</span>
+          </button>
         </div>
-        <button data-action="mobile" data-value="hub" style="background:none; border:none; color:#000; font-size:24px;"><i class="ph ph-magnifying-glass"></i></button>
       </div>
-      <div class="toolbar" style="margin-top:10px;"><input id="feed-search" type="search" value="${esc(ui.feedSearch)}" aria-label="Search jobs" placeholder="Title, organization or city">${ib("filters", "Filter jobs", "sliders-horizontal")}</div>
-      <button data-action="mobile" data-value="profile" style="width:100%; margin-top:16px; padding:10px; background:#f3f4f6; border:1px solid #e5e7eb; border-radius:8px; color:#374151; font-size:13px; font-weight:600; display:flex; align-items:center; justify-content:center; gap:6px;">
-        <i class="ph ph-user-circle" style="font-size:18px;"></i> Edit Job Profile & Preferences
-      </button>`;
+
+      <!-- 2. Search Bar + Filter -->
+      <div class="toolbar" style="margin-top:0; margin-bottom:4px; display:flex; gap:8px; align-items:center;">
+        <input id="feed-search" type="search" value="${esc(ui.feedSearch)}" aria-label="Search jobs" placeholder="Title, organization or city" style="flex:1;">
+        ${ib("filters", "Filter jobs", "sliders-horizontal")}
+      </div>`;
     const list = filteredJobs();
     body =
       (!dancer().availibility
         ? '<div class="notice">New job alerts are paused. You can still browse and apply.</div>'
         : "") +
-      `<div class="section-heading" style="display:flex; justify-content:space-between; align-items:center;"><div><h3>${ui.guest ? "All opportunities" : "Recommended opportunities"}</h3><small>${list.length} jobs</small></div>${!ui.guest ? `<button data-action="toggle-open-to-work" style="display:flex; align-items:center; gap:6px; background:${dancer().availibility ? "#ecfdf5" : "#f3f4f6"}; border:1px solid ${dancer().availibility ? "#a7f3d0" : "#d1d5db"}; color:${dancer().availibility ? "#047857" : "#6b7280"}; border-radius:12px; padding:3px 10px; font-size:11px; font-weight:600; cursor:pointer;"><span style="width:6px; height:6px; border-radius:50%; background:${dancer().availibility ? "#10b981" : "#9ca3af"};"></span>${dancer().availibility ? "Open to Work: ON" : "Open to Work: OFF"}</button>` : ""}</div>` +
+      `<div class="section-heading" style="display:flex; justify-content:space-between; align-items:center; margin-top:16px;"><div><h3>${ui.guest ? "All opportunities" : "Recommended opportunities"}</h3><small>${list.length} jobs</small></div></div>` +
       (list.length
         ? list.map((item, idx) => {
             const card = jobCard(item);
@@ -2303,11 +2197,11 @@ function mobileNav() {
                 <div style="display:flex; gap:10px; align-items:flex-start;">
                   <span style="font-size: 22px;">💡</span>
                   <div style="flex:1;">
-                    <div style="font-weight: 700; font-size: 13px; color: #0369a1; margin-bottom: 4px;">Dạo này bạn có nâng cát-xê hay đổi style mới?</div>
-                    <div style="font-size: 12px; color: #475569; line-height: 1.4; margin-bottom: 10px;">Cập nhật lại mức thù lao & phong cách nhảy để AI ghép đúng các show mới nhất tháng này.</div>
+                    <div style="font-weight: 700; font-size: 13px; color: #0369a1; margin-bottom: 4px;">Changed your rate or learned new styles?</div>
+                    <div style="font-size: 12px; color: #475569; line-height: 1.4; margin-bottom: 10px;">Keep your preferences fresh so AI pairs you with the newest casting calls and gigs this month.</div>
                     <div style="display:flex; gap:8px;">
-                      <button data-action="open-quick-setup" style="background:#0284c7; color:white; border:none; padding:6px 12px; border-radius:6px; font-size:12px; font-weight:600; cursor:pointer;">Cập nhật nhanh (30s)</button>
-                      <button data-action="dismiss-nudge" style="background:white; border: 1px solid #cbd5e1; color:#64748b; padding:6px 10px; border-radius:6px; font-size:12px; font-weight:500; cursor:pointer;">Thông tin vẫn chuẩn</button>
+                      <button data-action="open-quick-setup" style="background:#0284c7; color:white; border:none; padding:6px 12px; border-radius:6px; font-size:12px; font-weight:600; cursor:pointer;">Quick Update (30s)</button>
+                      <button data-action="dismiss-nudge" style="background:white; border: 1px solid #cbd5e1; color:#64748b; padding:6px 10px; border-radius:6px; font-size:12px; font-weight:500; cursor:pointer;">Keep Current Details</button>
                     </div>
                   </div>
                 </div>
@@ -2328,33 +2222,81 @@ function mobileNav() {
       body += `<div class="section-heading"><h3>Outside your current filters</h3></div>${nearest.map(jobCard).join("")}`;
     }
   } else if (ui.mobile === "hub") {
-    title = "Job History";
-    below = `<div class="tabs" style="display:flex; gap:12px; border-bottom: 1px solid #e5e7eb; padding-bottom:0;">${["saved", "drafted", "applied"].map((s) => btn("hub", { saved: "Saved", drafted: "Drafts", applied: "Applied" }[s], s, (ui.hub === s || (ui.hub === "all" && s === "saved")) ? "active" : "")).join("")}</div>`;
-    const items = db.ai_opportunities.filter((o) => {
+    const allHistoryJobs = db.ai_opportunities.filter((o) => {
       const h = ext().history[o.id];
-      return (
-        h &&
-        (ui.hub === "all"
-          ? h.saved || Object.keys(h.drafts).length || h.applied_at
-          : ui.hub === "saved"
-            ? h.saved
-            : ui.hub === "drafted"
-              ? Object.keys(h.drafts).length && !h.applied_at
-              : !!h.applied_at)
-      );
+      return h && (h.saved || Object.keys(h.drafts || {}).length > 0 || h.applied_at);
     });
+    const savedJobs = db.ai_opportunities.filter((o) => ext().history[o.id]?.saved);
+    const draftedJobs = db.ai_opportunities.filter((o) => {
+      const h = ext().history[o.id];
+      return h && Object.keys(h.drafts || {}).length > 0 && !h.applied_at;
+    });
+    const appliedJobs = db.ai_opportunities.filter((o) => ext().history[o.id]?.applied_at);
+
+    const counts = {
+      all: allHistoryJobs.length,
+      saved: savedJobs.length,
+      drafted: draftedJobs.length,
+      applied: appliedJobs.length,
+    };
+
+    title = btn("mobile", "‹ Job History", "feed", "link", false, 'style="color:#111827; font-weight:800; font-size:17px; text-decoration:none; padding:0; background:none; border:none; cursor:pointer;"');
+    tools = `
+      <div style="display:flex; align-items:center; gap:8px;">
+        <span style="background:#0f172a; color:#fff; font-size:11px; font-weight:700; padding:4px 10px; border-radius:14px;">${counts.all} ${counts.all === 1 ? 'Job' : 'Jobs'}</span>
+        <button data-action="mobile" data-value="submit" style="display:inline-flex; align-items:center; gap:5px; background:#f0fdf4; border:1px solid #bbf7d0; border-radius:18px; padding:6px 12px; font-size:12px; font-weight:700; color:#15803d; cursor:pointer; box-shadow:0 1px 2px rgba(0,0,0,0.03);">
+          <i class="ph-bold ph-plus-circle" style="font-size:15px; color:#16a34a;"></i>
+          <span>Submit Link</span>
+        </button>
+      </div>
+    `;
+
+    below = `
+      <div class="tabs" style="display:flex; gap:8px; overflow-x:auto; padding:6px 0 10px 0; -webkit-overflow-scrolling:touch; margin-bottom:4px;">
+        ${[
+          ["all", `All (${counts.all})`],
+          ["saved", `Saved (${counts.saved})`],
+          ["drafted", `Drafts (${counts.drafted})`],
+          ["applied", `Applied (${counts.applied})`]
+        ].map(([key, label]) => {
+          const isActive = (ui.hub === key) || (!ui.hub && key === "all");
+          const bg = isActive ? "#0f172a" : "#ffffff";
+          const color = isActive ? "#ffffff" : "#475569";
+          const border = isActive ? "1px solid #0f172a" : "1px solid #e2e8f0";
+          return `<button data-action="hub" data-value="${key}" style="background:${bg}; color:${color}; border:${border}; border-radius:20px; padding:6px 14px; font-size:12.5px; font-weight:700; white-space:nowrap; cursor:pointer; transition:all 0.15s; box-shadow:0 1px 2px rgba(0,0,0,0.03);">${label}</button>`;
+        }).join("")}
+      </div>
+    `;
+
+    const items = (
+      ui.hub === "saved"
+        ? savedJobs
+        : ui.hub === "drafted"
+          ? draftedJobs
+          : ui.hub === "applied"
+            ? appliedJobs
+            : allHistoryJobs
+    );
+
     body = items.length
       ? items.map((o) => jobCard(o, true)).join("")
-      : empty(
-          "Nothing here yet",
-          "Save a job or create an application draft.",
-          btn("mobile", "Browse jobs", "feed"),
-        );
+      : `
+        <div style="text-align:center; padding:44px 20px; background:#fff; border-radius:16px; border:1px dashed #cbd5e1; margin-top:16px;">
+          <div style="width:52px; height:52px; border-radius:50%; background:#f1f5f9; color:#64748b; display:flex; align-items:center; justify-content:center; margin:0 auto 14px auto; font-size:24px;">
+            <i class="ph-bold ph-folder-notch-open"></i>
+          </div>
+          <h3 style="font-size:16px; font-weight:800; color:#0f172a; margin:0 0 6px 0;">No jobs found in this tab</h3>
+          <p style="font-size:13px; color:#64748b; margin:0 0 18px 0; line-height:1.5;">Bookmark casting calls or draft an application pitch to track your progress here.</p>
+          <button data-action="mobile" data-value="feed" style="background:#0f172a; color:#fff; border:none; padding:12px 22px; border-radius:10px; font-size:13.5px; font-weight:700; cursor:pointer; box-shadow:0 2px 6px rgba(0,0,0,0.15);">
+            Explore Jobs Now
+          </button>
+        </div>
+      `;
   } else if (ui.mobile === "profile") {
-    title = "Profile & preferences";
+    title = btn("mobile", "‹ Profile & preferences", "feed", "link", false, 'style="color:#111827; font-weight:800; font-size:17px; text-decoration:none; padding:0; background:none; border:none; cursor:pointer;"');
     body = profileForm();
   } else if (ui.mobile === "submit") {
-    title = "Contribute a job link";
+    title = btn("mobile", "‹ Contribute Job Link", "hub", "link", false, 'style="color:#111827; font-weight:800; font-size:17px; text-decoration:none; padding:0; background:none; border:none; cursor:pointer;"');
     body = `<p class="muted compact">Share a public recruitment link for the Hammer team to review.</p><div class="divider"></div><form id="submission-form">${field("url", "Recruitment URL *", "", "url", 'required placeholder="https://…"')}${area("note", "Optional note", "", 'maxlength="500"')}<div class="error-text" id="submission-error" role="alert"></div><button type="submit" class="primary wide-button">Submit for review</button></form><div class="section-heading"><h3>Your contributions</h3></div>${
       ext()
         .submissions.filter((s) => s.dancer_id === dancer().id)
@@ -2404,99 +2346,242 @@ function mobileNav() {
   <style>
     @media (min-width: 1000px) { .annotation-box { display: block !important; } }
   </style>
-  <section class="mobile-app"><header class="mobile-top"><div class="mobile-title" style="${title ? '' : 'display:none;'}"><h1>${title}</h1><div class="actions">${tools}</div></div>${below}</header><div class="mobile-body">${alert}${body}</div>${mobileNav()}</section></div>`;
+  <section class="mobile-app"><header class="mobile-top"><div class="mobile-title" style="${title ? '' : 'display:none;'}"><h1>${title}</h1><div class="actions">${tools}</div></div>${below}</header><div class="mobile-body">${alert}${body}</div>${mobileNav()}<div id="mobile-overlay-root">${ui.dialog && ui.dialogState ? renderMobileDialogHTML(ui.dialogState) : ""}</div></section></div>`;
 }
 function filteredJobs() {
+  const dUser = dancer();
   return db.ai_opportunities
     .filter(available)
     .filter((o) => {
       const f = ui.filters,
         d = distance(o),
-        days = duration(o),
         c = o.compensation;
-      return (
-        (!ui.feedSearch ||
-          [o.title, o.organization, o.city]
-            .join(" ")
-            .toLowerCase()
-            .includes(ui.feedSearch.toLowerCase())) &&
-        (!f.city || o.city === f.city) &&
-        (!f.type || o.opportunity_type === f.type) &&
-        (f.radius === null || (d !== null && d <= f.radius)) &&
-        (f.duration === 365 || (days !== null && days <= f.duration)) &&
-        (!f.min ||
-          (c &&
-            c.currency === ext().profile.currency &&
-            c.unit === ext().profile.compensation_unit &&
-            c.amount >= f.min))
-      );
+
+      // 1. Keyword search (title, org, city, styles)
+      if (ui.feedSearch) {
+        const text = [o.title, o.organization, o.city, ...(o.dance_styles || [])]
+          .join(" ")
+          .toLowerCase();
+        if (!text.includes(ui.feedSearch.toLowerCase())) return false;
+      }
+
+      // 2. Country & City Location filter
+      if (f.country && o.country !== f.country) {
+        const isIntlOrOnline = !o.country || (o.country && dUser.country && o.country !== dUser.country);
+        if (!f.include_intl_online || !isIntlOrOnline) return false;
+      }
+      if (f.city && o.city !== f.city) {
+        const isIntlOrOnline = !o.city || (o.country && dUser.country && o.country !== dUser.country);
+        if (!f.include_intl_online || !isIntlOrOnline) return false;
+      }
+
+      // 3. Dance Style filter (from Profile Sec 2)
+      if (f.style) {
+        const sLower = f.style.toLowerCase();
+        const hasStyle = (o.dance_styles || []).some((s) => {
+          const itemLower = s.toLowerCase();
+          return itemLower === sLower || itemLower.includes(sLower) || sLower.includes(itemLower);
+        });
+        if (!hasStyle) return false;
+      }
+
+      // 4. Preferred Role filter (from Profile Sec 3)
+      if (f.role) {
+        const rLower = f.role.toLowerCase();
+        const titleAndDesc = [o.title, o.description, o.opportunity_type].join(" ").toLowerCase();
+        if (rLower === "teaching") {
+          const isTeaching = o.opportunity_type === "workshop" || titleAndDesc.includes("teach") || titleAndDesc.includes("workshop") || titleAndDesc.includes("class") || titleAndDesc.includes("instructor");
+          if (!isTeaching) return false;
+        } else if (rLower === "performance") {
+          const isPerf = ["audition", "commercial", "battle", "touring", "casting"].includes(o.opportunity_type) || titleAndDesc.includes("dancer") || titleAndDesc.includes("perform") || titleAndDesc.includes("show") || titleAndDesc.includes("mv");
+          if (!isPerf) return false;
+        } else if (rLower === "choreography") {
+          const isChoreo = titleAndDesc.includes("choreo");
+          if (!isChoreo) return false;
+        }
+      }
+
+      // 5. Skill Level filter (from Profile Sec 4)
+      if (f.skill_level) {
+        const reqLevel = o.requirements?.skill_level;
+        if (reqLevel && reqLevel !== "All levels" && reqLevel.toLowerCase() !== f.skill_level.toLowerCase()) {
+          return false;
+        }
+      }
+
+      // 6. Travel Radius filter (from Profile Sec 1)
+      if (f.radius !== null) {
+        if (d !== null && d > f.radius) {
+          const isIntlOrOnline = !o.city || (o.country && dUser.country && o.country !== dUser.country);
+          if (!f.include_intl_online || !isIntlOrOnline) return false;
+        }
+      }
+
+      // 7. Minimum Pay filter (from Profile Sec 5)
+      if (f.min && +f.min > 0) {
+        if (!c || c.amount < +f.min) return false;
+      }
+
+      return true;
     })
     .sort((a, b) => score(b).value - score(a).value);
 }
 function jobCard(o, inHub = false) {
-    const h = ext().history[o.id], open = available(o);
+    const h = ext().history[o.id] || { saved: false, drafts: {}, applied_at: null }, open = available(o);
     const s = score(o);
 
-    // 1. Badge Logic
+    // 1. Common info
     const ot = (o.opportunity_type || "").toLowerCase();
     const isShowcase = ot.includes("audition") || ot.includes("battle") || ot.includes("jam") || ot.includes("contest") || ot.includes("competition") || ot.includes("casting") || ot.includes("workshop");
-    
-    let typeBg = isShowcase ? "#f3e8ff" : "#f3f4f6";
-    let typeColor = isShowcase ? "#9333ea" : "#374151";
-    const typeLabel = isShowcase ? "SHOWCASE" : "JOB";
-    
-    const typePill = `<span style="background: ${typeBg}; color: ${typeColor}; font-size: 10px; font-weight: 700; padding: 4px 8px; border-radius: 4px; text-transform: uppercase;">${typeLabel}</span>`;
-
-          // 2. Match Badge (hidden for guests)
-      let matchPill = "";
-      if (!ui.guest) {
-          if (open) {
-              matchPill = `<span style="background: #d1fae5; color: #047857; font-size: 11px; font-weight: 700; padding: 3px 8px; border-radius: 4px; display: flex; align-items: center; gap: 4px;">✨ ${s.value}%${s.est ? ' * est' : ' Match'}</span>`;
-          } else {
-              matchPill = `<span style="background: #fee2e2; color: #b91c1c; font-size: 11px; font-weight: 700; padding: 3px 8px; border-radius: 4px;">Closed</span>`;
-          }
-      } else if (!open) {
-          matchPill = `<span style="background: #fee2e2; color: #b91c1c; font-size: 11px; font-weight: 700; padding: 3px 8px; border-radius: 4px;">Closed</span>`;
-      }
-
-    // 3. Org & Location
     const loc = o.city ? `${o.city}${o.country ? ", " + o.country : ""}` : "Worldwide";
     const orgLoc = `${esc(o.organization || "Private")} &bull; ${esc(loc)}`;
 
-    // 4. Extra Meta: Dance Styles & Dates
-    const styles = (o.dance_styles || []).join(", ");
-    let styleHtml = "";
-    if (styles) {
-        styleHtml = `<div style="font-size: 12px; color: #6b7280; margin-top: 4px; display: flex; align-items: center; gap: 4px;"><svg width="14" height="14" viewBox="0 0 256 256" fill="currentColor"><path d="M216,104v8a56.06,56.06,0,0,1-56,56H136v40h16a8,8,0,0,1,0,16H104a8,8,0,0,1,0-16h16V168H104a56.06,56.06,0,0,1-56-56v-8a8,8,0,0,1,16,0v8a40,40,0,0,0,40,40h16V88H104A40,40,0,0,1,64,48V40a8,8,0,0,1,16,0v8a24,24,0,0,0,24,24h16V32a8,8,0,0,1,16,0V72h16a24,24,0,0,0,24-24V40a8,8,0,0,1,16,0v8A40,40,0,0,1,152,88h-16v64h24a40,40,0,0,0,40-40v-8a8,8,0,0,1,16,0Z"></path></svg> ${esc(styles)}</div>`;
-    }
-
-    let dateHtml = "";
-    if (o.event_start_date) {
-        let dateText = dateLabel(o.event_start_date);
-        if (o.event_end_date && o.event_end_date !== o.event_start_date) {
-            dateText += " to " + dateLabel(o.event_end_date);
-        }
-        dateHtml = `<div style="font-size: 12px; color: #6b7280; margin-top: 4px; display: flex; align-items: center; gap: 4px;"><svg width="14" height="14" viewBox="0 0 256 256" fill="currentColor"><path d="M208,32H184V24a8,8,0,0,0-16,0v8H88V24a8,8,0,0,0-16,0v8H48A16,16,0,0,0,32,48V208a16,16,0,0,0,16,16H208a16,16,0,0,0,16-16V48A16,16,0,0,0,208,32ZM72,48v8a8,8,0,0,0,16,0V48h80v8a8,8,0,0,0,16,0V48h24V72H48V48ZM208,208H48V88H208V208Z"></path></svg> ${dateText}</div>`;
-    }
-
-    // 5. Compensation
     let compMain = "Contact Organizer";
-    
     if (o.compensation && (o.compensation.min_amount || o.compensation.max_amount || o.compensation.amount)) {
         compMain = (isShowcase ? "Prize: " : "") + money(o);
     }
-    
-    // 6. Fake Activity Counter (FOMO)
-    // Generates a stable pseudo-random number (3 to 32) based on job ID
+
+    // 2. Hub status & progress mapping
+    const isApplied = !!h.applied_at;
+    const hasDraft = Object.keys(h.drafts || {}).length > 0;
+    const isSaved = !!h.saved;
+    const progress = h.progress || "pending";
+
+    const progressConfig = {
+        pending: { label: "Pending Response", step: 1, color: "#d97706", bg: "#fef3c7" },
+        interview: { label: "Interview / Casting", step: 2, color: "#2563eb", bg: "#dbeafe" },
+        booked: { label: "Booked!", step: 3, color: "#059669", bg: "#d1fae5" },
+        rejected: { label: "Declined", step: 0, color: "#dc2626", bg: "#fee2e2" },
+    };
+    const currentProgress = progressConfig[progress] || progressConfig.pending;
+
+    let hubBadge = "";
+    if (isApplied) {
+        hubBadge = `<span style="background:#ecfdf5; color:#059669; border:1px solid #a7f3d0; font-size:10.5px; font-weight:700; padding:2px 8px; border-radius:12px; display:inline-flex; align-items:center; gap:4px;">Applied</span>`;
+    } else if (hasDraft) {
+        hubBadge = `<span style="background:#fffbeb; color:#d97706; border:1px solid #fde68a; font-size:10.5px; font-weight:700; padding:2px 8px; border-radius:12px; display:inline-flex; align-items:center; gap:4px;">Draft</span>`;
+    } else if (isSaved) {
+        hubBadge = `<span style="background:#eff6ff; color:#2563eb; border:1px solid #bfdbfe; font-size:10.5px; font-weight:700; padding:2px 8px; border-radius:12px; display:inline-flex; align-items:center; gap:4px;">Saved</span>`;
+    }
+
+    // 3. Badge Logic
+    let typeBg = isShowcase ? "#f3e8ff" : "#f3f4f6";
+    let typeColor = isShowcase ? "#9333ea" : "#374151";
+    const typeLabel = isShowcase ? "SHOWCASE" : "JOB";
+    const typePill = `<span style="background: ${typeBg}; color: ${typeColor}; font-size: 10px; font-weight: 700; padding: 4px 8px; border-radius: 4px; text-transform: uppercase;">${typeLabel}</span>`;
+
+    let matchPill = "";
+    if (!ui.guest) {
+        if (open) {
+            matchPill = `<span style="background: #d1fae5; color: #047857; font-size: 11px; font-weight: 700; padding: 3px 8px; border-radius: 4px; display: flex; align-items: center; gap: 4px;">✨ ${s.value}%${s.est ? ' * est' : ' Match'}</span>`;
+        } else {
+            matchPill = `<span style="background: #fee2e2; color: #b91c1c; font-size: 11px; font-weight: 700; padding: 3px 8px; border-radius: 4px;">Closed</span>`;
+        }
+    } else if (!open) {
+        matchPill = `<span style="background: #fee2e2; color: #b91c1c; font-size: 11px; font-weight: 700; padding: 3px 8px; border-radius: 4px;">Closed</span>`;
+    }
+
+    // 4. Clean Meta: Dance Styles & Dates (Typography only, no cluttering SVG icons)
+    const styles = (o.dance_styles || []).join(", ");
+    let dateText = "";
+    if (o.event_start_date) {
+        dateText = dateLabel(o.event_start_date);
+        if (o.event_end_date && o.event_end_date !== o.event_start_date) {
+            dateText += " - " + dateLabel(o.event_end_date);
+        }
+    }
+
+    let metaRow = "";
+    if (styles || dateText) {
+        const parts = [];
+        if (styles) parts.push(esc(styles));
+        if (dateText) parts.push(esc(dateText));
+        metaRow = `<div style="font-size: 12.5px; color: #64748b; margin-top: 5px; font-weight: 500; line-height: 1.4;">${parts.join(" • ")}</div>`;
+    }
+
+    // 5. FOMO Counter for feed
     const interestedCount = (o.id * 7 % 30) + 3;
     const interestedPill = `<span style="font-size: 11px; color: #4b5563; font-weight: 600; display: flex; align-items: center; gap: 4px; background: #f3f4f6; padding: 4px 8px; border-radius: 4px;">👥 ${interestedCount} interested</span>`;
 
-    return `<article class="job-card" style="background: white; border: 1px solid #e5e7eb; border-radius: 8px; padding: 16px; margin-bottom: 16px; box-shadow: 0 1px 3px rgba(0,0,0,0.05); text-align: left;" data-job="${o.id}">
+    // 6. In-Hub Specific: Application Progress Timeline Stepper (ONLY shown if job is Applied)
+    let hubProgressSection = "";
+    if (inHub && isApplied) {
+        const curStep = currentProgress.step;
+        const isRejected = progress === "rejected";
+
+        const stepPill = (num, label, active) => `
+            <div style="flex:1; text-align:center;">
+                <div style="height:4px; border-radius:2px; background:${active ? '#0f172a' : '#e2e8f0'}; margin-bottom:5px;"></div>
+                <div style="font-size:10px; font-weight:${active ? '700' : '500'}; color:${active ? '#0f172a' : '#94a3b8'}; text-transform:uppercase; letter-spacing:0.3px;">${label}</div>
+            </div>
+        `;
+
+        const stepperHtml = isRejected
+            ? `<div style="background:#fee2e2; border-radius:6px; padding:6px 10px; font-size:11.5px; font-weight:700; color:#dc2626; text-align:center; margin-bottom:8px;">Status: Application Declined</div>`
+            : `
+                <div style="display:flex; gap:6px; align-items:center; margin-bottom:10px;">
+                    ${stepPill(1, "1. Applied", curStep >= 1)}
+                    ${stepPill(2, "2. Interview", curStep >= 2)}
+                    ${stepPill(3, "3. Booked", curStep >= 3)}
+                </div>
+            `;
+
+        hubProgressSection = `
+            <div style="background:#f8fafc; border:1px solid #e2e8f0; border-radius:8px; padding:10px 12px; margin:10px 0 6px 0;" onclick="event.stopPropagation()">
+                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
+                    <span style="font-size:10.5px; font-weight:800; color:#475569; letter-spacing:0.5px;">APPLICATION PROGRESS:</span>
+                    <span style="font-size:10.5px; font-weight:700; color:${currentProgress.color}; background:${currentProgress.bg}; padding:2px 8px; border-radius:6px;">${currentProgress.label}</span>
+                </div>
+                ${stepperHtml}
+                <select data-action="update-job-progress" data-job="${o.id}" style="width:100%; padding:7px 10px; background:#ffffff; border:1px solid #cbd5e1; border-radius:6px; font-size:12.5px; font-weight:600; color:#1e293b; outline:none; cursor:pointer;">
+                    <option value="pending" ${progress === "pending" ? "selected" : ""}>Pending Response</option>
+                    <option value="interview" ${progress === "interview" ? "selected" : ""}>Interview / Audition Scheduled</option>
+                    <option value="booked" ${progress === "booked" ? "selected" : ""}>Booked / Offer Accepted</option>
+                    <option value="rejected" ${progress === "rejected" ? "selected" : ""}>Declined / Unsuccessful</option>
+                </select>
+            </div>
+        `;
+    }
+
+    let hubExpiredNotice = "";
+    if (inHub && !open) {
+        hubExpiredNotice = `
+            <div style="background:#fff7ed; border:1px solid #fed7aa; border-radius:8px; padding:8px 12px; margin:8px 0; font-size:12px; color:#c2410c; display:flex; justify-content:space-between; align-items:center;" onclick="event.stopPropagation()">
+                <span>This opportunity is closed. You can still review your draft.</span>
+                <button type="button" data-action="job" data-value="${o.id}" style="background:none; border:none; color:#ea580c; font-weight:700; cursor:pointer; text-decoration:underline; font-size:12px; padding:0;">View</button>
+            </div>
+        `;
+    }
+
+    // 7. Right Action buttons in Bottom row (Clean & light)
+    let bottomActions = "";
+    if (!inHub) {
+        bottomActions = `
+            ${interestedPill}
+            ${ib("save-job", h?.saved ? "Unsave job" : "Save job", h?.saved ? "bookmark-simple-fill" : "bookmark-simple", o.id)}
+        `;
+    } else {
+        let actionBtn = "";
+        if (hasDraft || isApplied) {
+            actionBtn = `<button type="button" data-action="pitch" data-value="${o.id}" style="background:none; border:none; color:#2563eb; font-size:12.5px; font-weight:700; cursor:pointer; padding:4px 6px;">${isApplied ? "View Draft" : "Resume Draft"}</button>`;
+        }
+        bottomActions = `
+            ${actionBtn}
+            ${ib("save-job", h?.saved ? "Unsave job" : "Save job", h?.saved ? "bookmark-simple-fill" : "bookmark-simple", o.id)}
+        `;
+    }
+
+    return `<article class="job-card" data-action="job" data-value="${o.id}" style="background: white; border: 1px solid #e5e7eb; border-radius: 8px; padding: 16px; margin-bottom: 16px; box-shadow: 0 1px 3px rgba(0,0,0,0.05); text-align: left; cursor: pointer; transition: transform 0.15s ease, box-shadow 0.15s ease;" data-job="${o.id}">
       
       <!-- Top Row: Badges -->
-      <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 12px;">
-        ${typePill}
-        ${matchPill}
+      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
+        <div style="display: flex; align-items: center; gap: 6px;">
+          ${typePill}
+          ${inHub && hubBadge ? hubBadge : ""}
+        </div>
+        <div style="display: flex; align-items: center; gap: 6px;">
+          ${inHub && !open ? `<span style="background:#fee2e2; color:#b91c1c; font-size:10px; font-weight:700; padding:3px 7px; border-radius:4px;">Closed</span>` : matchPill}
+        </div>
       </div>
 
       <!-- Title & Org -->
@@ -2507,27 +2592,29 @@ function jobCard(o, inHub = false) {
         ${orgLoc}
       </div>
       
-      <!-- Extra Meta: Styles & Dates -->
-      ${styleHtml}
-      ${dateHtml}
+      <!-- Clean Meta: Styles & Dates -->
+      ${metaRow}
+
+      <!-- Hub Extras -->
+      ${hubProgressSection}
+      ${hubExpiredNotice}
 
       <!-- Divider -->
       <hr style="border: none; border-top: 1px solid #e5e7eb; margin: 12px 0;">
 
       <!-- Bottom Row: Compensation & Action -->
-      <div style="display: flex; justify-content: space-between; align-items: center;">
+      <div style="display: flex; justify-content: space-between; align-items: center;" onclick="event.stopPropagation()">
         <div style="font-size: 16px; font-weight: 800; color: #111827;">
-            ${esc(compMain)}
+          ${esc(compMain)}
         </div>
         
         <div style="display: flex; gap: 8px; align-items: center;">
-            ${interestedPill}
-            ${ib("save-job", h?.saved ? "Unsave job" : "Save job", h?.saved ? "bookmark-simple-fill" : "bookmark-simple", o.id)}
+          ${bottomActions}
         </div>
       </div>
       
     </article>`;
-  }
+}
   function jobDetail() {
     const o = job(ui.job);
     if (!o) return empty("Job unavailable", "This link may no longer be available.", btn("mobile", "Browse jobs", "feed"));
@@ -2535,6 +2622,15 @@ function jobCard(o, inHub = false) {
     const s = score(o);
     const h = history(o.id);
     const open = available(o);
+    const isApplied = !!h.applied_at;
+    const progress = h.progress || "pending";
+    const progressConfig = {
+        pending: { label: "Pending Response", step: 1, color: "#d97706", bg: "#fef3c7" },
+        interview: { label: "Interview / Casting", step: 2, color: "#2563eb", bg: "#dbeafe" },
+        booked: { label: "Booked!", step: 3, color: "#059669", bg: "#d1fae5" },
+        rejected: { label: "Declined", step: 0, color: "#dc2626", bg: "#fee2e2" },
+    };
+    const currentProgress = progressConfig[progress] || progressConfig.pending;
       
     const ot = (o.opportunity_type || "").toLowerCase();
     const isShowcase = ot.includes("audition") || ot.includes("battle") || ot.includes("jam") || ot.includes("contest") || ot.includes("competition") || ot.includes("casting") || ot.includes("workshop");
@@ -2615,6 +2711,60 @@ function jobCard(o, inHub = false) {
 
           <div style="height: 8px; background: #f8fafc; border-top: 1px solid #f1f5f9; border-bottom: 1px solid #f1f5f9; width: 100%;"></div>
           ` : ""}
+
+        <!-- Application Progress Section (Within Job Detail - shown if applied) -->
+        ${(!ui.guest && isApplied) ? `
+        <div style="padding: 20px 20px 10px 20px;">
+            <div style="background: #f8fafc; border: 1.5px solid #e2e8f0; border-radius: 12px; padding: 16px; box-shadow: 0 1px 3px rgba(0,0,0,0.02);">
+                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom: 12px;">
+                    <div>
+                        <div style="font-size: 11px; font-weight: 800; color: #475569; letter-spacing: 0.5px; text-transform: uppercase;">APPLICATION PROGRESS</div>
+                        <div style="font-size: 12px; color: #64748b; margin-top: 2px;">Submitted: <strong>${stamp(h.applied_at)}</strong></div>
+                    </div>
+                    <span style="font-size: 11px; font-weight: 700; color:${currentProgress.color}; background:${currentProgress.bg}; padding: 3px 10px; border-radius: 8px;">
+                        ${currentProgress.label}
+                    </span>
+                </div>
+
+                ${progress === 'rejected'
+                    ? `<div style="background:#fee2e2; border-radius:6px; padding:8px 12px; font-size:12px; font-weight:700; color:#dc2626; text-align:center; margin-bottom:12px;">Status: Application Declined</div>`
+                    : `
+                        <div style="display:flex; gap:8px; align-items:center; margin-bottom:14px;">
+                            <div style="flex:1; text-align:center;">
+                                <div style="height:4px; border-radius:2px; background:${currentProgress.step >= 1 ? '#0f172a' : '#e2e8f0'}; margin-bottom:5px;"></div>
+                                <div style="font-size:10.5px; font-weight:${currentProgress.step >= 1 ? '700' : '500'}; color:${currentProgress.step >= 1 ? '#0f172a' : '#94a3b8'}; text-transform:uppercase;">1. Applied</div>
+                            </div>
+                            <div style="flex:1; text-align:center;">
+                                <div style="height:4px; border-radius:2px; background:${currentProgress.step >= 2 ? '#0f172a' : '#e2e8f0'}; margin-bottom:5px;"></div>
+                                <div style="font-size:10.5px; font-weight:${currentProgress.step >= 2 ? '700' : '500'}; color:${currentProgress.step >= 2 ? '#0f172a' : '#94a3b8'}; text-transform:uppercase;">2. Interview</div>
+                            </div>
+                            <div style="flex:1; text-align:center;">
+                                <div style="height:4px; border-radius:2px; background:${currentProgress.step >= 3 ? '#0f172a' : '#e2e8f0'}; margin-bottom:5px;"></div>
+                                <div style="font-size:10.5px; font-weight:${currentProgress.step >= 3 ? '700' : '500'}; color:${currentProgress.step >= 3 ? '#0f172a' : '#94a3b8'}; text-transform:uppercase;">3. Booked</div>
+                            </div>
+                        </div>
+                    `
+                }
+
+                <select data-action="update-job-progress" data-job="${o.id}" style="width: 100%; padding: 10px 12px; background: #ffffff; border: 1.5px solid #cbd5e1; border-radius: 8px; font-size: 13.5px; font-weight: 600; color: #1e293b; outline: none; cursor: pointer;">
+                    <option value="pending" ${progress === "pending" ? "selected" : ""}>Pending Response</option>
+                    <option value="interview" ${progress === "interview" ? "selected" : ""}>Interview / Audition Scheduled</option>
+                    <option value="booked" ${progress === "booked" ? "selected" : ""}>Booked / Offer Accepted</option>
+                    <option value="rejected" ${progress === "rejected" ? "selected" : ""}>Declined / Unsuccessful</option>
+                </select>
+            </div>
+        </div>
+        ` : ""}
+
+        ${!open ? `
+        <div style="padding: 0 20px 16px 20px;">
+            <div style="background:#fff7ed; border:1px solid #fed7aa; border-radius:8px; padding:10px 14px; font-size:13px; color:#c2410c;">
+                This opportunity is closed. You can still review details and your application draft.
+            </div>
+        </div>
+        ` : ""}
+
+        <div style="height: 8px; background: #f8fafc; border-top: 1px solid #f1f5f9; border-bottom: 1px solid #f1f5f9; width: 100%;"></div>
   
           <!-- Job Description -->
         <div style="padding: 24px 20px;">
@@ -2649,7 +2799,7 @@ ${(o.requirements && Array.isArray(o.requirements) && o.requirements.length > 0)
               </div>
               ` : `
               <div style="padding: 24px 20px;">
-              ${h2EndMarker}
+              <h2 style="font-size: 16px; font-weight: 700; color: #0f172a; margin-bottom: 12px;">How to Apply</h2>
               
 
               
@@ -2724,7 +2874,7 @@ My profile aligns perfectly with your requirements for ${(Array.isArray(o.dance_
 Let me know if you need my dance reel.</div>
 
                     <div style="display:flex;">
-                        <button ${ui.guest ? 'data-action="generate"' : `onclick="toast('Copied to clipboard!')"`} style="flex:1; border: none; background: #0f172a; color: white; padding: 12px; border-radius: 8px; font-size: 14px; font-weight: 600; display:flex; justify-content:center; align-items:center; gap:8px; cursor:pointer; box-shadow: 0 2px 4px rgba(0,0,0,0.1);"><i class="ph ph-copy" style="font-size: 18px;"></i> Copy & Apply</button>
+                        <button ${ui.guest ? 'data-action="generate"' : `data-action="copy-and-apply" data-job="${o.id}"`} style="flex:1; border: none; background: #0f172a; color: white; padding: 12px; border-radius: 8px; font-size: 14px; font-weight: 600; display:flex; justify-content:center; align-items:center; gap:8px; cursor:pointer; box-shadow: 0 2px 4px rgba(0,0,0,0.1);"><i class="ph ph-copy" style="font-size: 18px;"></i> Copy & Apply</button>
                     </div>
                 </div>
             </div>
@@ -2749,90 +2899,187 @@ function profileForm() {
   const roles = ["Performance", "Teaching", "Choreography", "Other"];
   const langs = ["English", "Vietnamese", "Japanese", "Mandarin", "Korean", "Other"];
   
-  const renderChips = (name, list, current) => {
-    const curArr = (current || "").split(",");
-    return `<div class="chip-group" style="margin-top:0;">${list.map(item => `<label><input type="checkbox" name="${name}" value="${item}" class="chip-input" ${curArr.includes(item) ? "checked" : ""}><span class="chip-label">${item}</span></label>`).join("")}</div>`;
+  const curStyles = (d.dance_styles || "Hip-hop,Open Choreo").split(",").map(s => s.trim().toLowerCase());
+  const curRoles = (d.preferred_types || "Performance,Teaching").split(",").map(r => r.trim().toLowerCase());
+  const curLangs = (d.languages || "English").split(",").map(l => l.trim().toLowerCase());
+
+  const renderChips = (name, list, curArr) => {
+    return `<div class="chip-group" style="margin-top:0; display:flex; flex-wrap:wrap; gap:8px;">${list.map(item => {
+      const active = curArr.includes(item.toLowerCase());
+      return `<label style="margin:0; cursor:pointer;"><input type="checkbox" name="${name}" value="${item}" class="chip-input" ${active ? "checked" : ""}><span class="chip-label">${item}</span></label>`;
+    }).join("")}</div>`;
   };
 
-  return `<div class="profile-heading" style="margin-bottom:16px; display:none;">
-    <img class="avatar" src="assets/dancer.jpg" alt="Sample dancer portrait">
-    <div><h3 style="margin:0;font-size:18px;">${esc(p.display_name)}</h3><small style="color:#6b7280;">${esc(d.email)}</small></div>
-  </div>
-  
-  <form id="profile-form">
-  
-  <div class="pro-card" style="display:flex; align-items:center; justify-content:space-between; border-left:4px solid #10b981; padding:12px 16px;">
-    <div>
-      <span style="font-weight:700; display:block; font-size:15px; color:#111827;">Open to Work</span>
-      <span style="font-size:12px; color:#6b7280; margin-top:2px; display:block;">Get personalized job alerts and recommendations.</span>
-    </div>
-    <input id="open-to-work-profile" name="availibility" class="switch" type="checkbox" ${d.availibility ? "checked" : ""}>
-  </div>
+  const countries = ["Singapore", "Japan", "Vietnam", "United States"];
+  const countryOptions = countries.map(c => `<option value="${c}" ${(d.country || "Japan") === c ? "selected" : ""}>${c}</option>`).join("");
 
-  <h3 style="font-size:18px; font-weight:800; color:#111827; margin:24px 0 16px;">Basic Info</h3>
-  
-  <!-- 1. LOCATION BLOCK -->
-  <div style="margin-bottom:24px;">
-    <h4 style="font-size:14px; font-weight:700; color:#374151; margin:0 0 12px; display:flex; align-items:center; gap:6px;">1. Location</h4>
-    
-    <div style="display:flex; gap:16px; margin-bottom:16px;">
-      <div style="flex:1;"><label class="form-label" style="font-size:11px;">Country</label>${select("country", "", ["Singapore", "Japan", "Vietnam", "United States"], d.country || "Singapore").replace('<label class="field"><span></span>', "").replace('</label>', "")}</div>
-      <div style="flex:1;"><label class="form-label" style="font-size:11px;">City</label>${select("city", "", cities, d.city).replace('<label class="field"><span></span>', "").replace('</label>', "")}</div>
-    </div>
-    
-    <label class="field"><span class="range-value" style="font-weight:600; font-size:12px; margin-top:8px;">Willing to travel locally up to <output id="radius-output" style="color:#10b981;">${d.travelRadiusKm || 20} km</output></span><input type="range" name="travelRadiusKm" min="5" max="100" value="${d.travelRadiusKm || 20}" data-output="radius-output" data-unit=" km"></label>
-    
-    <div style="margin-top:16px; display:flex; flex-direction:column; gap:12px; ">
-      <label class="check-row" style="margin:0;"><input type="checkbox" name="work_abroad" ${d.work_abroad ? "checked" : ""}> <span style="font-size:13px; font-weight:500;">Open to international travel / work abroad</span></label>
-      <label class="check-row" style="margin:0;"><input type="checkbox" name="include_online" ${d.include_online ? "checked" : ""}> <span style="font-size:13px; font-weight:500;">Include online/remote projects</span></label>
-    </div>
-  </div>
+  const cityList = ["Tokyo", "Singapore", "Osaka", "Kyoto", "Ho Chi Minh City", "Other"];
+  const cityOptions = cityList.map(c => `<option value="${c}" ${(d.city || "Tokyo") === c ? "selected" : ""}>${c}</option>`).join("");
 
-  <!-- 2. STYLES BLOCK -->
-  <div style="margin-bottom:24px;">
-    <h4 style="font-size:14px; font-weight:700; color:#374151; margin:0 0 10px; display:flex; align-items:center; gap:6px;">2. Dance Styles</h4>
-    ${renderChips("dance_styles", styles, d.dance_styles)}
-  </div>
+  const isAgeVerified = ageAllowed();
 
-  <!-- 3. ROLES BLOCK -->
-  <div style="margin-bottom:24px;">
-    <h4 style="font-size:14px; font-weight:700; color:#374151; margin:0 0 10px; display:flex; align-items:center; gap:6px;">3. Preferred Roles</h4>
-    ${renderChips("preferred_types", roles, d.preferred_types)}
-  </div>
-
-  <!-- 4. EXPERIENCE BLOCK -->
-  <div style="margin-bottom:24px;">
-    <h4 style="font-size:14px; font-weight:700; color:#374151; margin:0 0 10px; display:flex; align-items:center; gap:6px;">4. Experience</h4>
-    <div style="display:flex; gap:16px;">
-      <div style="flex:2;"><label class="form-label" style="font-size:11px;">Skill Level</label>${select("skill_level", "", ["Beginner", "Intermediate", "Advanced"], d.skill_level).replace('<label class="field"><span></span>', "").replace('</label>', "")}</div>
-      <div style="flex:1;"><label class="form-label" style="font-size:11px;">Years</label>${field("year_experience", "", d.year_experience, "number", 'min="0" max="80"').replace('<label class="field"><span></span>', "").replace('</label>', "")}</div>
-    </div>
-  </div>
-
-  <!-- 5. ADVANCED BLOCK -->
-  <details class="pro-card" style="padding:0; margin-bottom:24px; overflow:hidden;">
-    <summary style="font-weight:600; cursor:pointer; padding:16px; color:#3b82f6; background:#f8fafc; border-bottom:1px solid #e5e7eb; display:flex; justify-content:space-between; align-items:center;">
-      <span style="display:flex; align-items:center; gap:6px;"><i class="ph ph-plus-circle"></i> Add rate & details for better matches</span>
-      <i class="ph ph-caret-down"></i>
-    </summary>
-    <div style="padding:16px;">
-      <label class="form-label" style="font-size:12px; margin-bottom:8px;">Minimum acceptable rate</label>
-      <div style="display:flex; gap:8px; margin-bottom:20px;">
-        <div style="flex:2;">${field("min_compensation", "", d.min_compensation, "number", 'min="0" step="1" placeholder="e.g. 50"').replace('<label class="field"><span></span>', "").replace('</label>', "")}</div>
-        <div style="flex:1;">${select("currency", "", ["SGD", "USD", "VND"], p.currency).replace('<label class="field"><span></span>', "").replace('</label>', "")}</div>
-        <div style="flex:2;">${select("compensation_unit", "", ["Per hour", "Per class", "Per gig", "Per month", "Other"], p.compensation_unit).replace('<label class="field"><span></span>', "").replace('</label>', "")}</div>
+  return `
+  <div style="margin-bottom:16px;">
+    <form id="profile-form">
+      
+      <!-- Open to Work Card -->
+      <div class="pro-card" style="display:flex; align-items:center; justify-content:space-between; border-left:4px solid #10b981; padding:12px 16px; margin:0 0 20px 0; background:#fff; border-radius:10px; border-top:1px solid #e2e8f0; border-right:1px solid #e2e8f0; border-bottom:1px solid #e2e8f0; box-shadow:0 1px 3px rgba(0,0,0,0.03);">
+        <div>
+          <span style="font-weight:700; display:block; font-size:15px; color:#111827;">Open to Work</span>
+          <span style="font-size:12px; color:#6b7280; margin-top:2px; display:block;">Get personalized job alerts and recommendations.</span>
+        </div>
+        <input id="open-to-work-profile" name="availibility" class="switch" type="checkbox" ${d.availibility !== false ? "checked" : ""}>
       </div>
-      
-      <label class="form-label" style="font-size:12px; margin-bottom:8px;">Languages you speak</label>
-      ${renderChips("languages", langs, d.languages)}
-      
-      
-    </div>
-  </details>
 
-  <div class="error-text" id="profile-error" role="alert"></div>
-  <button class="primary wide-button" type="submit" style="padding:14px; font-size:15px; font-weight:600; border-radius:8px;">Save & View Jobs</button>
-  </form>`;
+      <h3 style="font-size:18px; font-weight:800; color:#111827; margin:0 0 16px;">Basic Info</h3>
+      
+      <!-- 1. LOCATION BLOCK -->
+      <div style="margin-bottom:24px;">
+        <h4 style="font-size:14px; font-weight:700; color:#374151; margin:0 0 12px; display:flex; align-items:center; gap:6px;">1. Location</h4>
+        
+        <div style="display:flex; gap:16px; margin-bottom:16px;">
+          <div style="flex:1;">
+            <label class="form-label" style="font-size:11px; font-weight:600; color:#6b7280; margin-bottom:4px;">Country</label>
+            <select name="country" id="profile-country" style="width:100%; padding:9px 10px; border:1px solid #cbd5e1; border-radius:8px; font-size:13px; background:#fff; outline:none;">
+              ${countryOptions}
+            </select>
+          </div>
+          <div style="flex:1;">
+            <label class="form-label" style="font-size:11px; font-weight:600; color:#6b7280; margin-bottom:4px;">City</label>
+            <select name="city" id="profile-city" style="width:100%; padding:9px 10px; border:1px solid #cbd5e1; border-radius:8px; font-size:13px; background:#fff; outline:none;">
+              ${cityOptions}
+            </select>
+          </div>
+        </div>
+        
+        <label class="field" style="margin-bottom:8px;">
+          <span class="range-value" style="font-weight:600; font-size:12px; margin-bottom:6px; display:flex; justify-content:space-between; align-items:center;">
+            <span style="color:#1e293b;">Willing to travel locally up to</span>
+            <output id="radius-output" style="color:#059669; font-weight:700;">${d.travelRadiusKm || 25} km</output>
+          </span>
+          <input type="range" name="travelRadiusKm" min="5" max="100" value="${d.travelRadiusKm || 25}" data-output="radius-output" data-unit=" km">
+        </label>
+        
+        <div style="margin-top:14px; display:flex; flex-direction:column; gap:10px;">
+          <label class="check-row" style="margin:0;"><input type="checkbox" name="work_abroad" ${d.work_abroad ? "checked" : ""}> <span style="font-size:13px; font-weight:500; color:#374151;">Open to international travel / work abroad</span></label>
+          <label class="check-row" style="margin:0;"><input type="checkbox" name="include_online" ${d.include_online ? "checked" : ""}> <span style="font-size:13px; font-weight:500; color:#374151;">Include online/remote projects</span></label>
+        </div>
+      </div>
+
+      <!-- 2. STYLES BLOCK -->
+      <div style="margin-bottom:24px;">
+        <h4 style="font-size:14px; font-weight:700; color:#374151; margin:0 0 10px; display:flex; align-items:center; gap:6px;">2. Dance Styles</h4>
+        ${renderChips("dance_styles", styles, curStyles)}
+      </div>
+
+      <!-- 3. ROLES BLOCK -->
+      <div style="margin-bottom:24px;">
+        <h4 style="font-size:14px; font-weight:700; color:#374151; margin:0 0 10px; display:flex; align-items:center; gap:6px;">3. Preferred Roles</h4>
+        ${renderChips("preferred_types", roles, curRoles)}
+      </div>
+
+      <!-- 4. EXPERIENCE BLOCK -->
+      <div style="margin-bottom:24px;">
+        <h4 style="font-size:14px; font-weight:700; color:#374151; margin:0 0 10px; display:flex; align-items:center; gap:6px;">4. Experience</h4>
+        <div style="display:flex; gap:16px;">
+          <div style="flex:2;">
+            <label class="form-label" style="font-size:11px; font-weight:600; color:#6b7280; margin-bottom:4px;">Skill Level</label>
+            <select name="skill_level" style="width:100%; padding:9px 10px; border:1px solid #cbd5e1; border-radius:8px; font-size:13px; background:#fff; outline:none;">
+              ${["Beginner", "Intermediate", "Advanced"].map(s => `<option value="${s}" ${(d.skill_level || "Advanced") === s ? "selected" : ""}>${s}</option>`).join("")}
+            </select>
+          </div>
+          <div style="flex:1;">
+            <label class="form-label" style="font-size:11px; font-weight:600; color:#6b7280; margin-bottom:4px;">Years</label>
+            <input type="number" name="year_experience" value="${d.year_experience || 4}" min="0" max="60" style="width:100%; padding:9px 10px; border:1px solid #cbd5e1; border-radius:8px; font-size:13px; outline:none;" />
+          </div>
+        </div>
+      </div>
+
+      <!-- 5. ADVANCED BLOCK -->
+      <details class="pro-card" style="padding:0; margin:0 0 24px 0; overflow:hidden; border:1px solid #cbd5e1; border-radius:12px; background:#fff;" open>
+        <summary style="font-weight:600; cursor:pointer; padding:15px 16px; color:#2563eb; background:#fff; display:flex; justify-content:space-between; align-items:center;">
+          <span style="display:flex; align-items:center; gap:8px;">
+            <i class="ph ph-plus-circle" style="font-size:17px; color:#2563eb;"></i>
+            <span style="font-size:14px; font-weight:600;">Add rate & details for better matches</span>
+          </span>
+          <i class="ph ph-caret-down" style="font-size:16px; color:#2563eb;"></i>
+        </summary>
+        <div style="padding:16px; border-top:1px solid #f1f5f9; display:flex; flex-direction:column; gap:16px;">
+          <div>
+            <label class="form-label" style="font-size:12px; font-weight:600; color:#374151; margin-bottom:6px;">Minimum acceptable rate</label>
+            <div style="display:grid; grid-template-columns: 2fr 1fr 2fr; gap:8px;">
+              <input type="number" name="min_compensation" id="profile-rate" value="${d.min_compensation || 300}" min="0" step="5" style="padding:9px 10px; border:1px solid #cbd5e1; border-radius:8px; font-size:13px; outline:none;" placeholder="50" />
+              <select name="currency" style="padding:9px 8px; border:1px solid #cbd5e1; border-radius:8px; font-size:13px; background:#fff; outline:none;">
+                ${["USD", "SGD", "VND", "JPY"].map(c => `<option value="${c}" ${(p.currency || "USD") === c ? "selected" : ""}>${c}</option>`).join("")}
+              </select>
+              <select name="compensation_unit" style="padding:9px 8px; border:1px solid #cbd5e1; border-radius:8px; font-size:13px; background:#fff; outline:none;">
+                ${["Per hour", "Per class", "Per gig", "Per month", "Other"].map(u => `<option value="${u}" ${(p.compensation_unit || "Per hour") === u ? "selected" : ""}>${u}</option>`).join("")}
+              </select>
+            </div>
+          </div>
+          
+          <div>
+            <label class="form-label" style="font-size:12px; font-weight:600; color:#374151; margin-bottom:8px;">Languages you speak</label>
+            ${renderChips("languages", langs, curLangs)}
+          </div>
+        </div>
+      </details>
+
+      <!-- AGE VERIFICATION & TERMS -->
+      <div style="background:#f8fafc; border:1px solid #e2e8f0; border-radius:12px; padding:16px; margin:0 0 20px 0;">
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px;">
+          <h4 style="font-size:14px; font-weight:700; color:#374151; margin:0; display:flex; align-items:center; gap:6px;">
+            <i class="ph-bold ph-shield-check" style="color:#2563eb; font-size:17px;"></i> Age Verification & Terms
+          </h4>
+          ${isAgeVerified ? `<span style="background:#ecfdf5; color:#059669; font-size:11px; font-weight:700; padding:3px 10px; border-radius:12px; display:inline-flex; align-items:center; gap:4px;"><i class="ph-fill ph-check-circle"></i> 18+ Verified</span>` : `<span style="background:#fef2f2; color:#dc2626; font-size:11px; font-weight:700; padding:3px 8px; border-radius:12px;">Required</span>`}
+        </div>
+        <div style="display:flex; flex-direction:column; gap:4px; margin-bottom:12px;">
+          <label style="font-size:12px; font-weight:600; color:#374151;">Date of Birth *</label>
+          <input type="date" name="dob" id="profile-dob" value="${ext().age?.dob || ''}" max="${today()}" required style="padding:9px 12px; border:1px solid #cbd5e1; border-radius:8px; font-size:13px; background:#fff; outline:none;">
+          <span style="font-size:11px; color:#64748b;">You must be at least 18 years old to explore and apply for dance opportunities.</span>
+        </div>
+        <label class="check-row" style="margin:0; display:flex; align-items:flex-start; gap:8px;">
+          <input type="checkbox" name="agreement" id="profile-agreement" ${isAgeVerified ? 'checked' : ''} style="margin-top:2px;">
+          <span style="font-size:12px; color:#374151; line-height:1.4;">I agree to the terms of the <button type="button" data-action="open-disclaimer-modal" style="color:#2563eb; text-decoration:underline; font-weight:600; background:none; border:none; padding:0; cursor:pointer; font-size:12px;">Job Agent Disclaimer</button>.</span>
+        </label>
+      </div>
+
+      <div class="error-text" id="profile-error" role="alert"></div>
+      <button class="primary wide-button" type="submit" style="padding:14px; font-size:15px; font-weight:700; border-radius:8px; background:#18181b; color:#fff; width:100%; cursor:pointer;">Save & View Jobs</button>
+    </form>
+  </div>`;
+}
+
+function renderMobileDialogHTML(state) {
+  if (!state) return "";
+  const { kind, title, body, saveLabel, extra, shape } = state;
+  const isCenter = shape === "center";
+  return `
+    <div class="mobile-overlay">
+      <div class="mobile-backdrop" data-action="close"></div>
+      <div class="${isCenter ? 'mobile-confirm-card' : 'mobile-dialog-sheet'}">
+        ${!isCenter ? '<div class="mobile-sheet-drag"></div>' : ''}
+        <div style="display:flex; align-items:center; justify-content:${title ? 'space-between' : 'flex-end'}; padding: 4px 14px 6px 18px;">
+          ${title ? `<h3 class="mobile-sheet-title">${esc(title)}</h3>` : ''}
+          <button type="button" class="mobile-sheet-close" data-action="close" aria-label="Close">
+            <i class="ph ph-x"></i>
+          </button>
+        </div>
+        <div class="mobile-sheet-body">
+          <form id="dialog-form" data-kind="${kind}">
+            <div class="error-text" id="dialog-error" role="alert"></div>
+            ${body}
+          </form>
+        </div>
+        ${(extra || saveLabel) ? `
+          <div class="mobile-sheet-footer">
+            ${extra}
+            ${saveLabel ? `<button class="primary wide-button" type="submit" form="dialog-form">${saveLabel}</button>` : ""}
+          </div>
+        ` : ''}
+      </div>
+    </div>
+  `;
 }
 
 let lastFocus = null;
@@ -2840,6 +3087,26 @@ function dialog(kind, title, body, saveLabel = "", extra = "", shape = "") {
   lastFocus = document.activeElement;
   ui.dialog = kind;
   ui.dirty = false;
+  ui.dialogState = { kind, title, body, saveLabel, extra, shape };
+
+  if (ui.mode === "dancer") {
+    $("#overlay-root").innerHTML = "";
+    const m = $("#mobile-overlay-root");
+    if (m) {
+      m.innerHTML = renderMobileDialogHTML(ui.dialogState);
+      setTimeout(
+        () =>
+          $(
+            "#mobile-overlay-root input:not([type=hidden]),#mobile-overlay-root select,#mobile-overlay-root button",
+          )?.focus(),
+        0,
+      );
+      return;
+    }
+  }
+
+  const m = $("#mobile-overlay-root");
+  if (m) m.innerHTML = "";
   $("#overlay-root").innerHTML =
     `<div class="overlay ${shape}"><section class="dialog ${shape === "drawer" ? "" : "wide"}" role="dialog" aria-modal="true" aria-labelledby="dialog-title"><header class="dialog-head"><h2 id="dialog-title">${title}</h2>${ib("close", "Close dialog", "x")}</header><div class="dialog-body"><form id="dialog-form" data-kind="${kind}"><div class="error-text" id="dialog-error" role="alert"></div>${body}</form></div><footer class="dialog-footer">${extra}${btn("close", "Close")}${saveLabel ? `<button class="primary" type="submit" form="dialog-form" ${ui.mode === "cms" && !editable() ? "disabled" : ""}>${saveLabel}</button>` : ""}</footer></section></div>`;
   document.body.style.overflow = "hidden";
@@ -2851,10 +3118,31 @@ function dialog(kind, title, body, saveLabel = "", extra = "", shape = "") {
     0,
   );
 }
+
 function showConfirm(msg, confirmAction, confirmValue) {
   lastFocus = document.activeElement;
   ui.dialog = "confirm";
   ui.dirty = false;
+
+  if (ui.mode === "dancer") {
+    const m = $("#mobile-overlay-root");
+    if (m) {
+      m.innerHTML = `
+        <div class="mobile-overlay">
+          <div class="mobile-backdrop" data-action="close"></div>
+          <div class="mobile-confirm-card">
+            <p style="font-size: 15px; font-weight: 600; color: #0f172a; margin-bottom: 20px; line-height: 1.5;">${esc(msg)}</p>
+            <div style="display: flex; gap: 10px;">
+              <button class="primary" data-action="${confirmAction}" data-value="${confirmValue}" style="flex:1; background:#0f172a; color:#fff; border:none; padding: 12px; border-radius: 8px; font-weight: 600; cursor:pointer;">Confirm</button>
+              <button data-action="close" style="flex:1; background:#f1f5f9; border:none; color:#475569; padding: 12px; border-radius: 8px; font-weight: 600; cursor:pointer;">Cancel</button>
+            </div>
+          </div>
+        </div>
+      `;
+      return;
+    }
+  }
+
   $("#overlay-root").innerHTML = `
     <div class="overlay">
       <section class="dialog" style="max-width: 400px; padding: 24px 30px; text-align: center; border-radius: 12px; border: none; box-shadow: 0 4px 20px rgba(0,0,0,0.15); background: #fff;">
@@ -2868,11 +3156,15 @@ function showConfirm(msg, confirmAction, confirmValue) {
   `;
   document.body.style.overflow = "hidden";
 }
+
 function closeDialog(force = false) {
   if (ui.dirty && !force && !confirm("Discard unsaved changes?")) return false;
   $("#overlay-root").innerHTML = "";
+  const m = $("#mobile-overlay-root");
+  if (m) m.innerHTML = "";
   document.body.style.overflow = "";
   ui.dialog = null;
+  ui.dialogState = null;
   ui.dirty = false;
   lastFocus?.isConnected && lastFocus.focus();
   return true;
@@ -2891,15 +3183,15 @@ function formError(message) {
         
         <div style="font-size: 13px; color: #4b5563; line-height: 1.5; display: flex; flex-direction: column; gap: 12px;">
           <p style="margin: 0;">
-            Job Agent automatically matches you with studios that need instructors. Before you opt in, please review these basic rules:
+            Hammer provides curated dance jobs, casting calls, and audition listings. Before exploring opportunities, please keep in mind:
           </p>
           <ul style="margin: 0; padding-left: 20px; display: flex; flex-direction: column; gap: 8px; color: #374151;">
-            <li><strong>We are a platform, not an agency:</strong> Hammer connects you to teaching opportunities, but we do not act as your employer or manager.</li>
-            <li><strong>Bookings are not guaranteed:</strong> We will notify you when a class matches your profile, but we cannot promise a set schedule or fixed income.</li>
-            <li><strong>Your studio, your terms:</strong> Once you accept a class, your working relationship is directly with that studio. Hammer is not responsible for delayed payments, late cancellations, or any on-site issues.</li>
+            <li><strong>Discovery platform, not an agency:</strong> Hammer aggregates and curates dance opportunities. We do not act as an agency or employer, and do not issue or manage contracts.</li>
+            <li><strong>Direct connection & application:</strong> Dancers review listings and independently contact, register, or apply directly with studios and organizers.</li>
+            <li><strong>Your own arrangements:</strong> Any working arrangements, schedules, casting participation, and payments are handled directly between you and the organizer.</li>
           </ul>
           <p style="font-weight: 600; color: #1f2937; margin: 4px 0 0 0;">
-            By checking the box, you agree that Hammer is simply here to make the introduction.
+            By checking the box, you confirm that you are 18+ and understand Hammer serves as a discovery platform to help you connect independently.
           </p>
         </div>
 
@@ -2950,10 +3242,71 @@ function showJob(id) {
 }
 function openFilters() {
   const f = ui.filters;
+  const d = dancer();
+  const stylesList = ["Hip-hop", "Contemporary", "Ballet", "Jazz", "K-pop", "Open Choreo", "Heels", "Other"];
+  const rolesList = ["Performance", "Teaching", "Choreography", "Other"];
+  const levelsList = ["Beginner", "Intermediate", "Advanced"];
+
   dialog(
     "filters",
     "Filter opportunities",
-    `${select("city", "City", [["", "All cities"], ...cities], f.city)}${select("type", "Job type", [["", "All types"], ...types], f.type)}<label class="check-row"><input type="checkbox" name="limit_radius" ${f.radius !== null ? "checked" : ""}>Limit distance from my profile city</label><label class="field"><span class="range-value">Travel radius <output id="filter-radius">${f.radius ?? 25} km</output></span><input type="range" name="radius" min="5" max="100" value="${f.radius ?? 25}" data-output="filter-radius" data-unit=" km"></label><label class="field"><span class="range-value">Maximum duration <output id="filter-duration">${f.duration} days</output></span><input type="range" name="duration" min="1" max="365" value="${f.duration}" data-output="filter-duration" data-unit=" days"></label>${field("min", `Minimum pay (${esc(ext().profile.currency)} / ${esc(ext().profile.compensation_unit)})`, f.min, "number", 'min="0" step="1"')}<small>Unknown or differently denominated pay is excluded when a minimum is set.</small>`,
+    `<div style="display:flex; flex-direction:column; gap:14px;">
+      <!-- Match Profile Preset Banner -->
+      <div style="background:#eff6ff; border:1px solid #bfdbfe; border-radius:10px; padding:12px 14px; display:flex; justify-content:space-between; align-items:center;">
+        <div>
+          <div style="font-size:12px; font-weight:700; color:#1e3a8a;">Quick Match</div>
+          <div style="font-size:11px; color:#3b82f6;">Fill filters using your saved Profile</div>
+        </div>
+        <button type="button" data-action="filter-profile-defaults" style="background:#2563eb; color:white; border:none; padding:6px 12px; border-radius:6px; font-size:11px; font-weight:700; cursor:pointer;">
+          Match My Profile
+        </button>
+      </div>
+
+      <!-- 1. Dance Style (From Profile Sec 2) -->
+      ${select("style", "Dance style", [["", "All dance styles"], ...stylesList], f.style)}
+
+      <!-- 2. Preferred Role (From Profile Sec 3) -->
+      ${select("role", "Preferred role", [["", "All roles"], ...rolesList], f.role)}
+
+      <!-- 3. Skill Level (From Profile Sec 4) -->
+      ${select("skill_level", "Skill level", [["", "All levels"], ...levelsList], f.skill_level)}
+
+      <!-- 4. Location: Country & City on 1 row (From Profile Sec 1) -->
+      <div style="display:flex; flex-direction:column; gap:6px;">
+        <div style="display:flex; gap:10px;">
+          <div style="flex:1;">
+            ${select("country", "Country", [["", "All countries"], ...countries], f.country)}
+          </div>
+          <div style="flex:1;">
+            ${select("city", "City", [["", "All cities"], ...cities], f.city)}
+          </div>
+        </div>
+        
+        <label class="check-row" style="margin:2px 0 0 0;">
+          <input type="checkbox" name="limit_radius" ${f.radius !== null ? "checked" : ""}>
+          <span style="font-size:12px; font-weight:600; color:#374151;">Limit distance from my city</span>
+        </label>
+        
+        <label class="field" style="margin-bottom:0;">
+          <span class="range-value" style="font-size:12px; font-weight:600; display:flex; justify-content:space-between;">
+            <span>Travel radius</span>
+            <output id="filter-radius" style="color:#059669; font-weight:700;">${f.radius ?? (d.travelRadiusKm || 25)} km</output>
+          </span>
+          <input type="range" name="radius" min="5" max="100" value="${f.radius ?? (d.travelRadiusKm || 25)}" data-output="filter-radius" data-unit=" km">
+        </label>
+
+        <label class="check-row" style="margin:0;">
+          <input type="checkbox" name="include_intl_online" ${f.include_intl_online ? "checked" : ""}>
+          <span style="font-size:12px; color:#475569;">Include international & online/remote gigs</span>
+        </label>
+      </div>
+
+      <!-- 5. Minimum Pay (From Profile Sec 5) -->
+      <div>
+        ${field("min", `Minimum pay (${esc(ext().profile.currency)} / ${esc(ext().profile.compensation_unit)})`, f.min ? f.min : "", "number", 'min="0" step="10" placeholder="e.g. ' + (d.min_compensation || 300) + '"')}
+        <small style="color:#64748b; font-size:11px; margin-top:4px; display:block;">Your profile min rate: ${d.min_compensation || 300} ${esc(ext().profile.currency)}. Opportunities below this will be excluded.</small>
+      </div>
+    </div>`,
     "Apply filters",
     btn("reset-filters", "Reset"),
     "sheet",
@@ -3493,6 +3846,7 @@ const cmsMutations = new Set([
   "save-schedule",
 ]);
 document.addEventListener("click", async (event) => {
+  if (event.target.closest("select, option")) return;
   const b = event.target.closest("[data-action], [data-page-for]");
   if (!b || b.disabled) return;
   event.preventDefault();
@@ -3514,7 +3868,7 @@ document.addEventListener("click", async (event) => {
   }
   if (
     ui.mode === "dancer" &&
-    !["mode", "reset", "age", "close", "sign-in", "job", "mobile", "feed-search", "continue-onboarding", "login-returning", "open-quick-setup", "dismiss-onboarding-hook", "dismiss-nudge", "toggle-open-to-work", "submit-quick-setup", "open-disclaimer-modal", "agree-disclaimer-from-modal", "submit-age-gate"].includes(a) &&
+    !["mode", "reset", "age", "close", "sign-in", "job", "mobile", "feed-search", "continue-onboarding", "login-returning", "open-quick-setup", "dismiss-onboarding-hook", "dismiss-nudge", "toggle-open-to-work", "submit-quick-setup", "open-disclaimer-modal", "agree-disclaimer-from-modal", "submit-age-gate", "toggle-quick-style", "toggle-quick-role", "toggle-boost"].includes(a) &&
     !ensureAccess()
   )
     return;
@@ -3561,10 +3915,37 @@ document.addEventListener("click", async (event) => {
     render();
   } else if (a === "filters") openFilters();
   else if (a === "reset-filters") {
-    ui.filters = { city: "", type: "", radius: null, duration: 365, min: 0 };
+    ui.filters = {
+      country: "",
+      city: "",
+      style: "",
+      role: "",
+      skill_level: "",
+      radius: null,
+      include_intl_online: false,
+      min: 0,
+    };
     ui.feedSearch = "";
     closeDialog(true);
     render();
+  } else if (a === "filter-profile-defaults") {
+    const d = dancer();
+    const primaryStyle = (d.dance_styles || "").split(",")[0]?.trim() || "";
+    const primaryRole = (d.preferred_types || "").split(",")[0]?.trim() || "";
+    ui.filters = {
+      country: d.country || "",
+      city: d.city || "",
+      style: primaryStyle,
+      role: primaryRole,
+      skill_level: d.skill_level || "",
+      radius: d.travelRadiusKm || 25,
+      include_intl_online: !!d.work_abroad || !!d.include_online,
+      min: d.min_compensation || 0,
+    };
+    closeDialog(true);
+    render();
+    toast("Filters set to match your profile preferences! ✨");
+    return;
   } else if (a === "hub") {
     ui.hub = v;
     render();
@@ -3584,6 +3965,22 @@ document.addEventListener("click", async (event) => {
       audit("draft copied", ui.job);
       toast("Draft copied. Submit it through the original listing.");
     }
+  } else if (a === "copy-and-apply") {
+    const jId = Number(b.dataset.job || v || ui.job);
+    const h = history(jId);
+    const jobObj = job(jId);
+    const draftText = (h.drafts && h.drafts[ui.lang]) || `Dear ${jobObj?.organization || 'Team'}, I am interested in applying for ${jobObj?.title || 'this opportunity'}.`;
+    await copyText(draftText);
+    h.copied_at = now();
+    if (!h.applied_at) {
+      h.applied_at = now();
+      if (!h.progress) h.progress = "pending";
+    }
+    audit("copied and applied", jId);
+    persist();
+    render();
+    toast("Draft copied! Job marked as Applied.");
+    return;
   } else if (a === "applied") {
     const h = history(v);
     if (!h.applied_at && !available(job(v))) return;
@@ -3619,35 +4016,94 @@ document.addEventListener("click", async (event) => {
       checkReturningUserHook();
       return;
     } else if (a === "submit-quick-setup") {
-      const ageConfirm = document.getElementById("quick-age-confirm")?.checked;
-      if (!ageConfirm) {
-        toast("Vui lòng xác nhận bạn đủ 18 tuổi để kích hoạt Job Agent.");
-        return;
+      const isAlreadyVerified = ageAllowed();
+      let dobVal = ext().age?.dob;
+      if (!isAlreadyVerified) {
+        const ageConfirm = document.getElementById("quick-age-confirm")?.checked;
+        if (!ageConfirm) {
+          toast("Please agree to the Job Agent Disclaimer to continue.");
+          return;
+        }
+        dobVal = document.getElementById("quick-dob-input")?.value;
+        if (!dobVal) {
+          toast("Please enter your date of birth.");
+          return;
+        }
+        ext().age = {
+          dob: dobVal,
+          accepted_at: new Date().toISOString()
+        };
       }
       const d = dancer();
-      const stylesVal = document.getElementById("quick-styles-input")?.value || "Hip-Hop";
+      const stylesVal = document.getElementById("quick-styles-input")?.value || "Hip-hop";
+      const rolesVal = document.getElementById("quick-roles-input")?.value || "Teaching,Performance";
+      const countryVal = document.getElementById("quick-country-input")?.value || "Japan";
       const cityVal = document.getElementById("quick-city-input")?.value || "Tokyo";
-      const rateVal = parseInt(document.getElementById("quick-rate-input")?.value) || 300;
-      const dobVal = document.getElementById("quick-dob-input")?.value || "2000-01-01";
+      const rateVal = parseInt(document.getElementById("quick-rate-input")?.value) || 50;
+      const currencyVal = document.getElementById("quick-currency-input")?.value || "SGD";
+      const unitVal = document.getElementById("quick-unit-input")?.value || "Per class";
       const openWork = document.getElementById("quick-open-to-work")?.checked !== false;
 
       d.dance_styles = stylesVal;
+      d.preferred_types = rolesVal;
+      d.country = countryVal;
       d.city = cityVal;
       d.min_compensation = rateVal;
       d.availibility = openWork;
+
+      ext().profile.currency = currencyVal;
+      ext().profile.compensation_unit = unitVal;
       
-      ext().age = {
-        dob: dobVal,
-        accepted_at: new Date().toISOString()
-      };
       ext().onboardingCompleted = true;
       ext().nudgeDismissed = true;
+      rebuildRecommendations();
+      persist();
       
       closeDialog();
       ui.guest = false;
       ui.mobile = "feed";
       render();
-      toast("🎉 Hồ sơ đã kích hoạt! AI đã tìm thấy các show phù hợp cho bạn.");
+      toast("Preferences saved! Matching jobs refreshed. ✨");
+      return;
+    } else if (a === "toggle-quick-style") {
+      const chip = b;
+      const st = chip.getAttribute("data-style");
+      const hiddenInput = document.getElementById("quick-styles-input");
+      if (hiddenInput && st) {
+        let selected = hiddenInput.value.split(",").map(s => s.trim()).filter(Boolean);
+        if (selected.map(s => s.toLowerCase()).includes(st.toLowerCase())) {
+          selected = selected.filter(s => s.toLowerCase() !== st.toLowerCase());
+          chip.style.borderColor = "#cbd5e1";
+          chip.style.background = "#fff";
+          chip.style.color = "#475569";
+        } else {
+          selected.push(st);
+          chip.style.borderColor = "#2563eb";
+          chip.style.background = "#eff6ff";
+          chip.style.color = "#1d4ed8";
+        }
+        hiddenInput.value = selected.join(",");
+      }
+      return;
+    } else if (a === "toggle-quick-role") {
+      const chip = b;
+      const rl = chip.getAttribute("data-role");
+      const hiddenInput = document.getElementById("quick-roles-input");
+      if (hiddenInput && rl) {
+        let selected = hiddenInput.value.split(",").map(s => s.trim()).filter(Boolean);
+        if (selected.map(s => s.toLowerCase()).includes(rl.toLowerCase())) {
+          selected = selected.filter(s => s.toLowerCase() !== rl.toLowerCase());
+          chip.style.borderColor = "#cbd5e1";
+          chip.style.background = "#fff";
+          chip.style.color = "#475569";
+        } else {
+          selected.push(rl);
+          chip.style.borderColor = "#2563eb";
+          chip.style.background = "#eff6ff";
+          chip.style.color = "#1d4ed8";
+        }
+        hiddenInput.value = selected.join(",");
+      }
       return;
     } else if (a === "submit-age-gate") {
       const dobInput = document.getElementById("dob");
@@ -3656,12 +4112,12 @@ document.addEventListener("click", async (event) => {
       const isAgreed = agreementBox ? agreementBox.checked : false;
 
       if (!dobVal) {
-        toast("Vui l\u00F2ng ch\u1ECDn ng\u00E0y sinh c\u1EE7a b\u1EA1n.");
+        toast("Please select your date of birth.");
         dobInput?.focus();
         return;
       }
       if (!isAgreed) {
-        toast("Vui l\u00F2ng t\u00EDch \u0111\u1ED3ng \u00FD v\u1EDBi \u0111i\u1EC1u kho\u1EA3n Job Agent Disclaimer.");
+        toast("Please agree to the Job Agent Disclaimer to continue.");
         agreementBox?.focus();
         return;
       }
@@ -3676,7 +4132,7 @@ document.addEventListener("click", async (event) => {
         years--;
 
       if (dobVal > today() || years < 18) {
-        toast("Job Agent ch\u1EC9 d\u00E0nh cho ng\u01B0\u1EDDi t\u1EEB 18 tu\u1ED5i tr\u1EDF l\u00EAn.");
+        toast("Job Agent is only available for dancers aged 18 and older.");
         return;
       }
 
@@ -3687,35 +4143,42 @@ document.addEventListener("click", async (event) => {
       audit("age declared", dancer().id);
       persist();
       render();
-      toast("\uD83C\uDF89 X\u00E1c th\u1EF1c 18+ th\u00E0nh c\u00F4ng! Ch\u00E0o m\u1EEBng b\u1EA1n \u0111\u1EBFn v\u1EDBi Job Agent.");
+      toast("🎉 18+ verified! Welcome to Job Agent.");
       return;
     } else if (a === "open-disclaimer-modal") {
       openDisclaimerModal();
       return;
     } else if (a === "agree-disclaimer-from-modal") {
       closeDialog();
-      const cb = document.getElementById("agreement") || document.getElementById("quick-age-confirm");
+      const cb = document.getElementById("agreement") || document.getElementById("quick-age-confirm") || document.getElementById("profile-agreement");
       if (cb) cb.checked = true;
       toast("Disclaimer agreed!");
       return;
     } else if (a === "open-quick-setup") {
       openQuickSetupModal();
       return;
+    } else if (a === "toggle-boost") {
+      const dt = document.getElementById("profile-boost-details");
+      if (dt) {
+        dt.open = true;
+        dt.scrollIntoView({ behavior: "smooth", block: "start" });
+      }
+      return;
     } else if (a === "dismiss-onboarding-hook") {
       closeDialog();
       render();
-      toast("B\u1EA1n c\u00F3 th\u1EC3 c\u1EADp nh\u1EADt Job Profile b\u1EA5t k\u1EF3 l\u00FAc n\u00E0o!");
+      toast("You can update your Job Profile anytime in Settings.");
       return;
     } else if (a === "dismiss-nudge") {
       ext().nudgeDismissed = true;
       render();
-      toast("\u0110\u00E3 ghi nh\u1EADn! H\u1ED3 s\u01A1 c\u1EE7a b\u1EA1n gi\u1EEF nguy\u00EAn.");
+      toast("Preferences kept as-is.");
       return;
     } else if (a === "toggle-open-to-work") {
       const d = dancer();
       d.availibility = !d.availibility;
       render();
-      toast(d.availibility ? "\uD83D\uDFE2 \u0110\u00E3 b\u1EADt Open to Work! B\u1EA1n s\u1EBD nh\u1EADn \u0111\u01B0\u1EE3c th\u00F4ng b\u00E1o show m\u1EDBi." : "\u23F8\uFE0F \u0110\u00E3 t\u1EA1m d\u1EEBng Open to Work.");
+      toast(d.availibility ? "🟢 Open to Work is ON. You'll receive gig alerts." : "⏸️ Open to Work is paused.");
       return;
     } else if (a === "open-alert") {
     ui.alertJob = null;
@@ -3743,7 +4206,7 @@ document.addEventListener("click", async (event) => {
   <!-- USER TRACKING SECTION -->
   <div style="border: 1px solid #e5e7eb; border-radius: 8px; overflow: hidden; box-shadow: 0 1px 3px rgba(0,0,0,0.05);">
     <div style="background: #f9fafb; padding: 14px 16px; border-bottom: 1px solid #e5e7eb; font-weight: 600; color: #111827; display: flex; align-items: center; gap: 8px; font-size: 13px; letter-spacing: 0.5px;">
-      <i class="ph-fill ph-git-commit" style="color: #6366f1; font-size: 16px;"></i> TIẾP TRÌNH ỨNG TUYỂN (PIPELINE)
+      <i class="ph-fill ph-git-commit" style="color: #6366f1; font-size: 16px;"></i> APPLICATION PIPELINE
     </div>
     <div style="padding: 20px 16px; background: #fff;">
       
@@ -3754,17 +4217,17 @@ document.addEventListener("click", async (event) => {
         
         <div style="position: relative; z-index: 2; display: flex; flex-direction: column; align-items: center; gap: 8px; width: 25%;">
           <div style="width: 24px; height: 24px; border-radius: 50%; background: #10b981; color: #fff; display: flex; align-items: center; justify-content: center; font-size: 12px; font-weight: bold;"><i class="ph-bold ph-check"></i></div>
-          <div style="font-size: 11px; font-weight: 700; color: #10b981; text-align: center; text-transform: uppercase;">Saved<br><span style="font-size:9px;font-weight:500;color:#6b7280;text-transform:none;">Đã lưu/Xem</span></div>
+          <div style="font-size: 11px; font-weight: 700; color: #10b981; text-align: center; text-transform: uppercase;">Saved<br><span style="font-size:9px;font-weight:500;color:#6b7280;text-transform:none;">Bookmarked</span></div>
         </div>
         
         <div style="position: relative; z-index: 2; display: flex; flex-direction: column; align-items: center; gap: 8px; width: 25%;">
           <div style="width: 24px; height: 24px; border-radius: 50%; background: #3b82f6; border: 2px solid #3b82f6; color: #fff; display: flex; align-items: center; justify-content: center; font-size: 12px; font-weight: bold;">2</div>
-          <div style="font-size: 11px; font-weight: 700; color: #2563eb; text-align: center; text-transform: uppercase;">Applied<br><span style="font-size:9px;font-weight:500;color:#6b7280;text-transform:none;">Đã ứng tuyển</span></div>
+          <div style="font-size: 11px; font-weight: 700; color: #2563eb; text-align: center; text-transform: uppercase;">Applied<br><span style="font-size:9px;font-weight:500;color:#6b7280;text-transform:none;">Submitted</span></div>
         </div>
 
         <div style="position: relative; z-index: 2; display: flex; flex-direction: column; align-items: center; gap: 8px; width: 25%;">
           <div style="width: 24px; height: 24px; border-radius: 50%; background: #fff; border: 2px solid #e5e7eb; color: #9ca3af; display: flex; align-items: center; justify-content: center; font-size: 12px; font-weight: bold;">3</div>
-          <div style="font-size: 11px; font-weight: 600; color: #6b7280; text-align: center; text-transform: uppercase;">Audition<br><span style="font-size:9px;font-weight:500;color:#9ca3af;text-transform:none;">Casting Booked</span></div>
+          <div style="font-size: 11px; font-weight: 600; color: #6b7280; text-align: center; text-transform: uppercase;">Audition<br><span style="font-size:9px;font-weight:500;color:#9ca3af;text-transform:none;">Interview / Call</span></div>
         </div>
 
         <div style="position: relative; z-index: 2; display: flex; flex-direction: column; align-items: center; gap: 8px; width: 25%;">
@@ -3774,15 +4237,15 @@ document.addEventListener("click", async (event) => {
       </div>
 
       <div style="display:flex; flex-direction:column; gap:8px;">
-        <label style="font-size:11px; font-weight:700; color:#374151; letter-spacing:0.5px;">CẬP NHẬT TRẠNG THÁI (UPDATE PROGRESS)</label>
+        <label style="font-size:11px; font-weight:700; color:#374151; letter-spacing:0.5px;">UPDATE PROGRESS</label>
         <select style="padding:10px 12px; border:1px solid #d1d5db; border-radius:6px; font-size:14px; color:#111; outline:none; background:#f9fafb; font-weight:500;">
-          <option>Saved (Đã lưu/Xem)</option>
-          <option selected>Applied - Waiting for response (Đã ứng tuyển)</option>
-          <option>Interview / Casting booked (Đã gọi Casting)</option>
-          <option>Booked & confirmed (Đã chốt show)</option>
-          <option>Not a fit / Declined (Từ chối/Trượt)</option>
+          <option>Saved (Bookmarked)</option>
+          <option selected>Applied - Waiting for response</option>
+          <option>Audition / Interview scheduled</option>
+          <option>Booked & confirmed</option>
+          <option>Not a fit / Declined</option>
         </select>
-        <div style="font-size:11px; color:#6b7280; margin-top:2px;">Cập nhật lần cuối: Hôm nay, 09:42 AM</div>
+        <div style="font-size:11px; color:#6b7280; margin-top:2px;">Last updated: Today, 09:42 AM</div>
       </div>
     </div>
   </div>
@@ -3790,7 +4253,7 @@ document.addEventListener("click", async (event) => {
   <!-- AI MATCH SECTION -->
   <div style="border: 1px solid #e5e7eb; border-radius: 8px; overflow: hidden; box-shadow: 0 1px 3px rgba(0,0,0,0.05);">
     <div style="background: #eff6ff; padding: 14px 16px; border-bottom: 1px solid #bfdbfe; font-weight: 600; color: #1e3a8a; display: flex; align-items: center; gap: 8px; font-size: 13px; letter-spacing: 0.5px;">
-      <i class="ph-fill ph-robot" style="color: #3b82f6; font-size: 16px;"></i> KẾt QUẢ ĐÁNH GIÁ (AI EVALUATION)
+      <i class="ph-fill ph-robot" style="color: #3b82f6; font-size: 16px;"></i> AI EVALUATION & MATCH REASONS
     </div>
     <div style="padding: 16px; background: #fff;">
       <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:16px; padding-bottom: 16px; border-bottom: 1px dashed #e5e7eb;">
@@ -3798,23 +4261,23 @@ document.addEventListener("click", async (event) => {
         <span style="background:#fef9c3; color:#a16207; border:1px solid #fde047; font-size:11px; font-weight:600; padding:4px 10px; border-radius:12px;">* Estimated</span>
       </div>
       <div style="background: #eff6ff; border: 1px solid #bfdbfe; border-radius: 8px; padding: 14px 16px; margin-bottom: 20px;">
-        <div style="font-size: 11px; font-weight: 800; color: #1e40af; margin-bottom: 6px; display:flex; align-items:center; gap:6px; letter-spacing: 0.5px;"><i class="ph-fill ph-sparkle" style="font-size: 14px;"></i> AI MATCH REASON:</div>
+        <div style="font-size: 11px; font-weight: 800; color: #1e40af; margin-bottom: 6px; display:flex; align-items:center; gap:6px; letter-spacing: 0.5px;"><i class="ph-fill ph-sparkle" style="font-size: 14px;"></i> AI MATCH CRITERIA:</div>
         <div style="font-size: 13px; color: #3b82f6; font-weight: 500;">Role + Dance Styles + Skill Level.</div>
       </div>
 
       
-      <h4 style="margin-bottom:10px; font-size:13px; font-weight:600; color:#16a34a; display:flex; align-items:center; gap:6px;"><i class="ph-fill ph-check-circle" style="font-size: 16px;"></i> ĐIỂM MẠNH (STRENGTHS)</h4>
+      <h4 style="margin-bottom:10px; font-size:13px; font-weight:600; color:#16a34a; display:flex; align-items:center; gap:6px;"><i class="ph-fill ph-check-circle" style="font-size: 16px;"></i> MATCH HIGHLIGHTS (STRENGTHS)</h4>
       <ul style="padding-left:24px; margin-bottom:20px; color:#374151; line-height:1.6;">
-        <li style="margin-bottom:4px;">Vai trò mong muốn trùng khớp vị trí tuyển dụng.</li>
-        <li style="margin-bottom:4px;">Các thể loại múa chính khớp hoàn toàn (<strong>Contemporary, Ballet</strong>).</li>
-        <li style="margin-bottom:4px;">Cấp độ chuyên môn <strong>[Advanced]</strong> đạt hoặc vượt yêu cầu.</li>
+        <li style="margin-bottom:4px;">Desired role matches the opportunity opening.</li>
+        <li style="margin-bottom:4px;">Core dance styles align directly (<strong>Contemporary, Ballet</strong>).</li>
+        <li style="margin-bottom:4px;">Skill level <strong>[Advanced]</strong> meets or exceeds requirements.</li>
       </ul>
 
-      <h4 style="margin-bottom:10px; font-size:13px; font-weight:600; color:#dc2626; display:flex; align-items:center; gap:6px;"><i class="ph-fill ph-x-circle" style="font-size: 16px;"></i> THIẾU HỤT (GAPS)</h4>
+      <h4 style="margin-bottom:10px; font-size:13px; font-weight:600; color:#dc2626; display:flex; align-items:center; gap:6px;"><i class="ph-fill ph-x-circle" style="font-size: 16px;"></i> CONSIDERATIONS (GAPS)</h4>
       <ul style="padding-left:24px; margin-bottom:20px; color:#374151; line-height:1.6;">
-        <li style="margin-bottom:4px;">Còn thiếu thể loại <strong>[Hip-hop]</strong> theo yêu cầu.</li>
-        <li style="margin-bottom:4px;">Kinh nghiệm thực tế (1 năm) còn xa so với yêu cầu (4 năm).</li>
-        <li style="margin-bottom:4px;">Thiếu ngoại ngữ <strong>[Korean]</strong>.</li>
+        <li style="margin-bottom:4px;">Additional style noted: <strong>[Hip-hop]</strong>.</li>
+        <li style="margin-bottom:4px;">Logged experience (1 yr) is below preferred range (4 yrs).</li>
+        <li style="margin-bottom:4px;">Optional secondary language: <strong>[Korean]</strong>.</li>
       </ul>
     </div>
   </div>
@@ -4052,6 +4515,23 @@ document.addEventListener("input", (event) => {
 });
 document.addEventListener("change", (event) => {
   const t = event.target;
+  if (t.dataset.action === "update-job-progress") {
+    const jobId = Number(t.dataset.job);
+    const val = t.value;
+    const h = history(jobId);
+    h.progress = val;
+    audit("application progress updated", `${jobId}:${val}`);
+    persist();
+    render();
+    const labels = {
+      pending: "Pending Response",
+      interview: "Interview / Casting Scheduled",
+      booked: "Booked / Offer Accepted",
+      rejected: "Application Declined",
+    };
+    toast(`Progress updated: ${labels[val] || val}`);
+    return;
+  }
   if (t.dataset.limitFor) {
     ui.pagination = ui.pagination || {};
     ui.pagination[t.dataset.limitFor] = ui.pagination[t.dataset.limitFor] || {
@@ -4292,15 +4772,25 @@ document.addEventListener("submit", (event) => {
     toast("Prospect created.");
   } else if (kind === "age") {
     const prev = ext().age;
-    const dobVal = v.dob || "1998-05-15";
+    const dobVal = v.dob || document.getElementById("dob")?.value || "";
     const agreed = v.agreement || document.getElementById("agreement")?.checked;
-    ext().age = { dob: dobVal, accepted_at: agreed ? now() : null };
+    if (!dobVal) {
+      formError("Please select your date of birth.");
+      toast("Vui lòng chọn ngày sinh của bạn.");
+      return;
+    }
+    if (!agreed) {
+      formError("Please agree to the Job Agent Disclaimer to continue.");
+      toast("Vui lòng đồng ý với điều khoản Job Agent Disclaimer.");
+      return;
+    }
+    ext().age = { dob: dobVal, accepted_at: now() };
     if (dobVal > today() || !ageAllowed()) {
       ext().age = prev;
       formError(
         "Job Agent is available only from your 18th birthday. Check your date of birth.",
       );
-      toast("Job Agent ch\u1EC9 d\u00E0nh cho ng\u01B0\u1EDDi t\u1EEB 18 tu\u1ED5i tr\u1EDF l\u00EAn.");
+      toast("Job Agent chỉ dành cho người từ 18 tuổi trở lên.");
       return;
     }
     audit("age declared", dancer().id);
@@ -4311,11 +4801,14 @@ document.addEventListener("submit", (event) => {
     toast("\uD83C\uDF89 X\u00E1c th\u1EF1c 18+ th\u00E0nh c\u00F4ng!");
   } else if (kind === "filters") {
     ui.filters = {
-      city: v.city,
-      type: v.type,
+      country: v.country || "",
+      city: v.city || "",
+      style: v.style || "",
+      role: v.role || "",
+      skill_level: v.skill_level || "",
       radius: v.limit_radius ? +v.radius : null,
-      duration: +v.duration,
-      min: +v.min,
+      include_intl_online: !!v.include_intl_online,
+      min: v.min ? +v.min : 0,
     };
     closeDialog(true);
     render();
@@ -4556,44 +5049,80 @@ document.addEventListener("submit", (event) => {
     toast("Review recorded. Source settings were not changed.");
   } else if (f.id === "profile-form") {
     const error = $("#profile-error");
-    if (
-      !v.dance_styles.trim() ||
-      (v.portfolio_url && !normalize(v.portfolio_url))
-    ) {
-      error.textContent =
-        "Enter your dance styles and a valid public portfolio URL.";
+    const selectedStyles = fd.getAll("dance_styles").join(",");
+    const selectedRoles = fd.getAll("preferred_types").join(",");
+    const selectedLangs = fd.getAll("languages").join(",");
+
+    if (!selectedStyles || !selectedStyles.trim()) {
+      error.textContent = "Please select at least one dance style.";
       return;
     }
-    if ((v.city === "Singapore") !== (v.country === "Singapore")) {
+    if (v.portfolio_url && v.portfolio_url.trim() && !normalize(v.portfolio_url.trim())) {
+      error.textContent = "Enter a valid public portfolio URL (e.g. https://...).";
+      return;
+    }
+    if (v.city && v.country && (v.city === "Singapore") !== (v.country === "Singapore")) {
       error.textContent = "City and country do not match.";
       return;
     }
+
+    // Always validate and update DOB / age gate
+    const dobVal = v.dob || document.getElementById("profile-dob")?.value;
+    const agreed = document.getElementById("profile-agreement")?.checked;
+    if (dobVal) {
+      if (!agreed) {
+        error.textContent = "Please agree to the Job Agent Disclaimer to continue.";
+        return;
+      }
+      const dDate = new Date(dobVal + "T00:00:00Z");
+      const nDate = new Date();
+      let years = nDate.getUTCFullYear() - dDate.getUTCFullYear();
+      if (
+        nDate.getUTCMonth() < dDate.getUTCMonth() ||
+        (nDate.getUTCMonth() === dDate.getUTCMonth() && nDate.getUTCDate() < dDate.getUTCDate())
+      ) years--;
+      if (dobVal > today() || years < 18) {
+        error.textContent = "Job Agent is only available for dancers aged 18 and older.";
+        return;
+      }
+      ext().age = { dob: dobVal, accepted_at: ext().age?.accepted_at || now() };
+      audit("age declared", dancer().id);
+    } else if (!ageAllowed()) {
+      error.textContent = "Please enter your date of birth.";
+      return;
+    }
+
     Object.assign(dancer(), {
       availibility: !!document.getElementById("open-to-work-profile")?.checked,
-      dance_styles: v.dance_styles.trim(),
-      city: v.city,
-      skill_level: v.skill_level,
-      year_experience: +v.year_experience,
-      preferred_types: v.preferred_types,
-      languages: v.languages,
-      min_compensation: +v.min_compensation,
+      dance_styles: selectedStyles,
+      country: v.country || dancer().country || "Singapore",
+      city: v.city || dancer().city || "Singapore",
+      skill_level: v.skill_level || dancer().skill_level || "Intermediate",
+      year_experience: +(v.year_experience || dancer().year_experience || 3),
+      preferred_types: selectedRoles || dancer().preferred_types || "Teaching,Performance",
+      languages: selectedLangs || dancer().languages || "English",
+      min_compensation: +(v.min_compensation || dancer().min_compensation || 50),
       accept_unpaid: !!v.accept_unpaid,
       include_online: !!v.include_online,
-      travelRadiusKm: +(v.travelRadiusKm || 20),
+      work_abroad: !!v.work_abroad,
+      portfolio_url: v.portfolio_url ? v.portfolio_url.trim() : (dancer().portfolio_url || ""),
+      travelRadiusKm: +(v.travelRadiusKm || dancer().travelRadiusKm || 20),
     });
     Object.assign(ext().profile, {
-      currency: v.currency,
-      compensation_unit: v.compensation_unit,
+      currency: v.currency || ext().profile.currency || "SGD",
+      compensation_unit: v.compensation_unit || ext().profile.compensation_unit || "Per class",
     });
     ext().push.enabled = !!v.push;
-    ui.filters.radius = +v.travelRadiusKm;
-    ui.filters.duration = +v.max_duration_days;
+    ui.filters.radius = +(v.travelRadiusKm || 20);
+    ext().onboardingCompleted = true;
+    ext().nudgeDismissed = true;
     ui.dirty = false;
     rebuildRecommendations();
+    persist();
     audit("profile preferences saved", dancer().id);
     ui.mobile = "feed";
     render();
-    toast("Preferences saved. Matches refreshed.");
+    toast("Preferences saved! Matching jobs refreshed. ✨");
   } else if (f.id === "submission-form") {
     const normalized = normalize(v.url);
     if (!normalized) {
