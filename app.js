@@ -2528,35 +2528,38 @@ function jobCard(o, inHub = false) {
         const curStep = currentProgress.step;
         const isRejected = progress === "rejected";
 
-        const stepPill = (num, label, active) => `
+        const stepPill = (num, label, isPassed, isCurrent) => {
+            const barBg = isPassed ? (isCurrent ? currentProgress.color : '#0f172a') : '#e2e8f0';
+            const textColor = isCurrent ? currentProgress.color : (isPassed ? '#0f172a' : '#94a3b8');
+            const weight = isCurrent ? '800' : (isPassed ? '700' : '500');
+            return `
             <div style="flex:1; text-align:center;">
-                <div style="height:4px; border-radius:2px; background:${active ? '#0f172a' : '#e2e8f0'}; margin-bottom:5px;"></div>
-                <div style="font-size:10px; font-weight:${active ? '700' : '500'}; color:${active ? '#0f172a' : '#94a3b8'}; text-transform:uppercase; letter-spacing:0.3px;">${label}</div>
-            </div>
-        `;
+                <div style="height:4px; border-radius:2px; background:${barBg}; margin-bottom:5px;"></div>
+                <div style="font-size:10px; font-weight:${weight}; color:${textColor}; text-transform:uppercase; letter-spacing:0.3px;">${label}</div>
+            </div>`;
+        };
 
         const stepperHtml = isRejected
-            ? `<div style="background:#fee2e2; border-radius:6px; padding:6px 10px; font-size:11.5px; font-weight:700; color:#dc2626; text-align:center; margin-bottom:8px;">Status: Application Declined</div>`
+            ? `<div style="background:#fee2e2; border-radius:6px; padding:6px 10px; font-size:11.5px; font-weight:700; color:#dc2626; text-align:center; margin-bottom:8px;">Status: Declined</div>`
             : `
                 <div style="display:flex; gap:6px; align-items:center; margin-bottom:10px;">
-                    ${stepPill(1, "1. Applied", curStep >= 1)}
-                    ${stepPill(2, "2. Interview", curStep >= 2)}
-                    ${stepPill(3, "3. Booked", curStep >= 3)}
+                    ${stepPill(1, "1. Applied", curStep >= 1, curStep === 1)}
+                    ${stepPill(2, "2. Interview", curStep >= 2, curStep === 2)}
+                    ${stepPill(3, "3. Booked", curStep >= 3, curStep === 3)}
                 </div>
             `;
 
         hubProgressSection = `
             <div style="background:#f8fafc; border:1px solid #e2e8f0; border-radius:8px; padding:10px 12px; margin:10px 0 6px 0;" onclick="event.stopPropagation()">
-                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
-                    <span style="font-size:10.5px; font-weight:800; color:#475569; letter-spacing:0.5px;">APPLICATION PROGRESS:</span>
-                    <span style="font-size:10.5px; font-weight:700; color:${currentProgress.color}; background:${currentProgress.bg}; padding:2px 8px; border-radius:6px;">${currentProgress.label}</span>
+                <div style="margin-bottom:8px;">
+                    <span style="font-size:10px; font-weight:800; color:#475569; letter-spacing:0.5px;">APPLICATION PROGRESS</span>
                 </div>
                 ${stepperHtml}
                 <select data-action="update-job-progress" data-job="${o.id}" style="width:100%; padding:7px 10px; background:#ffffff; border:1px solid #cbd5e1; border-radius:6px; font-size:12.5px; font-weight:600; color:#1e293b; outline:none; cursor:pointer;">
-                    <option value="pending" ${progress === "pending" ? "selected" : ""}>Pending Response</option>
-                    <option value="interview" ${progress === "interview" ? "selected" : ""}>Interview / Audition Scheduled</option>
-                    <option value="booked" ${progress === "booked" ? "selected" : ""}>Booked / Offer Accepted</option>
-                    <option value="rejected" ${progress === "rejected" ? "selected" : ""}>Declined / Unsuccessful</option>
+                    <option value="pending" ${progress === "pending" ? "selected" : ""}>Applied (Pending Response)</option>
+                    <option value="interview" ${progress === "interview" ? "selected" : ""}>Interview / Casting</option>
+                    <option value="booked" ${progress === "booked" ? "selected" : ""}>Booked / Confirmed</option>
+                    <option value="rejected" ${progress === "rejected" ? "selected" : ""}>Declined</option>
                 </select>
             </div>
         `;
@@ -2740,36 +2743,33 @@ function jobCard(o, inHub = false) {
                         <div style="font-size: 11px; font-weight: 800; color: #475569; letter-spacing: 0.5px; text-transform: uppercase;">APPLICATION PROGRESS</div>
                         <div style="font-size: 12px; color: #64748b; margin-top: 2px;">Submitted: <strong>${stamp(h.applied_at)}</strong></div>
                     </div>
-                    <span style="font-size: 11px; font-weight: 700; color:${currentProgress.color}; background:${currentProgress.bg}; padding: 3px 10px; border-radius: 8px;">
-                        ${currentProgress.label}
-                    </span>
                 </div>
 
                 ${progress === 'rejected'
-                    ? `<div style="background:#fee2e2; border-radius:6px; padding:8px 12px; font-size:12px; font-weight:700; color:#dc2626; text-align:center; margin-bottom:12px;">Status: Application Declined</div>`
+                    ? `<div style="background:#fee2e2; border-radius:6px; padding:8px 12px; font-size:12px; font-weight:700; color:#dc2626; text-align:center; margin-bottom:12px;">Status: Declined</div>`
                     : `
                         <div style="display:flex; gap:8px; align-items:center; margin-bottom:14px;">
                             <div style="flex:1; text-align:center;">
-                                <div style="height:4px; border-radius:2px; background:${currentProgress.step >= 1 ? '#0f172a' : '#e2e8f0'}; margin-bottom:5px;"></div>
-                                <div style="font-size:10.5px; font-weight:${currentProgress.step >= 1 ? '700' : '500'}; color:${currentProgress.step >= 1 ? '#0f172a' : '#94a3b8'}; text-transform:uppercase;">1. Applied</div>
+                                <div style="height:4px; border-radius:2px; background:${currentProgress.step >= 1 ? (currentProgress.step === 1 ? currentProgress.color : '#0f172a') : '#e2e8f0'}; margin-bottom:5px;"></div>
+                                <div style="font-size:10.5px; font-weight:${currentProgress.step === 1 ? '800' : (currentProgress.step >= 1 ? '700' : '500')}; color:${currentProgress.step === 1 ? currentProgress.color : (currentProgress.step >= 1 ? '#0f172a' : '#94a3b8')}; text-transform:uppercase;">1. Applied</div>
                             </div>
                             <div style="flex:1; text-align:center;">
-                                <div style="height:4px; border-radius:2px; background:${currentProgress.step >= 2 ? '#0f172a' : '#e2e8f0'}; margin-bottom:5px;"></div>
-                                <div style="font-size:10.5px; font-weight:${currentProgress.step >= 2 ? '700' : '500'}; color:${currentProgress.step >= 2 ? '#0f172a' : '#94a3b8'}; text-transform:uppercase;">2. Interview</div>
+                                <div style="height:4px; border-radius:2px; background:${currentProgress.step >= 2 ? (currentProgress.step === 2 ? currentProgress.color : '#0f172a') : '#e2e8f0'}; margin-bottom:5px;"></div>
+                                <div style="font-size:10.5px; font-weight:${currentProgress.step === 2 ? '800' : (currentProgress.step >= 2 ? '700' : '500')}; color:${currentProgress.step === 2 ? currentProgress.color : (currentProgress.step >= 2 ? '#0f172a' : '#94a3b8')}; text-transform:uppercase;">2. Interview</div>
                             </div>
                             <div style="flex:1; text-align:center;">
-                                <div style="height:4px; border-radius:2px; background:${currentProgress.step >= 3 ? '#0f172a' : '#e2e8f0'}; margin-bottom:5px;"></div>
-                                <div style="font-size:10.5px; font-weight:${currentProgress.step >= 3 ? '700' : '500'}; color:${currentProgress.step >= 3 ? '#0f172a' : '#94a3b8'}; text-transform:uppercase;">3. Booked</div>
+                                <div style="height:4px; border-radius:2px; background:${currentProgress.step >= 3 ? (currentProgress.step === 3 ? currentProgress.color : '#0f172a') : '#e2e8f0'}; margin-bottom:5px;"></div>
+                                <div style="font-size:10.5px; font-weight:${currentProgress.step === 3 ? '800' : (currentProgress.step >= 3 ? '700' : '500')}; color:${currentProgress.step === 3 ? currentProgress.color : (currentProgress.step >= 3 ? '#0f172a' : '#94a3b8')}; text-transform:uppercase;">3. Booked</div>
                             </div>
                         </div>
                     `
                 }
 
                 <select data-action="update-job-progress" data-job="${o.id}" style="width: 100%; padding: 10px 12px; background: #ffffff; border: 1.5px solid #cbd5e1; border-radius: 8px; font-size: 13.5px; font-weight: 600; color: #1e293b; outline: none; cursor: pointer;">
-                    <option value="pending" ${progress === "pending" ? "selected" : ""}>Pending Response</option>
-                    <option value="interview" ${progress === "interview" ? "selected" : ""}>Interview / Audition Scheduled</option>
-                    <option value="booked" ${progress === "booked" ? "selected" : ""}>Booked / Offer Accepted</option>
-                    <option value="rejected" ${progress === "rejected" ? "selected" : ""}>Declined / Unsuccessful</option>
+                    <option value="pending" ${progress === "pending" ? "selected" : ""}>Applied (Pending Response)</option>
+                    <option value="interview" ${progress === "interview" ? "selected" : ""}>Interview / Casting</option>
+                    <option value="booked" ${progress === "booked" ? "selected" : ""}>Booked / Confirmed</option>
+                    <option value="rejected" ${progress === "rejected" ? "selected" : ""}>Declined</option>
                 </select>
             </div>
         </div>
