@@ -2091,7 +2091,7 @@ function mobileNav() {
           <div style="width: 48px; height: 48px; background: #2563eb; color: #ffffff; border-radius: 14px; display: flex; align-items: center; justify-content: center; font-weight: 800; font-size: 24px; margin-bottom: 20px; box-shadow: 0 4px 12px rgba(37,99,235,0.25);">
             H
           </div>
-          <h1 style="font-size: 22px; font-weight: 800; color: #111827; margin: 0 0 8px 0; line-height: 1.25;">Age Verification (18+) 🛡️</h1>
+          <h1 style="font-size: 22px; font-weight: 800; color: #111827; margin: 0 0 8px 0; line-height: 1.25;">Age Verification</h1>
           <p style="font-size: 14px; color: #6b7280; margin: 0; line-height: 1.5;">Hammer aggregates dance opportunities, casting calls, and audition listings. Dancers explore, connect, and apply directly with organizers. Please verify that you are 18 or older to browse and participate.</p>
         </div>
 
