@@ -2528,9 +2528,10 @@ function jobCard(o, inHub = false) {
         const curStep = currentProgress.step;
         const isRejected = progress === "rejected";
 
-        const stepPill = (num, label, isPassed, isCurrent) => {
-            const barBg = isPassed ? (isCurrent ? currentProgress.color : '#0f172a') : '#e2e8f0';
-            const textColor = isCurrent ? currentProgress.color : (isPassed ? '#0f172a' : '#94a3b8');
+        const stepPill = (num, label, isPassed, isCurrent, customColor) => {
+            const activeColor = customColor || currentProgress.color;
+            const barBg = isPassed ? (isCurrent ? activeColor : '#0f172a') : '#e2e8f0';
+            const textColor = isCurrent ? activeColor : (isPassed ? '#0f172a' : '#94a3b8');
             const weight = isCurrent ? '800' : (isPassed ? '700' : '500');
             return `
             <div style="flex:1; text-align:center;">
@@ -2540,7 +2541,13 @@ function jobCard(o, inHub = false) {
         };
 
         const stepperHtml = isRejected
-            ? `<div style="background:#fee2e2; border-radius:6px; padding:6px 10px; font-size:11.5px; font-weight:700; color:#dc2626; text-align:center; margin-bottom:8px;">Status: Declined</div>`
+            ? `
+                <div style="display:flex; gap:6px; align-items:center; margin-bottom:10px;">
+                    ${stepPill(1, "1. Applied", true, false)}
+                    ${stepPill(2, "✕ Declined", true, true, "#dc2626")}
+                    ${stepPill(3, "3. Booked", false, false)}
+                </div>
+            `
             : `
                 <div style="display:flex; gap:6px; align-items:center; margin-bottom:10px;">
                     ${stepPill(1, "1. Applied", curStep >= 1, curStep === 1)}
@@ -2746,7 +2753,22 @@ function jobCard(o, inHub = false) {
                 </div>
 
                 ${progress === 'rejected'
-                    ? `<div style="background:#fee2e2; border-radius:6px; padding:8px 12px; font-size:12px; font-weight:700; color:#dc2626; text-align:center; margin-bottom:12px;">Status: Declined</div>`
+                    ? `
+                        <div style="display:flex; gap:8px; align-items:center; margin-bottom:14px;">
+                            <div style="flex:1; text-align:center;">
+                                <div style="height:4px; border-radius:2px; background:#0f172a; margin-bottom:5px;"></div>
+                                <div style="font-size:10.5px; font-weight:700; color:#0f172a; text-transform:uppercase;">1. Applied</div>
+                            </div>
+                            <div style="flex:1; text-align:center;">
+                                <div style="height:4px; border-radius:2px; background:#dc2626; margin-bottom:5px;"></div>
+                                <div style="font-size:10.5px; font-weight:800; color:#dc2626; text-transform:uppercase;">✕ Declined</div>
+                            </div>
+                            <div style="flex:1; text-align:center;">
+                                <div style="height:4px; border-radius:2px; background:#e2e8f0; margin-bottom:5px;"></div>
+                                <div style="font-size:10.5px; font-weight:500; color:#94a3b8; text-transform:uppercase;">3. Booked</div>
+                            </div>
+                        </div>
+                    `
                     : `
                         <div style="display:flex; gap:8px; align-items:center; margin-bottom:14px;">
                             <div style="flex:1; text-align:center;">
@@ -2759,7 +2781,7 @@ function jobCard(o, inHub = false) {
                             </div>
                             <div style="flex:1; text-align:center;">
                                 <div style="height:4px; border-radius:2px; background:${currentProgress.step >= 3 ? (currentProgress.step === 3 ? currentProgress.color : '#0f172a') : '#e2e8f0'}; margin-bottom:5px;"></div>
-                                <div style="font-size:10.5px; font-weight:${currentProgress.step === 3 ? '800' : (currentProgress.step >= 3 ? '700' : '500')}; color:${currentProgress.step === 3 ? currentProgress.color : (currentProgress.step >= 3 ? '#0f172a' : '#94a3b8')}; text-transform:uppercase;">3. Booked</div>
+                                <div style="font-size:10.5px; font-weight:${currentProgress.step === 3 ? '800' : (currentProgress.step >= 3 ? '700' : '500')}; color:${currentProgress.step === 3 ? currentProgress.color : (currentProgress.step >= 2 ? '#0f172a' : '#94a3b8')}; text-transform:uppercase;">3. Booked</div>
                             </div>
                         </div>
                     `
