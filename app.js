@@ -1029,9 +1029,6 @@ function render() {
           ui.guest ? "guest" : "dancer",
         );
   $("#app").innerHTML = ui.mode === "cms" ? renderCMS() : renderDancer();
-  if (ui.mode === "dancer" && !ui.guest && !ext().returningWelcomeShown && !ui.dialog) {
-    setTimeout(checkReturningUserHook, 120);
-  }
 }
 function renderCMS() {
   const pages = [
@@ -2088,20 +2085,21 @@ function mobileNav() {
         
         <!-- Top App Bar / Header -->
         <div style="padding: 32px 24px 16px 24px; background: #ffffff;">
-          <div style="width: 48px; height: 48px; background: #2563eb; color: #ffffff; border-radius: 14px; display: flex; align-items: center; justify-content: center; font-weight: 800; font-size: 24px; margin-bottom: 20px; box-shadow: 0 4px 12px rgba(37,99,235,0.25);">
+          <div style="width: 48px; height: 48px; background: #2563eb; color: #ffffff; border-radius: 14px; display: flex; align-items: center; justify-content: center; font-weight: 800; font-size: 24px; margin-bottom: 16px; box-shadow: 0 4px 12px rgba(37,99,235,0.25);">
             H
           </div>
-          <h1 style="font-size: 22px; font-weight: 800; color: #111827; margin: 0 0 8px 0; line-height: 1.25;">Age Verification</h1>
-          <p style="font-size: 14px; color: #6b7280; margin: 0; line-height: 1.5;">Hammer aggregates dance opportunities, casting calls, and audition listings. Dancers explore, connect, and apply directly with organizers. Please verify that you are 18 or older to browse and participate.</p>
+          <div style="font-size: 13px; font-weight: 700; color: #2563eb; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 4px;">Welcome back, ${esc(dancer().name || 'Yuki')}!</div>
+          <h1 style="font-size: 22px; font-weight: 800; color: #111827; margin: 0 0 8px 0; line-height: 1.25;">Discover Hammer AI Jobs</h1>
+          <p style="font-size: 13.5px; color: #6b7280; margin: 0; line-height: 1.5;">Hammer now aggregates dance opportunities, studio casting calls, and audition listings. Verify your age to activate Job Agent and explore matching opportunities.</p>
         </div>
 
         <!-- Main Form Content -->
         <div style="padding: 16px 24px 24px 24px; display: flex; flex-direction: column; flex: 1;">
-          <form id="dialog-form" data-kind="age" style="display: flex; flex-direction: column; gap: 20px; height: 100%;">
+          <form id="dialog-form" data-kind="age" style="display: flex; flex-direction: column; gap: 18px; height: 100%;">
             
             <!-- Date of Birth Input -->
             <div style="display: flex; flex-direction: column; gap: 6px;">
-              <label for="dob" style="font-size: 14px; font-weight: 600; color: #374151;">Date of Birth *</label>
+              <label for="dob" style="font-size: 13.5px; font-weight: 700; color: #374151;">Date of Birth *</label>
               <input 
                 type="date" 
                 id="dob" 
@@ -2114,7 +2112,7 @@ function mobileNav() {
             </div>
 
             <!-- Disclaimer Checkbox -->
-            <div style="display: flex; align-items: flex-start; gap: 12px; background: #eff6ff; padding: 16px; border-radius: 12px; border: 1px solid #dbeafe;">
+            <div style="display: flex; align-items: flex-start; gap: 12px; background: #eff6ff; padding: 14px 16px; border-radius: 12px; border: 1px solid #dbeafe;">
               <div style="display: flex; align-items: center; margin-top: 2px;">
                 <input 
                   id="agreement" 
@@ -2130,21 +2128,30 @@ function mobileNav() {
                 <button type="button" data-action="open-disclaimer-modal" style="color: #2563eb; font-weight: 600; text-decoration: underline; background: none; border: none; padding: 0; cursor: pointer; font-size: 13px;">
                   Job Agent Disclaimer
                 </button>
-                <p style="color: #6b7280; font-size: 12px; margin: 4px 0 0 0;">Required to explore and apply for dance opportunities.</p>
+                <p style="color: #6b7280; font-size: 11.5px; margin: 3px 0 0 0;">Required to explore and apply for dance opportunities.</p>
               </div>
             </div>
 
             <div class="error-text" id="dialog-error" role="alert" style="color: #ef4444; font-size: 13px; font-weight: 500;"></div>
 
-            <!-- Bottom Action Area -->
-            <div style="margin-top: auto; padding-top: 16px;">
+            <!-- Bottom Action Area (Next to profile setup OR Skip & browse jobs) -->
+            <div style="margin-top: auto; padding-top: 16px; display: flex; flex-direction: column; gap: 12px;">
               <button 
-                id="continueBtn" 
+                id="nextProfileBtn" 
                 type="button" 
-                data-action="submit-age-gate"
-                style="width: 100%; padding: 14px 20px; border-radius: 12px; font-weight: 600; font-size: 16px; border: none; background: #2563eb; color: #ffffff; cursor: pointer; box-shadow: 0 4px 14px rgba(37,99,235,0.3); transition: all 0.2s;"
+                data-action="submit-age-gate-next"
+                style="width: 100%; padding: 13px 20px; border-radius: 12px; font-weight: 700; font-size: 15px; border: none; background: #0f172a; color: #ffffff; cursor: pointer; box-shadow: 0 4px 14px rgba(15,23,42,0.2); transition: all 0.2s; display:flex; align-items:center; justify-content:center; gap:8px;"
               >
-                Continue
+                <span>Continue to Profile Setup</span> <i class="ph-bold ph-arrow-right"></i>
+              </button>
+
+              <button 
+                id="skipBrowseBtn" 
+                type="button" 
+                data-action="submit-age-gate-skip"
+                style="width: 100%; padding: 10px; background: none; border: none; color: #64748b; font-size: 13.5px; font-weight: 600; cursor: pointer; text-decoration: underline;"
+              >
+                Skip & browse jobs first
               </button>
             </div>
           </form>
@@ -2931,7 +2938,18 @@ function profileForm() {
         <input id="open-to-work-profile" name="availibility" class="switch" type="checkbox" ${d.availibility !== false ? "checked" : ""}>
       </div>
 
-      <h3 style="font-size:18px; font-weight:800; color:#111827; margin:0 0 16px;">Basic Info</h3>
+      <div style="display:flex; justify-content:space-between; align-items:center; margin:0 0 16px;">
+        <h3 style="font-size:18px; font-weight:800; color:#111827; margin:0;">Basic Info</h3>
+        ${isAgeVerified ? `
+          <span style="background:#ecfdf5; color:#059669; border:1px solid #a7f3d0; font-size:11px; font-weight:700; padding:3px 10px; border-radius:12px; display:inline-flex; align-items:center; gap:4px;">
+            <i class="ph-bold ph-shield-check"></i> 18+ Verified
+          </span>
+        ` : `
+          <span style="background:#fef2f2; color:#dc2626; border:1px solid #fecaca; font-size:11px; font-weight:700; padding:3px 8px; border-radius:12px;">
+            Age Unverified
+          </span>
+        `}
+      </div>
       
       <!-- 1. LOCATION BLOCK -->
       <div style="margin-bottom:24px;">
@@ -3025,27 +3043,8 @@ function profileForm() {
         </div>
       </details>
 
-      <!-- AGE VERIFICATION & TERMS -->
-      <div style="background:#f8fafc; border:1px solid #e2e8f0; border-radius:12px; padding:16px; margin:0 0 20px 0;">
-        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px;">
-          <h4 style="font-size:14px; font-weight:700; color:#374151; margin:0; display:flex; align-items:center; gap:6px;">
-            <i class="ph-bold ph-shield-check" style="color:#2563eb; font-size:17px;"></i> Age Verification & Terms
-          </h4>
-          ${isAgeVerified ? `<span style="background:#ecfdf5; color:#059669; font-size:11px; font-weight:700; padding:3px 10px; border-radius:12px; display:inline-flex; align-items:center; gap:4px;"><i class="ph-fill ph-check-circle"></i> 18+ Verified</span>` : `<span style="background:#fef2f2; color:#dc2626; font-size:11px; font-weight:700; padding:3px 8px; border-radius:12px;">Required</span>`}
-        </div>
-        <div style="display:flex; flex-direction:column; gap:4px; margin-bottom:12px;">
-          <label style="font-size:12px; font-weight:600; color:#374151;">Date of Birth *</label>
-          <input type="date" name="dob" id="profile-dob" value="${ext().age?.dob || ''}" max="${today()}" required style="padding:9px 12px; border:1px solid #cbd5e1; border-radius:8px; font-size:13px; background:#fff; outline:none;">
-          <span style="font-size:11px; color:#64748b;">You must be at least 18 years old to explore and apply for dance opportunities.</span>
-        </div>
-        <label class="check-row" style="margin:0; display:flex; align-items:flex-start; gap:8px;">
-          <input type="checkbox" name="agreement" id="profile-agreement" ${isAgeVerified ? 'checked' : ''} style="margin-top:2px;">
-          <span style="font-size:12px; color:#374151; line-height:1.4;">I agree to the terms of the <button type="button" data-action="open-disclaimer-modal" style="color:#2563eb; text-decoration:underline; font-weight:600; background:none; border:none; padding:0; cursor:pointer; font-size:12px;">Job Agent Disclaimer</button>.</span>
-        </label>
-      </div>
-
       <div class="error-text" id="profile-error" role="alert"></div>
-      <button class="primary wide-button" type="submit" style="padding:14px; font-size:15px; font-weight:700; border-radius:8px; background:#18181b; color:#fff; width:100%; cursor:pointer;">Save & View Jobs</button>
+      <button class="primary wide-button" type="submit" style="padding:14px; font-size:15px; font-weight:700; border-radius:8px; background:#0f172a; color:#fff; width:100%; cursor:pointer; box-shadow:0 2px 6px rgba(0,0,0,0.15);">Save & View Jobs</button>
     </form>
   </div>`;
 }
@@ -3868,7 +3867,7 @@ document.addEventListener("click", async (event) => {
   }
   if (
     ui.mode === "dancer" &&
-    !["mode", "reset", "age", "close", "sign-in", "job", "mobile", "feed-search", "continue-onboarding", "login-returning", "open-quick-setup", "dismiss-onboarding-hook", "dismiss-nudge", "toggle-open-to-work", "submit-quick-setup", "open-disclaimer-modal", "agree-disclaimer-from-modal", "submit-age-gate", "toggle-quick-style", "toggle-quick-role", "toggle-boost"].includes(a) &&
+    !["mode", "reset", "age", "close", "sign-in", "job", "mobile", "feed-search", "continue-onboarding", "login-returning", "open-quick-setup", "dismiss-onboarding-hook", "dismiss-nudge", "toggle-open-to-work", "submit-quick-setup", "open-disclaimer-modal", "agree-disclaimer-from-modal", "submit-age-gate", "submit-age-gate-next", "submit-age-gate-skip", "toggle-quick-style", "toggle-quick-role", "toggle-boost"].includes(a) &&
     !ensureAccess()
   )
     return;
@@ -4105,7 +4104,7 @@ document.addEventListener("click", async (event) => {
         hiddenInput.value = selected.join(",");
       }
       return;
-    } else if (a === "submit-age-gate") {
+    } else if (a === "submit-age-gate" || a === "submit-age-gate-next" || a === "submit-age-gate-skip") {
       const dobInput = document.getElementById("dob");
       const agreementBox = document.getElementById("agreement");
       const dobVal = dobInput ? dobInput.value : "";
@@ -4142,8 +4141,16 @@ document.addEventListener("click", async (event) => {
       };
       audit("age declared", dancer().id);
       persist();
-      render();
-      toast("🎉 18+ verified! Welcome to Job Agent.");
+
+      if (a === "submit-age-gate-next") {
+        ui.mobile = "profile";
+        render();
+        toast("18+ verified! Set up your job preferences.");
+      } else {
+        ui.mobile = "feed";
+        render();
+        toast("18+ verified! Welcome to Job Agent.");
+      }
       return;
     } else if (a === "open-disclaimer-modal") {
       openDisclaimerModal();
@@ -5066,29 +5073,9 @@ document.addEventListener("submit", (event) => {
       return;
     }
 
-    // Always validate and update DOB / age gate
-    const dobVal = v.dob || document.getElementById("profile-dob")?.value;
-    const agreed = document.getElementById("profile-agreement")?.checked;
-    if (dobVal) {
-      if (!agreed) {
-        error.textContent = "Please agree to the Job Agent Disclaimer to continue.";
-        return;
-      }
-      const dDate = new Date(dobVal + "T00:00:00Z");
-      const nDate = new Date();
-      let years = nDate.getUTCFullYear() - dDate.getUTCFullYear();
-      if (
-        nDate.getUTCMonth() < dDate.getUTCMonth() ||
-        (nDate.getUTCMonth() === dDate.getUTCMonth() && nDate.getUTCDate() < dDate.getUTCDate())
-      ) years--;
-      if (dobVal > today() || years < 18) {
-        error.textContent = "Job Agent is only available for dancers aged 18 and older.";
-        return;
-      }
-      ext().age = { dob: dobVal, accepted_at: ext().age?.accepted_at || now() };
-      audit("age declared", dancer().id);
-    } else if (!ageAllowed()) {
-      error.textContent = "Please enter your date of birth.";
+    // If age was not previously allowed, check if age exists
+    if (!ageAllowed()) {
+      error.textContent = "Please complete Age Verification first.";
       return;
     }
 
