@@ -845,10 +845,21 @@ function audit(action, entity) {
 }
 let toastTimer;
 function toast(msg) {
-  $("#toast").textContent = msg;
-  $("#toast").classList.add("visible");
-  clearTimeout(toastTimer);
-  toastTimer = setTimeout(() => $("#toast").classList.remove("visible"), 4200);
+  const mt = $("#mobile-toast");
+  if (ui.mode === "dancer" && mt) {
+    mt.innerHTML = `<i class="ph-fill ph-info" style="font-size:16px;"></i><span>${msg}</span>`;
+    mt.classList.add("visible");
+    clearTimeout(toastTimer);
+    toastTimer = setTimeout(() => mt.classList.remove("visible"), 3800);
+    return;
+  }
+  const t = $("#toast");
+  if (t) {
+    t.textContent = msg;
+    t.classList.add("visible");
+    clearTimeout(toastTimer);
+    toastTimer = setTimeout(() => t.classList.remove("visible"), 4200);
+  }
 }
 function normalize(value) {
   try {
@@ -2332,7 +2343,7 @@ function mobileNav() {
   <style>
     @media (min-width: 1000px) { .annotation-box { display: block !important; } }
   </style>
-  <section class="mobile-app"><header class="mobile-top"><div class="mobile-title" style="${title ? '' : 'display:none;'}"><h1>${title}</h1><div class="actions">${tools}</div></div>${below}</header><div class="mobile-body">${alert}${body}</div>${mobileNav()}<div id="mobile-overlay-root">${ui.dialog && ui.dialogState ? renderMobileDialogHTML(ui.dialogState) : ""}</div></section></div>`;
+  <section class="mobile-app"><header class="mobile-top"><div class="mobile-title" style="${title ? '' : 'display:none;'}"><h1>${title}</h1><div class="actions">${tools}</div></div>${below}</header><div class="mobile-body">${alert}${body}</div>${mobileNav()}<div id="mobile-toast" class="mobile-toast" role="status" aria-live="polite"></div><div id="mobile-overlay-root">${ui.dialog && ui.dialogState ? renderMobileDialogHTML(ui.dialogState) : ""}</div></section></div>`;
 }
 function filteredJobs() {
   const dUser = dancer();
@@ -3151,10 +3162,15 @@ function dialog(kind, title, body, saveLabel = "", extra = "", shape = "") {
   );
 }
 
-function showConfirm(msg, confirmAction, confirmValue) {
+function showConfirm(msg, confirmAction, confirmValue, options = {}) {
   lastFocus = document.activeElement;
   ui.dialog = "confirm";
   ui.dirty = false;
+
+  const title = options.title || "";
+  const confirmText = options.confirmText || "Confirm";
+  const cancelText = options.cancelText || "Cancel";
+  const confirmBtnBg = options.danger ? "#dc2626" : "#0f172a";
 
   if (ui.mode === "dancer") {
     const m = $("#mobile-overlay-root");
@@ -3162,11 +3178,12 @@ function showConfirm(msg, confirmAction, confirmValue) {
       m.innerHTML = `
         <div class="mobile-overlay">
           <div class="mobile-backdrop" data-action="close"></div>
-          <div class="mobile-confirm-card">
-            <p style="font-size: 15px; font-weight: 600; color: #0f172a; margin-bottom: 20px; line-height: 1.5;">${esc(msg)}</p>
-            <div style="display: flex; gap: 10px;">
-              <button class="primary" data-action="${confirmAction}" data-value="${confirmValue}" style="flex:1; background:#0f172a; color:#fff; border:none; padding: 12px; border-radius: 8px; font-weight: 600; cursor:pointer;">Confirm</button>
-              <button data-action="close" style="flex:1; background:#f1f5f9; border:none; color:#475569; padding: 12px; border-radius: 8px; font-weight: 600; cursor:pointer;">Cancel</button>
+          <div class="mobile-confirm-card" style="max-width:340px; margin:auto 20px;">
+            ${title ? `<h3 style="font-size:16px; font-weight:800; color:#0f172a; margin:0 0 8px 0; text-align:center;">${esc(title)}</h3>` : ""}
+            <p style="font-size: 13.5px; font-weight: 500; color: #475569; margin: 0 0 20px 0; line-height: 1.5; text-align:center;">${esc(msg)}</p>
+            <div style="display: flex; flex-direction: ${options.vertical ? 'column' : 'row'}; gap: 10px;">
+              <button class="primary" data-action="${confirmAction}" data-value="${confirmValue || ''}" style="flex:1; background:${confirmBtnBg}; color:#fff; border:none; padding: 12px; border-radius: 10px; font-weight: 700; font-size:13.5px; cursor:pointer;">${confirmText}</button>
+              <button data-action="close" style="flex:1; background:#f1f5f9; border:none; color:#475569; padding: 12px; border-radius: 10px; font-weight: 600; font-size:13.5px; cursor:pointer;">${cancelText}</button>
             </div>
           </div>
         </div>
@@ -3178,10 +3195,11 @@ function showConfirm(msg, confirmAction, confirmValue) {
   $("#overlay-root").innerHTML = `
     <div class="overlay">
       <section class="dialog" style="max-width: 400px; padding: 24px 30px; text-align: center; border-radius: 12px; border: none; box-shadow: 0 4px 20px rgba(0,0,0,0.15); background: #fff;">
-        <p style="font-size: 15px; font-weight: 500; color: #333; margin-bottom: 24px; line-height: 1.5;">${esc(msg)}</p>
+        ${title ? `<h3 style="font-size:17px; font-weight:700; margin:0 0 10px 0;">${esc(title)}</h3>` : ""}
+        <p style="font-size: 14px; font-weight: 500; color: #333; margin-bottom: 24px; line-height: 1.5;">${esc(msg)}</p>
         <div style="display: flex; justify-content: center; gap: 12px;">
-          <button class="primary" data-action="${confirmAction}" data-value="${confirmValue}" style="background:#111; border-color:#111; color:#fff; min-width: 100px; padding: 8px 24px; border-radius: 6px; font-weight: 500;">Confirm</button>
-          <button data-action="close" style="background:#fff; border: 1px solid #ddd; color:#333; min-width: 100px; padding: 8px 24px; border-radius: 6px; font-weight: 500;">Cancel</button>
+          <button class="primary" data-action="${confirmAction}" data-value="${confirmValue || ''}" style="background:${confirmBtnBg}; border-color:${confirmBtnBg}; color:#fff; min-width: 100px; padding: 10px 20px; border-radius: 6px; font-weight: 600;">${confirmText}</button>
+          <button data-action="close" style="background:#fff; border: 1px solid #ddd; color:#333; min-width: 100px; padding: 10px 20px; border-radius: 6px; font-weight: 500;">${cancelText}</button>
         </div>
       </section>
     </div>
@@ -3190,7 +3208,24 @@ function showConfirm(msg, confirmAction, confirmValue) {
 }
 
 function closeDialog(force = false) {
-  if (ui.dirty && !force && !confirm("Discard unsaved changes?")) return false;
+  if (ui.dirty && !force) {
+    if (ui.mode === "dancer") {
+      showConfirm(
+        "You have unsaved changes. Are you sure you want to discard them?",
+        "force-close-dialog",
+        "",
+        {
+          title: "Discard changes?",
+          confirmText: "Discard",
+          cancelText: "Keep Editing",
+          danger: true
+        }
+      );
+      return false;
+    } else if (!confirm("Discard unsaved changes?")) {
+      return false;
+    }
+  }
   $("#overlay-root").innerHTML = "";
   const m = $("#mobile-overlay-root");
   if (m) m.innerHTML = "";
@@ -3931,9 +3966,56 @@ document.addEventListener("click", async (event) => {
     if (v === "operations") ui.metrics = null;
     render();
   } else if (a === "mobile") {
+    if (ui.mobile === "profile" && ui.dirty && v !== "profile") {
+      showConfirm(
+        "You have unsaved changes in your profile. Are you sure you want to discard them?",
+        "force-leave-profile",
+        v,
+        {
+          title: "Discard changes?",
+          confirmText: "Discard",
+          cancelText: "Keep Editing",
+          danger: true
+        }
+      );
+      return;
+    }
     ui.mobile = v;
     ui.dirty = false;
     render();
+  } else if (a === "force-leave-profile") {
+    closeDialog(true);
+    ui.dirty = false;
+    ui.mobile = v || "feed";
+    render();
+    return;
+  } else if (a === "confirm-profile-save") {
+    closeDialog(true);
+    if (typeof window._pendingProfileSave === "function") {
+      window._pendingProfileSave();
+    }
+    return;
+  } else if (a === "confirm-turn-off-work") {
+    closeDialog(true);
+    dancer().availibility = false;
+    persist();
+    render();
+    toast("Open to Work paused. You will not receive match alerts.");
+    return;
+  } else if (a === "confirm-turn-on-work-update") {
+    closeDialog(true);
+    dancer().availibility = true;
+    persist();
+    render();
+    toast("Open to Work enabled! Review your details below.");
+    // Scroll to Location section so user can update
+    setTimeout(() => {
+      document.getElementById("profile-country")?.scrollIntoView({ behavior: "smooth" });
+    }, 100);
+    return;
+  } else if (a === "force-close-dialog") {
+    closeDialog(true);
+    return;
   } else if (a === "sign-in") {
     ui.guest = false;
     render();
@@ -4558,20 +4640,49 @@ document.addEventListener("change", (event) => {
     audit("application progress updated", `${jobId}:${val}`);
     persist();
     render();
-    const labels = {
-      pending: "Pending Response",
-      interview: "Interview / Casting Scheduled",
-      booked: "Booked / Offer Accepted",
-      rejected: "Application Declined",
-    };
-    toast(`Progress updated: ${labels[val] || val}`);
+    if (val === "booked") {
+      toast("🎉 Congratulations on getting Booked! Wishing you a fantastic gig!");
+    } else if (val === "interview") {
+      toast("👏 Great news! Interview / Audition scheduled. Best of luck!");
+    } else if (val === "rejected") {
+      toast("🤝 Application declined. Don't worry, new auditions & gigs are added daily!");
+    } else {
+      toast("Application status updated to Pending Response.");
+    }
     return;
   }
-  if (t.dataset.action === "filter-hub-applied-status") {
-    ui.hub = "applied";
-    ui.hubAppliedStatus = t.value;
-    render();
-    return;
+  if (t.id === "open-to-work-profile") {
+    const isNowChecked = t.checked;
+    if (!isNowChecked) {
+      // User is turning OFF -> show confirm popup
+      t.checked = true; // revert temporarily until confirmed
+      showConfirm(
+        "You will no longer receive new matched job alerts or inquiries until you turn this back on.",
+        "confirm-turn-off-work",
+        "",
+        {
+          title: "Pause Job Opportunities?",
+          confirmText: "Pause for now",
+          cancelText: "Keep Active",
+          danger: true
+        }
+      );
+      return;
+    } else {
+      // User is turning ON -> ask if they want to review profile
+      t.checked = false; // revert temporarily until confirmed
+      showConfirm(
+        "Would you like to review and refresh your dance styles, rates, and location to ensure best matching?",
+        "confirm-turn-on-work-update",
+        "",
+        {
+          title: "Turn On Open to Work",
+          confirmText: "Update Details",
+          cancelText: "Skip & Turn On"
+        }
+      );
+      return;
+    }
   }
   if (t.dataset.limitFor) {
     ui.pagination = ui.pagination || {};
@@ -5138,37 +5249,52 @@ document.addEventListener("submit", (event) => {
       return;
     }
 
-    Object.assign(dancer(), {
-      availibility: !!document.getElementById("open-to-work-profile")?.checked,
-      dance_styles: selectedStyles,
-      country: v.country || dancer().country || "Singapore",
-      city: v.city || dancer().city || "Singapore",
-      skill_level: v.skill_level || dancer().skill_level || "Intermediate",
-      year_experience: +(v.year_experience || dancer().year_experience || 3),
-      preferred_types: selectedRoles || dancer().preferred_types || "Teaching,Performance",
-      languages: selectedLangs || dancer().languages || "English",
-      min_compensation: +(v.min_compensation || dancer().min_compensation || 50),
-      accept_unpaid: !!v.accept_unpaid,
-      include_online: !!v.include_online,
-      work_abroad: !!v.work_abroad,
-      portfolio_url: v.portfolio_url ? v.portfolio_url.trim() : (dancer().portfolio_url || ""),
-      travelRadiusKm: +(v.travelRadiusKm || dancer().travelRadiusKm || 20),
-    });
-    Object.assign(ext().profile, {
-      currency: v.currency || ext().profile.currency || "SGD",
-      compensation_unit: v.compensation_unit || ext().profile.compensation_unit || "Per class",
-    });
-    ext().push.enabled = !!v.push;
-    ui.filters.radius = +(v.travelRadiusKm || 20);
-    ext().onboardingCompleted = true;
-    ext().nudgeDismissed = true;
-    ui.dirty = false;
-    rebuildRecommendations();
-    persist();
-    audit("profile preferences saved", dancer().id);
-    ui.mobile = "feed";
-    render();
-    toast("Preferences saved! Matching jobs refreshed. ✨");
+    // Show 14-day update lock confirmation before saving profile
+    window._pendingProfileSave = () => {
+      Object.assign(dancer(), {
+        availibility: !!document.getElementById("open-to-work-profile")?.checked,
+        dance_styles: selectedStyles,
+        country: v.country || dancer().country || "Singapore",
+        city: v.city || dancer().city || "Singapore",
+        skill_level: v.skill_level || dancer().skill_level || "Intermediate",
+        year_experience: +(v.year_experience || dancer().year_experience || 3),
+        preferred_types: selectedRoles || dancer().preferred_types || "Teaching,Performance",
+        languages: selectedLangs || dancer().languages || "English",
+        min_compensation: +(v.min_compensation || dancer().min_compensation || 50),
+        accept_unpaid: !!v.accept_unpaid,
+        include_online: !!v.include_online,
+        work_abroad: !!v.work_abroad,
+        portfolio_url: v.portfolio_url ? v.portfolio_url.trim() : (dancer().portfolio_url || ""),
+        travelRadiusKm: +(v.travelRadiusKm || dancer().travelRadiusKm || 20),
+      });
+      Object.assign(ext().profile, {
+        currency: v.currency || ext().profile.currency || "SGD",
+        compensation_unit: v.compensation_unit || ext().profile.compensation_unit || "Per class",
+      });
+      ext().push.enabled = !!v.push;
+      ui.filters.radius = +(v.travelRadiusKm || 20);
+      ext().onboardingCompleted = true;
+      ext().nudgeDismissed = true;
+      ext().profileLastUpdated = now();
+      ui.dirty = false;
+      rebuildRecommendations();
+      persist();
+      audit("profile preferences saved", dancer().id);
+      ui.mobile = "feed";
+      render();
+      toast("Profile updated! Locked for 14 days for stable AI matching.");
+    };
+
+    showConfirm(
+      "Your preferences will be locked for 14 days after saving to allow AI to optimize your casting matches. Confirm update?",
+      "confirm-profile-save",
+      "",
+      {
+        title: "Confirm Profile Update",
+        confirmText: "Yes, Save Profile",
+        cancelText: "Review Again"
+      }
+    );
   } else if (f.id === "submission-form") {
     const normalized = normalize(v.url);
     if (!normalized) {
