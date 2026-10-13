@@ -2093,7 +2093,28 @@ function mobileNav() {
   <section class="mobile-app"><div class="mobile-top"><h1>Job opportunities</h1></div>${empty("Job Agent access is paused", "Contact Hammer support to review your access.")}</section></div>`;
     }
     window.checkGateAgeLive = function(input) {
-      // Kept clean, allow user to continue to profile
+      const val = input.value;
+      const warning = document.getElementById("gate-age-warning");
+      if (!val) return;
+      const d = new Date(val + "T00:00:00Z");
+      const n = new Date();
+      let years = n.getUTCFullYear() - d.getUTCFullYear();
+      if (
+        n.getUTCMonth() < d.getUTCMonth() ||
+        (n.getUTCMonth() === d.getUTCMonth() && n.getUTCDate() < d.getUTCDate())
+      ) {
+        years--;
+      }
+      const isUnder18 = years < 18;
+      if (isUnder18) {
+        input.style.borderColor = "#ef4444";
+        input.style.backgroundColor = "#fef2f2";
+        if (warning) warning.style.display = "flex";
+      } else {
+        input.style.borderColor = "";
+        input.style.backgroundColor = "";
+        if (warning) warning.style.display = "none";
+      }
     };
 
     return `<div class="dancer-stage age-gate-stage">
@@ -2113,8 +2134,16 @@ function mobileNav() {
         <form id="dialog-form" class="age-gate-form" data-kind="age">
           <div class="age-dob-field">
             <label for="dob">Date of Birth <b>*</b></label>
-            <input type="date" id="dob" name="dob" value="${esc(ext().age?.dob || '')}" max="${today()}" required>
+            <input type="date" id="dob" name="dob" value="${esc(ext().age?.dob || '')}" max="${today()}" oninput="checkGateAgeLive(this)" onchange="checkGateAgeLive(this)" required>
             <small>You must be at least 18 years old to explore and apply for dance opportunities.</small>
+          </div>
+
+          <!-- Inline Under-18 Warning Banner on Welcome Gate -->
+          <div id="gate-age-warning" style="display:none; align-items:flex-start; gap:8px; background:#fef2f2; border:1px solid #fecaca; border-radius:8px; padding:10px 12px; margin-bottom:12px; font-size:12px; color:#b91c1c; line-height:1.4;">
+            <i class="ph-bold ph-warning" style="font-size:16px; color:#dc2626; margin-top:1px; flex-shrink:0;"></i>
+            <div>
+              <strong>Under 18 restricted:</strong> You can still browse dance jobs, but <strong>job matching scores</strong> and <strong>AI application mail generation</strong> will be disabled.
+            </div>
           </div>
 
           <div class="age-consent">
@@ -2487,14 +2516,14 @@ function jobCard(o, inHub = false) {
     const typePill = `<span style="background: ${typeBg}; color: ${typeColor}; font-size: 10px; font-weight: 700; padding: 4px 8px; border-radius: 4px; text-transform: uppercase;">${typeLabel}</span>`;
 
     let matchPill = "";
-    const isAdult = ageAllowed();
+    const isUnder18 = !ageAllowed();
     if (!ui.guest) {
-        if (!isAdult) {
-            matchPill = `<span style="background: #fef2f2; color: #dc2626; border: 1px solid #fecaca; font-size: 10.5px; font-weight: 700; padding: 3px 8px; border-radius: 4px; display: flex; align-items: center; gap: 4px;">⚠️ Under 18 (No Match)</span>`;
-        } else if (open) {
-            matchPill = `<span style="background: #d1fae5; color: #047857; font-size: 11px; font-weight: 700; padding: 3px 8px; border-radius: 4px; display: flex; align-items: center; gap: 4px;">✨ ${s.value}%${s.est ? ' * est' : ' Match'}</span>`;
-        } else {
+        if (!open) {
             matchPill = `<span style="background: #fee2e2; color: #b91c1c; font-size: 11px; font-weight: 700; padding: 3px 8px; border-radius: 4px;">Closed</span>`;
+        } else if (isUnder18) {
+            matchPill = `<span style="background: #f1f5f9; color: #64748b; font-size: 10.5px; font-weight: 600; padding: 3px 8px; border-radius: 4px;" title="Matching disabled for under 18">View Only</span>`;
+        } else {
+            matchPill = `<span style="background: #d1fae5; color: #047857; font-size: 11px; font-weight: 700; padding: 3px 8px; border-radius: 4px; display: flex; align-items: center; gap: 4px;">✨ ${s.value}%${s.est ? ' * est' : ' Match'}</span>`;
         }
     } else if (!open) {
         matchPill = `<span style="background: #fee2e2; color: #b91c1c; font-size: 11px; font-weight: 700; padding: 3px 8px; border-radius: 4px;">Closed</span>`;
@@ -2729,21 +2758,7 @@ function jobCard(o, inHub = false) {
             </div>
         </div>
 
-        ${!ui.guest ? (
-          !ageAllowed() ? `
-          <!-- Under 18 Restriction Box -->
-          <div style="padding: 0 20px 24px 20px;">
-              <div style="background: #fef2f2; border: 1px solid #fecaca; border-radius: 8px; padding: 14px 16px; display:flex; align-items:flex-start; gap:10px;">
-                  <i class="ph-bold ph-warning-circle" style="color: #dc2626; font-size: 20px; margin-top:1px; flex-shrink:0;"></i>
-                  <div>
-                      <div style="font-size: 13px; font-weight: 800; color: #b91c1c; margin-bottom: 2px;">Under 18 restricted:</div>
-                      <div style="font-size: 12.5px; color: #dc2626; line-height: 1.4;">Style matching and automated job applications are reserved for dancers 18+. You can view this listing in view-only mode.</div>
-                  </div>
-              </div>
-          </div>
-
-          <div style="height: 8px; background: #f8fafc; border-top: 1px solid #f1f5f9; border-bottom: 1px solid #f1f5f9; width: 100%;"></div>
-          ` : `
+        ${!ui.guest ? `
           <!-- AI Match Box -->
           <div style="padding: 0 20px 24px 20px;">
               <div style="background: #eff6ff; border: 1px solid #bfdbfe; border-radius: 8px; padding: 16px;">
@@ -2753,8 +2768,7 @@ function jobCard(o, inHub = false) {
           </div>
 
           <div style="height: 8px; background: #f8fafc; border-top: 1px solid #f1f5f9; border-bottom: 1px solid #f1f5f9; width: 100%;"></div>
-          `
-        ) : ""}
+          ` : ""}
 
         <!-- Application Progress Section (Within Job Detail - shown if applied) -->
         ${(!ui.guest && isApplied) ? `
@@ -2904,14 +2918,16 @@ ${(o.requirements && Array.isArray(o.requirements) && o.requirements.length > 0)
 
             <!-- AI Pitch Draft Box -->
             ${!ageAllowed() ? `
-            <div style="border: 1px dashed #fca5a5; background: #fff5f5; border-radius: 8px; padding: 18px 16px; text-align: center;">
+            <div style="border: 1px dashed #fca5a5; background: #fff5f5; border-radius: 8px; padding: 20px; text-align: center; margin-top: 12px;">
                 <div style="width: 40px; height: 40px; border-radius: 50%; background: #fee2e2; color: #dc2626; display: flex; align-items: center; justify-content: center; margin: 0 auto 10px auto; font-size: 20px;">
                     <i class="ph-bold ph-lock-key"></i>
                 </div>
-                <div style="font-weight: 700; font-size: 14px; color: #991b1b; margin-bottom: 4px;">AI Pitch Draft Locked (18+)</div>
-                <div style="font-size: 12.5px; color: #b91c1c; line-height: 1.4; max-width: 290px; margin: 0 auto 14px auto;">Automatic AI email pitch generation and job applications are only available for dancers aged 18 and older.</div>
-                <button type="button" disabled style="width: 100%; border: none; background: #cbd5e1; color: #64748b; padding: 10px; border-radius: 8px; font-size: 13px; font-weight: 700; cursor: not-allowed;">
-                    <i class="ph-bold ph-prohibit" style="vertical-align: middle;"></i> Application Locked
+                <div style="font-weight: 700; font-size: 14.5px; color: #991b1b; margin-bottom: 4px;">AI Application Pitch Restricted</div>
+                <div style="font-size: 12.5px; color: #7f1d1d; line-height: 1.4; max-width: 320px; margin: 0 auto 14px auto;">
+                    Dancers under 18 can browse opportunities in View-Only mode. Direct application pitch generation is restricted until you turn 18.
+                </div>
+                <button type="button" disabled style="background: #e2e8f0; color: #94a3b8; border: none; padding: 10px 18px; border-radius: 8px; font-size: 13px; font-weight: 600; cursor: not-allowed;">
+                    Application Disabled (18+)
                 </button>
             </div>
             ` : (o.contact_email || true) ? `
