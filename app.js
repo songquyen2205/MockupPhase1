@@ -3004,6 +3004,8 @@ function profileForm() {
     const warning = document.getElementById("profile-age-warning");
     const saveBtn = document.getElementById("profile-save-btn");
     const prefWrapper = document.getElementById("profile-preferences-wrapper");
+    const openWorkCard = document.getElementById("profile-open-work-card");
+    const openWorkSwitch = document.getElementById("open-to-work-profile");
     if (!val) return;
     const d = new Date(val + "T00:00:00Z");
     const n = new Date();
@@ -3030,6 +3032,15 @@ function profileForm() {
         prefWrapper.style.pointerEvents = "none";
         prefWrapper.style.filter = "grayscale(0.6)";
       }
+      if (openWorkCard) {
+        openWorkCard.style.opacity = "0.45";
+        openWorkCard.style.pointerEvents = "none";
+        openWorkCard.style.borderLeftColor = "#cbd5e1";
+      }
+      if (openWorkSwitch) {
+        openWorkSwitch.disabled = true;
+        openWorkSwitch.checked = false;
+      }
       const underBadge = `<span style="background:#fef2f2; color:#dc2626; border:1px solid #fecaca; font-size:10.5px; font-weight:700; padding:2px 8px; border-radius:10px; display:inline-flex; align-items:center; gap:4px;"><i class="ph-bold ph-warning-circle"></i> Under 18</span>`;
       if (badgeTop) badgeTop.innerHTML = underBadge;
       if (badgeBot) badgeBot.innerHTML = underBadge;
@@ -3047,6 +3058,15 @@ function profileForm() {
         prefWrapper.style.opacity = "1";
         prefWrapper.style.pointerEvents = "auto";
         prefWrapper.style.filter = "none";
+      }
+      if (openWorkCard) {
+        openWorkCard.style.opacity = "1";
+        openWorkCard.style.pointerEvents = "auto";
+        openWorkCard.style.borderLeftColor = "#10b981";
+      }
+      if (openWorkSwitch) {
+        openWorkSwitch.disabled = false;
+        openWorkSwitch.checked = true;
       }
       const verifiedBadge = `<span style="background:#ecfdf5; color:#059669; border:1px solid #a7f3d0; font-size:10.5px; font-weight:700; padding:2px 8px; border-radius:10px; display:inline-flex; align-items:center; gap:4px;"><i class="ph-bold ph-shield-check"></i> 18+ Verified</span>`;
       if (badgeTop) badgeTop.innerHTML = verifiedBadge;
@@ -3074,12 +3094,15 @@ function profileForm() {
     <form id="profile-form">
       
       <!-- Open to Work Card -->
-      <div class="pro-card" style="display:flex; align-items:center; justify-content:space-between; border-left:4px solid #10b981; padding:12px 16px; margin:0 0 20px 0; background:#fff; border-radius:10px; border-top:1px solid #e2e8f0; border-right:1px solid #e2e8f0; border-bottom:1px solid #e2e8f0; box-shadow:0 1px 3px rgba(0,0,0,0.03);">
+      <div id="profile-open-work-card" class="pro-card" style="display:flex; align-items:center; justify-content:space-between; border-left:4px solid ${isAgeVerified ? '#10b981' : '#cbd5e1'}; padding:12px 16px; margin:0 0 20px 0; background:#fff; border-radius:10px; border-top:1px solid #e2e8f0; border-right:1px solid #e2e8f0; border-bottom:1px solid #e2e8f0; box-shadow:0 1px 3px rgba(0,0,0,0.03); transition:all 0.2s ease; ${!isAgeVerified ? 'opacity:0.45; pointer-events:none;' : ''}">
         <div>
-          <span style="font-weight:700; display:block; font-size:15px; color:#111827;">Open to Work</span>
-          <span style="font-size:12px; color:#6b7280; margin-top:2px; display:block;">Get personalized job alerts and recommendations.</span>
+          <span style="font-weight:700; display:flex; align-items:center; gap:6px; font-size:15px; color:#111827;">
+            Open to Work
+            ${!isAgeVerified ? '<span style="font-size:10.5px; font-weight:700; background:#fee2e2; color:#dc2626; padding:1px 6px; border-radius:4px;">Locked</span>' : ''}
+          </span>
+          <span style="font-size:12px; color:#6b7280; margin-top:2px; display:block;">${isAgeVerified ? 'Get personalized job alerts and recommendations.' : 'Requires 18+ age verification to receive casting calls.'}</span>
         </div>
-        <input id="open-to-work-profile" name="availibility" class="switch" type="checkbox" ${d.availibility !== false ? "checked" : ""}>
+        <input id="open-to-work-profile" name="availibility" class="switch" type="checkbox" ${d.availibility !== false && isAgeVerified ? "checked" : ""} ${!isAgeVerified ? "disabled" : ""}>
       </div>
 
       <div style="display:flex; justify-content:space-between; align-items:center; margin:0 0 16px;">
