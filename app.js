@@ -2343,7 +2343,7 @@ function mobileNav() {
   <style>
     @media (min-width: 1000px) { .annotation-box { display: block !important; } }
   </style>
-  <section class="mobile-app"><header class="mobile-top"><div class="mobile-title" style="${title ? '' : 'display:none;'}"><h1>${title}</h1><div class="actions">${tools}</div></div>${below}</header><div class="mobile-body">${alert}${body}</div>${mobileNav()}<div id="mobile-toast" class="mobile-toast" role="status" aria-live="polite"></div><div id="mobile-overlay-root">${ui.dialog && ui.dialogState ? renderMobileDialogHTML(ui.dialogState) : ""}</div></section></div>`;
+  <section class="mobile-app" style="position:relative;"><div id="mobile-toast" class="mobile-toast" role="status" aria-live="polite"></div><header class="mobile-top"><div class="mobile-title" style="${title ? '' : 'display:none;'}"><h1>${title}</h1><div class="actions">${tools}</div></div>${below}</header><div class="mobile-body">${alert}${body}</div>${mobileNav()}<div id="mobile-overlay-root">${ui.dialog && ui.dialogState ? renderMobileDialogHTML(ui.dialogState) : ""}</div></section></div>`;
 }
 function filteredJobs() {
   const dUser = dancer();
