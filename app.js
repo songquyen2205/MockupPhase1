@@ -2091,6 +2091,43 @@ function mobileNav() {
   
   <section class="mobile-app"><div class="mobile-top"><h1>Job opportunities</h1></div>${empty("Job Agent access is paused", "Contact Hammer support to review your access.")}</section></div>`;
     }
+    window.checkGateAgeLive = function(input) {
+      const val = input.value;
+      const warning = document.getElementById("gate-age-warning");
+      const nextBtn = document.getElementById("nextProfileBtn");
+      const skipBtn = document.getElementById("skipBrowseBtn");
+      if (!val) return;
+      const d = new Date(val + "T00:00:00Z");
+      const n = new Date();
+      let years = n.getUTCFullYear() - d.getUTCFullYear();
+      if (
+        n.getUTCMonth() < d.getUTCMonth() ||
+        (n.getUTCMonth() === d.getUTCMonth() && n.getUTCDate() < d.getUTCDate())
+      ) {
+        years--;
+      }
+      const isUnder18 = years < 18;
+      if (isUnder18) {
+        input.style.borderColor = "#ef4444";
+        input.style.backgroundColor = "#fef2f2";
+        if (warning) warning.style.display = "flex";
+        if (nextBtn) {
+          nextBtn.disabled = true;
+          nextBtn.style.opacity = "0.5";
+          nextBtn.style.cursor = "not-allowed";
+        }
+      } else {
+        input.style.borderColor = "";
+        input.style.backgroundColor = "";
+        if (warning) warning.style.display = "none";
+        if (nextBtn) {
+          nextBtn.disabled = false;
+          nextBtn.style.opacity = "1";
+          nextBtn.style.cursor = "pointer";
+        }
+      }
+    };
+
     return `<div class="dancer-stage age-gate-stage">
       <section class="mobile-app age-gate-app">
         <header class="age-gate-header">
@@ -2108,8 +2145,16 @@ function mobileNav() {
         <form id="dialog-form" class="age-gate-form" data-kind="age">
           <div class="age-dob-field">
             <label for="dob">Date of Birth <b>*</b></label>
-            <input type="date" id="dob" name="dob" value="${esc(ext().age?.dob || '')}" max="${today()}" required>
+            <input type="date" id="dob" name="dob" value="${esc(ext().age?.dob || '')}" max="${today()}" oninput="checkGateAgeLive(this)" onchange="checkGateAgeLive(this)" required>
             <small>You must be at least 18 years old to explore and apply for dance opportunities.</small>
+          </div>
+
+          <!-- Inline Under-18 Warning Banner on Welcome Gate -->
+          <div id="gate-age-warning" style="display:none; align-items:flex-start; gap:8px; background:#fef2f2; border:1px solid #fecaca; border-radius:8px; padding:10px 12px; margin-bottom:12px; font-size:12px; color:#b91c1c; line-height:1.4;">
+            <i class="ph-bold ph-warning" style="font-size:16px; color:#dc2626; margin-top:1px; flex-shrink:0;"></i>
+            <div>
+              <strong>Under 18 restricted:</strong> Job Agent is only available for dancers aged 18 and older. You can browse public listings as a Guest.
+            </div>
           </div>
 
           <div class="age-consent">
