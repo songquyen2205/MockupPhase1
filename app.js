@@ -2947,6 +2947,52 @@ function profileForm() {
     }
   };
 
+  window.checkProfileAgeLive = function(input) {
+    const val = input.value;
+    const badgeTop = document.getElementById("profile-badge-age-top");
+    const badgeBot = document.getElementById("profile-badge-age-bot");
+    const warning = document.getElementById("profile-age-warning");
+    const saveBtn = document.getElementById("profile-save-btn");
+    if (!val) return;
+    const d = new Date(val + "T00:00:00Z");
+    const n = new Date();
+    let years = n.getUTCFullYear() - d.getUTCFullYear();
+    if (
+      n.getUTCMonth() < d.getUTCMonth() ||
+      (n.getUTCMonth() === d.getUTCMonth() && n.getUTCDate() < d.getUTCDate())
+    ) {
+      years--;
+    }
+    const isUnder18 = years < 18;
+    if (isUnder18) {
+      input.style.borderColor = "#ef4444";
+      input.style.backgroundColor = "#fef2f2";
+      if (warning) warning.style.display = "flex";
+      if (saveBtn) {
+        saveBtn.disabled = true;
+        saveBtn.style.opacity = "0.5";
+        saveBtn.style.cursor = "not-allowed";
+        saveBtn.title = "Must be 18+ to save profile";
+      }
+      const underBadge = `<span style="background:#fef2f2; color:#dc2626; border:1px solid #fecaca; font-size:10.5px; font-weight:700; padding:2px 8px; border-radius:10px; display:inline-flex; align-items:center; gap:4px;"><i class="ph-bold ph-warning-circle"></i> Under 18</span>`;
+      if (badgeTop) badgeTop.innerHTML = underBadge;
+      if (badgeBot) badgeBot.innerHTML = underBadge;
+    } else {
+      input.style.borderColor = "#cbd5e1";
+      input.style.backgroundColor = "#ffffff";
+      if (warning) warning.style.display = "none";
+      if (saveBtn) {
+        saveBtn.disabled = false;
+        saveBtn.style.opacity = "1";
+        saveBtn.style.cursor = "pointer";
+        saveBtn.removeAttribute("title");
+      }
+      const verifiedBadge = `<span style="background:#ecfdf5; color:#059669; border:1px solid #a7f3d0; font-size:10.5px; font-weight:700; padding:2px 8px; border-radius:10px; display:inline-flex; align-items:center; gap:4px;"><i class="ph-bold ph-shield-check"></i> 18+ Verified</span>`;
+      if (badgeTop) badgeTop.innerHTML = verifiedBadge;
+      if (badgeBot) badgeBot.innerHTML = verifiedBadge;
+    }
+  };
+
   const renderChips = (name, list, curArr) => {
     return `<div class="chip-group" style="margin-top:0; display:flex; flex-wrap:wrap; gap:8px;">${list.map(item => {
       const active = curArr.includes(item.toLowerCase());
@@ -2977,15 +3023,17 @@ function profileForm() {
 
       <div style="display:flex; justify-content:space-between; align-items:center; margin:0 0 16px;">
         <h3 style="font-size:18px; font-weight:800; color:#111827; margin:0;">Basic Info</h3>
-        ${isAgeVerified ? `
-          <span style="background:#ecfdf5; color:#059669; border:1px solid #a7f3d0; font-size:11px; font-weight:700; padding:3px 10px; border-radius:12px; display:inline-flex; align-items:center; gap:4px;">
-            <i class="ph-bold ph-shield-check"></i> 18+ Verified
-          </span>
-        ` : `
-          <span style="background:#fef2f2; color:#dc2626; border:1px solid #fecaca; font-size:11px; font-weight:700; padding:3px 8px; border-radius:12px;">
-            Age Unverified
-          </span>
-        `}
+        <span id="profile-badge-age-top">
+          ${isAgeVerified ? `
+            <span style="background:#ecfdf5; color:#059669; border:1px solid #a7f3d0; font-size:11px; font-weight:700; padding:3px 10px; border-radius:12px; display:inline-flex; align-items:center; gap:4px;">
+              <i class="ph-bold ph-shield-check"></i> 18+ Verified
+            </span>
+          ` : `
+            <span style="background:#fef2f2; color:#dc2626; border:1px solid #fecaca; font-size:11px; font-weight:700; padding:3px 8px; border-radius:12px; display:inline-flex; align-items:center; gap:4px;">
+              <i class="ph-bold ph-warning-circle"></i> Under 18
+            </span>
+          `}
+        </span>
       </div>
       
       <!-- 1. LOCATION BLOCK -->
@@ -3108,8 +3156,16 @@ function profileForm() {
           <h4 style="font-size:14px; font-weight:700; color:#374151; margin:0; display:flex; align-items:center; gap:6px;">
             <i class="ph ph-shield-check" style="font-size:17px; color:#059669;"></i> Age & Verification
           </h4>
-          <span style="background:#ecfdf5; color:#059669; border:1px solid #a7f3d0; font-size:10.5px; font-weight:700; padding:2px 8px; border-radius:10px;">
-            18+ Verified
+          <span id="profile-badge-age-bot">
+            ${isAgeVerified ? `
+              <span style="background:#ecfdf5; color:#059669; border:1px solid #a7f3d0; font-size:10.5px; font-weight:700; padding:2px 8px; border-radius:10px; display:inline-flex; align-items:center; gap:4px;">
+                <i class="ph-bold ph-shield-check"></i> 18+ Verified
+              </span>
+            ` : `
+              <span style="background:#fef2f2; color:#dc2626; border:1px solid #fecaca; font-size:10.5px; font-weight:700; padding:2px 8px; border-radius:10px; display:inline-flex; align-items:center; gap:4px;">
+                <i class="ph-bold ph-warning-circle"></i> Under 18
+              </span>
+            `}
           </span>
         </div>
         <p style="font-size:12px; color:#64748b; margin:0 0 12px 0; line-height:1.4;">
@@ -3117,7 +3173,15 @@ function profileForm() {
         </p>
         <div style="margin-bottom:12px;">
           <label class="form-label" style="font-size:11px; font-weight:600; color:#475569; margin-bottom:4px; display:block;">Date of Birth</label>
-          <input type="date" name="dob" id="profile-dob" value="${esc(ext().age?.dob || '')}" style="width:100%; padding:9px 12px; border:1px solid #cbd5e1; border-radius:8px; font-size:13px; background:#fff; outline:none;" />
+          <input type="date" name="dob" id="profile-dob" value="${esc(ext().age?.dob || '')}" oninput="checkProfileAgeLive(this)" onchange="checkProfileAgeLive(this)" style="width:100%; padding:9px 12px; border:1px solid ${isAgeVerified ? '#cbd5e1' : '#ef4444'}; border-radius:8px; font-size:13px; background:${isAgeVerified ? '#fff' : '#fef2f2'}; outline:none; transition:all 0.15s ease;" />
+        </div>
+
+        <!-- Inline Under-18 Warning Banner -->
+        <div id="profile-age-warning" style="display:${isAgeVerified ? 'none' : 'flex'}; align-items:flex-start; gap:8px; background:#fef2f2; border:1px solid #fecaca; border-radius:8px; padding:10px 12px; margin-bottom:12px; font-size:12px; color:#b91c1c; line-height:1.4;">
+          <i class="ph-bold ph-warning" style="font-size:16px; color:#dc2626; margin-top:1px; flex-shrink:0;"></i>
+          <div>
+            <strong>Under 18 restricted:</strong> You must be at least 18 years old to access and save profile for job opportunities on Hammer.
+          </div>
         </div>
 
         <!-- Disclaimer & Agreement Confirmation Row -->
@@ -3135,7 +3199,7 @@ function profileForm() {
       </div>
 
       <div class="error-text" id="profile-error" role="alert"></div>
-      <button class="primary wide-button" type="submit" style="padding:14px; font-size:15px; font-weight:700; border-radius:8px; background:#0f172a; color:#fff; width:100%; cursor:pointer; box-shadow:0 2px 6px rgba(0,0,0,0.15);">Save & View Jobs</button>
+      <button id="profile-save-btn" class="primary wide-button" type="submit" ${isAgeVerified ? '' : 'disabled'} style="padding:14px; font-size:15px; font-weight:700; border-radius:8px; background:#0f172a; color:#fff; width:100%; cursor:${isAgeVerified ? 'pointer' : 'not-allowed'}; opacity:${isAgeVerified ? '1' : '0.5'}; box-shadow:0 2px 6px rgba(0,0,0,0.15); transition:opacity 0.2s ease;">Save & View Jobs</button>
     </form>
   </div>`;
 }
