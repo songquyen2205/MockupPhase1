@@ -3037,15 +3037,15 @@ function profileForm() {
       </div>
 
       <!-- 5. ADVANCED BLOCK -->
-      <details class="pro-card" style="padding:0; margin:0 0 24px 0; overflow:hidden; border:1px solid #cbd5e1; border-radius:12px; background:#fff;" open>
-        <summary style="font-weight:600; cursor:pointer; padding:15px 16px; color:#2563eb; background:#fff; display:flex; justify-content:space-between; align-items:center;">
+      <details class="pro-card" style="padding:0; margin:0 0 24px 0; overflow:visible; border:1px solid #cbd5e1; border-radius:12px; background:#fff;" open>
+        <summary style="font-weight:600; cursor:pointer; padding:15px 16px; color:#2563eb; background:#fff; display:flex; justify-content:space-between; align-items:center; border-radius:12px 12px 0 0;">
           <span style="display:flex; align-items:center; gap:8px;">
             <i class="ph ph-plus-circle" style="font-size:17px; color:#2563eb;"></i>
             <span style="font-size:14px; font-weight:600;">Add rate & details for better matches</span>
           </span>
           <i class="ph ph-caret-down" style="font-size:16px; color:#2563eb;"></i>
         </summary>
-        <div style="padding:16px; border-top:1px solid #f1f5f9; display:flex; flex-direction:column; gap:16px;">
+        <div style="padding:16px; border-top:1px solid #f1f5f9; display:flex; flex-direction:column; gap:16px; overflow:visible;">
           <div>
             <label class="form-label" style="font-size:12px; font-weight:600; color:#374151; margin-bottom:6px;">Minimum acceptable rate</label>
             <div style="display:grid; grid-template-columns: 2fr 1fr 2fr; gap:8px;">
@@ -4682,6 +4682,12 @@ document.addEventListener("change", (event) => {
     } else {
       toast("Application status updated to Pending Response.");
     }
+    return;
+  }
+  if (t.dataset.action === "filter-hub-applied-status") {
+    ui.hub = "applied";
+    ui.hubAppliedStatus = t.value;
+    render();
     return;
   }
   if (t.id === "open-to-work-profile") {
