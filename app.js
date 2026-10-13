@@ -2244,24 +2244,38 @@ function mobileNav() {
     const appliedPillColor = isAppliedActive ? "#0f172a" : "#475569";
     const appliedPillBorder = isAppliedActive ? "1.5px solid #0f172a" : "1px solid #cbd5e1";
 
+    const statusCounts = {
+      pending: appliedJobs.filter(o => (ext().history[o.id]?.progress || "pending") === "pending").length,
+      interview: appliedJobs.filter(o => ext().history[o.id]?.progress === "interview").length,
+      booked: appliedJobs.filter(o => ext().history[o.id]?.progress === "booked").length,
+      rejected: appliedJobs.filter(o => ext().history[o.id]?.progress === "rejected").length,
+    };
+
+    let appliedLabel = `Applied (${counts.applied})`;
+    if (appliedStatus === "pending") appliedLabel = `Pending (${statusCounts.pending})`;
+    else if (appliedStatus === "interview") appliedLabel = `Interview (${statusCounts.interview})`;
+    else if (appliedStatus === "booked") appliedLabel = `Booked (${statusCounts.booked})`;
+    else if (appliedStatus === "rejected") appliedLabel = `Declined (${statusCounts.rejected})`;
+
     below = `
       <div class="tabs" style="display:flex; align-items:center; gap:8px; overflow-x:auto; padding:6px 0 10px 0; -webkit-overflow-scrolling:touch; margin-bottom:4px;">
         <button data-action="hub" data-value="all" style="background:${(ui.hub === 'all') ? '#0f172a' : '#ffffff'}; color:${(ui.hub === 'all') ? '#ffffff' : '#475569'}; border:${(ui.hub === 'all') ? '1px solid #0f172a' : '1px solid #e2e8f0'}; border-radius:20px; padding:6px 14px; font-size:12.5px; font-weight:700; white-space:nowrap; cursor:pointer; transition:all 0.15s; box-shadow:0 1px 2px rgba(0,0,0,0.03);">
           All (${counts.all})
         </button>
+        <div style="position:relative; display:inline-flex; align-items:center;">
+          <select data-action="filter-hub-applied-status" style="appearance:none; -webkit-appearance:none; background:#ffffff; color:#0f172a; border:${appliedPillBorder}; border-radius:20px; padding:6px 28px 6px 14px; font-size:12.5px; font-weight:700; white-space:nowrap; cursor:pointer; transition:all 0.15s; box-shadow:0 1px 2px rgba(0,0,0,0.03); outline:none;">
+            <option value="all" style="background:#ffffff; color:#0f172a;" ${appliedStatus === "all" ? "selected" : ""}>All Status (${counts.applied})</option>
+            <option value="pending" style="background:#ffffff; color:#0f172a;" ${appliedStatus === "pending" ? "selected" : ""}>Pending Response (${statusCounts.pending})</option>
+            <option value="interview" style="background:#ffffff; color:#0f172a;" ${appliedStatus === "interview" ? "selected" : ""}>Interview / Casting (${statusCounts.interview})</option>
+            <option value="booked" style="background:#ffffff; color:#0f172a;" ${appliedStatus === "booked" ? "selected" : ""}>Booked / Confirmed (${statusCounts.booked})</option>
+            <option value="rejected" style="background:#ffffff; color:#0f172a;" ${appliedStatus === "rejected" ? "selected" : ""}>Declined (${statusCounts.rejected})</option>
+          </select>
+          <span style="position:absolute; left:14px; pointer-events:none; font-size:12.5px; font-weight:700; color:#0f172a; white-space:nowrap; display:none;">${appliedLabel}</span>
+          <i class="ph-bold ph-caret-down" style="position:absolute; right:11px; pointer-events:none; font-size:11px; color:#0f172a;"></i>
+        </div>
         <button data-action="hub" data-value="saved" style="background:${ui.hub === 'saved' ? '#0f172a' : '#ffffff'}; color:${ui.hub === 'saved' ? '#ffffff' : '#475569'}; border:${ui.hub === 'saved' ? '1px solid #0f172a' : '1px solid #e2e8f0'}; border-radius:20px; padding:6px 14px; font-size:12.5px; font-weight:700; white-space:nowrap; cursor:pointer; transition:all 0.15s; box-shadow:0 1px 2px rgba(0,0,0,0.03);">
           Saved (${counts.saved})
         </button>
-        <div style="position:relative; display:inline-flex; align-items:center;">
-          <select data-action="filter-hub-applied-status" style="appearance:none; -webkit-appearance:none; background:#ffffff; color:#0f172a; border:${appliedPillBorder}; border-radius:20px; padding:6px 28px 6px 14px; font-size:12.5px; font-weight:700; white-space:nowrap; cursor:pointer; transition:all 0.15s; box-shadow:0 1px 2px rgba(0,0,0,0.03); outline:none;">
-            <option value="all" style="background:#ffffff; color:#0f172a;" ${appliedStatus === "all" ? "selected" : ""}>Applied (${counts.applied})</option>
-            <option value="pending" style="background:#ffffff; color:#0f172a;" ${appliedStatus === "pending" ? "selected" : ""}>Pending</option>
-            <option value="interview" style="background:#ffffff; color:#0f172a;" ${appliedStatus === "interview" ? "selected" : ""}>Interview</option>
-            <option value="booked" style="background:#ffffff; color:#0f172a;" ${appliedStatus === "booked" ? "selected" : ""}>Booked</option>
-            <option value="rejected" style="background:#ffffff; color:#0f172a;" ${appliedStatus === "rejected" ? "selected" : ""}>Declined</option>
-          </select>
-          <i class="ph-bold ph-caret-down" style="position:absolute; right:11px; pointer-events:none; font-size:11px; color:#0f172a;"></i>
-        </div>
       </div>
     `;
 
