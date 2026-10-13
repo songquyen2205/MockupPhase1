@@ -3003,6 +3003,7 @@ function profileForm() {
     const badgeBot = document.getElementById("profile-badge-age-bot");
     const warning = document.getElementById("profile-age-warning");
     const saveBtn = document.getElementById("profile-save-btn");
+    const prefWrapper = document.getElementById("profile-preferences-wrapper");
     if (!val) return;
     const d = new Date(val + "T00:00:00Z");
     const n = new Date();
@@ -3022,7 +3023,12 @@ function profileForm() {
         saveBtn.disabled = true;
         saveBtn.style.opacity = "0.5";
         saveBtn.style.cursor = "not-allowed";
-        saveBtn.title = "Must be 18+ to save profile";
+        saveBtn.textContent = "Verify Age 18+ to Save";
+      }
+      if (prefWrapper) {
+        prefWrapper.style.opacity = "0.45";
+        prefWrapper.style.pointerEvents = "none";
+        prefWrapper.style.filter = "grayscale(0.6)";
       }
       const underBadge = `<span style="background:#fef2f2; color:#dc2626; border:1px solid #fecaca; font-size:10.5px; font-weight:700; padding:2px 8px; border-radius:10px; display:inline-flex; align-items:center; gap:4px;"><i class="ph-bold ph-warning-circle"></i> Under 18</span>`;
       if (badgeTop) badgeTop.innerHTML = underBadge;
@@ -3035,7 +3041,12 @@ function profileForm() {
         saveBtn.disabled = false;
         saveBtn.style.opacity = "1";
         saveBtn.style.cursor = "pointer";
-        saveBtn.removeAttribute("title");
+        saveBtn.textContent = "Save & View Jobs";
+      }
+      if (prefWrapper) {
+        prefWrapper.style.opacity = "1";
+        prefWrapper.style.pointerEvents = "auto";
+        prefWrapper.style.filter = "none";
       }
       const verifiedBadge = `<span style="background:#ecfdf5; color:#059669; border:1px solid #a7f3d0; font-size:10.5px; font-weight:700; padding:2px 8px; border-radius:10px; display:inline-flex; align-items:center; gap:4px;"><i class="ph-bold ph-shield-check"></i> 18+ Verified</span>`;
       if (badgeTop) badgeTop.innerHTML = verifiedBadge;
@@ -3086,125 +3097,132 @@ function profileForm() {
         </span>
       </div>
       
-      <!-- 1. LOCATION BLOCK -->
-      <div style="margin-bottom:24px;">
-        <h4 style="font-size:14px; font-weight:700; color:#374151; margin:0 0 12px; display:flex; align-items:center; gap:6px;">1. Location</h4>
-        
-        <div style="display:flex; gap:16px; margin-bottom:16px;">
-          <div style="flex:1;">
-            <label class="form-label" style="font-size:11px; font-weight:600; color:#6b7280; margin-bottom:4px;">Country</label>
-            <select name="country" id="profile-country" style="width:100%; padding:9px 10px; border:1px solid #cbd5e1; border-radius:8px; font-size:13px; background:#fff; outline:none;">
-              ${countryOptions}
-            </select>
-          </div>
-          <div style="flex:1;">
-            <label class="form-label" style="font-size:11px; font-weight:600; color:#6b7280; margin-bottom:4px;">City</label>
-            <select name="city" id="profile-city" style="width:100%; padding:9px 10px; border:1px solid #cbd5e1; border-radius:8px; font-size:13px; background:#fff; outline:none;">
-              ${cityOptions}
-            </select>
-          </div>
-        </div>
-        
-        <label class="field" style="margin-bottom:8px;">
-          <span class="range-value" style="font-weight:600; font-size:12px; margin-bottom:6px; display:flex; justify-content:space-between; align-items:center;">
-            <span style="color:#1e293b;">Willing to travel locally up to</span>
-            <output id="radius-output" style="color:#059669; font-weight:700;">${d.travelRadiusKm || 25} km</output>
-          </span>
-          <input type="range" name="travelRadiusKm" min="5" max="100" value="${d.travelRadiusKm || 25}" data-output="radius-output" data-unit=" km">
-        </label>
-        
-        <div style="margin-top:14px; display:flex; flex-direction:column; gap:10px;">
-          <label class="check-row" style="margin:0;"><input type="checkbox" name="work_abroad" ${d.work_abroad ? "checked" : ""}> <span style="font-size:13px; font-weight:500; color:#374151;">Open to international travel / work abroad</span></label>
-          <label class="check-row" style="margin:0;"><input type="checkbox" name="include_online" ${d.include_online ? "checked" : ""}> <span style="font-size:13px; font-weight:500; color:#374151;">Include online/remote projects</span></label>
-        </div>
-      </div>
+      <!-- Preferences Container (Disabled & dimmed if under 18) -->
+      <div id="profile-preferences-wrapper" style="position:relative; transition:all 0.2s ease; ${!isAgeVerified ? 'opacity:0.45; pointer-events:none; filter:grayscale(0.6);' : ''}">
+        ${!isAgeVerified ? `
+          <div style="position:absolute; top:0; left:0; right:0; bottom:0; z-index:10; background:rgba(255,255,255,0.2); cursor:not-allowed;"></div>
+        ` : ''}
 
-      <!-- 2. STYLES BLOCK -->
-      <div style="margin-bottom:24px;">
-        <h4 style="font-size:14px; font-weight:700; color:#374151; margin:0 0 10px; display:flex; align-items:center; gap:6px;">2. Dance Styles</h4>
-        ${renderChips("dance_styles", styles, curStyles)}
-      </div>
-
-      <!-- 3. ROLES BLOCK -->
-      <div style="margin-bottom:24px;">
-        <h4 style="font-size:14px; font-weight:700; color:#374151; margin:0 0 10px; display:flex; align-items:center; gap:6px;">3. Preferred Roles</h4>
-        ${renderChips("preferred_types", roles, curRoles)}
-      </div>
-
-      <!-- 4. EXPERIENCE BLOCK -->
-      <div style="margin-bottom:24px;">
-        <h4 style="font-size:14px; font-weight:700; color:#374151; margin:0 0 10px; display:flex; align-items:center; gap:6px;">4. Experience</h4>
-        <div style="display:flex; gap:16px;">
-          <div style="flex:2;">
-            <label class="form-label" style="font-size:11px; font-weight:600; color:#6b7280; margin-bottom:4px;">Skill Level</label>
-            <select name="skill_level" style="width:100%; padding:9px 10px; border:1px solid #cbd5e1; border-radius:8px; font-size:13px; background:#fff; outline:none;">
-              ${["Beginner", "Intermediate", "Advanced"].map(s => `<option value="${s}" ${(d.skill_level || "Advanced") === s ? "selected" : ""}>${s}</option>`).join("")}
-            </select>
-          </div>
-          <div style="flex:1;">
-            <label class="form-label" style="font-size:11px; font-weight:600; color:#6b7280; margin-bottom:4px;">Years</label>
-            <input type="number" name="year_experience" value="${d.year_experience || 4}" min="0" max="60" style="width:100%; padding:9px 10px; border:1px solid #cbd5e1; border-radius:8px; font-size:13px; outline:none;" />
-          </div>
-        </div>
-      </div>
-
-      <!-- 5. ADVANCED BLOCK -->
-      <details class="pro-card" style="padding:0; margin:0 0 24px 0; overflow:visible; border:1px solid #cbd5e1; border-radius:12px; background:#fff;" open>
-        <summary style="font-weight:600; cursor:pointer; padding:15px 16px; color:#2563eb; background:#fff; display:flex; justify-content:space-between; align-items:center; border-radius:12px 12px 0 0;">
-          <span style="display:flex; align-items:center; gap:8px;">
-            <i class="ph ph-plus-circle" style="font-size:17px; color:#2563eb;"></i>
-            <span style="font-size:14px; font-weight:600;">Add rate & details for better matches</span>
-          </span>
-          <i class="ph ph-caret-down" style="font-size:16px; color:#2563eb;"></i>
-        </summary>
-        <div style="padding:16px; border-top:1px solid #f1f5f9; display:flex; flex-direction:column; gap:16px; overflow:visible;">
-          <div>
-            <label class="form-label" style="font-size:12px; font-weight:600; color:#374151; margin-bottom:6px;">Minimum acceptable rate</label>
-            <div style="display:grid; grid-template-columns: 2fr 1fr 2fr; gap:8px;">
-              <input type="number" name="min_compensation" id="profile-rate" value="${d.min_compensation || 300}" min="0" step="5" style="padding:9px 10px; border:1px solid #cbd5e1; border-radius:8px; font-size:13px; outline:none;" placeholder="50" />
-              <select name="currency" style="padding:9px 8px; border:1px solid #cbd5e1; border-radius:8px; font-size:13px; background:#fff; outline:none;">
-                ${["USD", "SGD", "VND", "JPY"].map(c => `<option value="${c}" ${(p.currency || "USD") === c ? "selected" : ""}>${c}</option>`).join("")}
+        <!-- 1. LOCATION BLOCK -->
+        <div style="margin-bottom:24px;">
+          <h4 style="font-size:14px; font-weight:700; color:#374151; margin:0 0 12px; display:flex; align-items:center; gap:6px;">1. Location</h4>
+          
+          <div style="display:flex; gap:16px; margin-bottom:16px;">
+            <div style="flex:1;">
+              <label class="form-label" style="font-size:11px; font-weight:600; color:#6b7280; margin-bottom:4px;">Country</label>
+              <select name="country" id="profile-country" style="width:100%; padding:9px 10px; border:1px solid #cbd5e1; border-radius:8px; font-size:13px; background:#fff; outline:none;" ${!isAgeVerified ? 'disabled' : ''}>
+                ${countryOptions}
               </select>
-              <select name="compensation_unit" style="padding:9px 8px; border:1px solid #cbd5e1; border-radius:8px; font-size:13px; background:#fff; outline:none;">
-                ${["Per hour", "Per class", "Per gig", "Per month", "Other"].map(u => `<option value="${u}" ${(p.compensation_unit || "Per hour") === u ? "selected" : ""}>${u}</option>`).join("")}
+            </div>
+            <div style="flex:1;">
+              <label class="form-label" style="font-size:11px; font-weight:600; color:#6b7280; margin-bottom:4px;">City</label>
+              <select name="city" id="profile-city" style="width:100%; padding:9px 10px; border:1px solid #cbd5e1; border-radius:8px; font-size:13px; background:#fff; outline:none;" ${!isAgeVerified ? 'disabled' : ''}>
+                ${cityOptions}
               </select>
             </div>
           </div>
           
-          <div>
-            <label class="form-label" style="font-size:12px; font-weight:600; color:#374151; margin-bottom:8px;">Languages you speak</label>
-            <div style="position:relative; width:100%;" class="profile-multi-dropdown" id="profile-lang-dropdown">
-              <button type="button" id="profile-lang-trigger" style="width:100%; text-align:left; min-height:40px; background:#fff; border:1px solid #cbd5e1; border-radius:8px; padding:8px 12px; display:flex; justify-content:space-between; align-items:center; font-size:13px; color:#1e293b; cursor:pointer;" onclick="const d=document.getElementById('profile-lang-options'); const isOpen=d.style.display==='block'; document.querySelectorAll('.profile-dropdown-menu').forEach(x=>x.style.display='none'); d.style.display=isOpen?'none':'block';">
-                <span id="profile-lang-summary" style="display:flex; flex-wrap:wrap; gap:6px; align-items:center; flex:1; padding-right:8px;">
-                  ${curLangs.length ? curLangs.map(l => {
-                    const match = langs.find(x => x.toLowerCase() === l) || l;
-                    return `<span style="background:#eff6ff; color:#2563eb; border:1px solid #bfdbfe; font-size:11.5px; font-weight:600; padding:2px 8px; border-radius:6px; display:inline-flex; align-items:center; gap:4px;">${esc(match)}</span>`;
-                  }).join("") : `<span style="color:#94a3b8;">Select languages spoken...</span>`}
-                </span>
-                <i class="ph ph-caret-down" style="font-size:15px; color:#64748b;"></i>
-              </button>
-              <div id="profile-lang-options" class="profile-dropdown-menu" style="display:none; position:absolute; top:calc(100% + 4px); left:0; right:0; background:#fff; border:1px solid #cbd5e1; border-radius:8px; z-index:100; max-height:220px; overflow-y:auto; box-shadow:0 8px 20px rgba(0,0,0,0.08); padding:6px;">
-                ${langs.map(l => {
-                  const active = curLangs.includes(l.toLowerCase());
-                  return `<label style="display:flex; align-items:center; justify-content:space-between; padding:8px 10px; cursor:pointer; font-size:13px; color:#334155; border-radius:6px; margin:0; transition:background 0.15s ease;" onmouseover="this.style.background='#f8fafc'" onmouseout="this.style.background='transparent'">
-                    <span style="display:flex; align-items:center; gap:8px;">
-                      <input type="checkbox" name="languages" value="${esc(l)}" class="profile-lang-checkbox" ${active ? "checked" : ""} style="accent-color:#2563eb; width:15px; height:15px; cursor:pointer;" onchange="updateProfileLangSummary()">
-                      <span style="font-weight:${active ? '600' : '500'};">${esc(l)}</span>
-                    </span>
-                    ${active ? '<i class="ph-bold ph-check" style="color:#2563eb; font-size:13px;"></i>' : ''}
-                  </label>`;
-                }).join("")}
-              </div>
+          <label class="field" style="margin-bottom:8px;">
+            <span class="range-value" style="font-weight:600; font-size:12px; margin-bottom:6px; display:flex; justify-content:space-between; align-items:center;">
+              <span style="color:#1e293b;">Willing to travel locally up to</span>
+              <output id="radius-output" style="color:#059669; font-weight:700;">${d.travelRadiusKm || 25} km</output>
+            </span>
+            <input type="range" name="travelRadiusKm" min="5" max="100" value="${d.travelRadiusKm || 25}" data-output="radius-output" data-unit=" km" ${!isAgeVerified ? 'disabled' : ''}>
+          </label>
+          
+          <div style="margin-top:14px; display:flex; flex-direction:column; gap:10px;">
+            <label class="check-row" style="margin:0;"><input type="checkbox" name="work_abroad" ${d.work_abroad ? "checked" : ""} ${!isAgeVerified ? 'disabled' : ''}> <span style="font-size:13px; font-weight:500; color:#374151;">Open to international travel / work abroad</span></label>
+            <label class="check-row" style="margin:0;"><input type="checkbox" name="include_online" ${d.include_online ? "checked" : ""} ${!isAgeVerified ? 'disabled' : ''}> <span style="font-size:13px; font-weight:500; color:#374151;">Include online/remote projects</span></label>
+          </div>
+        </div>
+
+        <!-- 2. STYLES BLOCK -->
+        <div style="margin-bottom:24px;">
+          <h4 style="font-size:14px; font-weight:700; color:#374151; margin:0 0 10px; display:flex; align-items:center; gap:6px;">2. Dance Styles</h4>
+          ${renderChips("dance_styles", styles, curStyles)}
+        </div>
+
+        <!-- 3. ROLES BLOCK -->
+        <div style="margin-bottom:24px;">
+          <h4 style="font-size:14px; font-weight:700; color:#374151; margin:0 0 10px; display:flex; align-items:center; gap:6px;">3. Preferred Roles</h4>
+          ${renderChips("preferred_types", roles, curRoles)}
+        </div>
+
+        <!-- 4. EXPERIENCE BLOCK -->
+        <div style="margin-bottom:24px;">
+          <h4 style="font-size:14px; font-weight:700; color:#374151; margin:0 0 10px; display:flex; align-items:center; gap:6px;">4. Experience</h4>
+          <div style="display:flex; gap:16px;">
+            <div style="flex:2;">
+              <label class="form-label" style="font-size:11px; font-weight:600; color:#6b7280; margin-bottom:4px;">Skill Level</label>
+              <select name="skill_level" style="width:100%; padding:9px 10px; border:1px solid #cbd5e1; border-radius:8px; font-size:13px; background:#fff; outline:none;" ${!isAgeVerified ? 'disabled' : ''}>
+                ${["Beginner", "Intermediate", "Advanced"].map(s => `<option value="${s}" ${(d.skill_level || "Advanced") === s ? "selected" : ""}>${s}</option>`).join("")}
+              </select>
+            </div>
+            <div style="flex:1;">
+              <label class="form-label" style="font-size:11px; font-weight:600; color:#6b7280; margin-bottom:4px;">Years</label>
+              <input type="number" name="year_experience" value="${d.year_experience || 4}" min="0" max="60" style="width:100%; padding:9px 10px; border:1px solid #cbd5e1; border-radius:8px; font-size:13px; outline:none;" ${!isAgeVerified ? 'disabled' : ''} />
             </div>
           </div>
         </div>
-      </details>
 
-      <!-- 6. AGE VERIFICATION & DOB UPDATE BLOCK -->
-      <div style="margin-bottom:24px; padding:16px; background:#f8fafc; border:1px solid #e2e8f0; border-radius:12px;">
+        <!-- 5. ADVANCED BLOCK -->
+        <details class="pro-card" style="padding:0; margin:0 0 24px 0; overflow:visible; border:1px solid #cbd5e1; border-radius:12px; background:#fff;" open>
+          <summary style="font-weight:600; cursor:pointer; padding:15px 16px; color:#2563eb; background:#fff; display:flex; justify-content:space-between; align-items:center; border-radius:12px 12px 0 0;">
+            <span style="display:flex; align-items:center; gap:8px;">
+              <i class="ph ph-plus-circle" style="font-size:17px; color:#2563eb;"></i>
+              <span style="font-size:14px; font-weight:600;">Add rate & details for better matches</span>
+            </span>
+            <i class="ph ph-caret-down" style="font-size:16px; color:#2563eb;"></i>
+          </summary>
+          <div style="padding:16px; border-top:1px solid #f1f5f9; display:flex; flex-direction:column; gap:16px; overflow:visible;">
+            <div>
+              <label class="form-label" style="font-size:12px; font-weight:600; color:#374151; margin-bottom:6px;">Minimum acceptable rate</label>
+              <div style="display:grid; grid-template-columns: 2fr 1fr 2fr; gap:8px;">
+                <input type="number" name="min_compensation" id="profile-rate" value="${d.min_compensation || 300}" min="0" step="5" style="padding:9px 10px; border:1px solid #cbd5e1; border-radius:8px; font-size:13px; outline:none;" placeholder="50" ${!isAgeVerified ? 'disabled' : ''} />
+                <select name="currency" style="padding:9px 8px; border:1px solid #cbd5e1; border-radius:8px; font-size:13px; background:#fff; outline:none;" ${!isAgeVerified ? 'disabled' : ''}>
+                  ${["USD", "SGD", "VND", "JPY"].map(c => `<option value="${c}" ${(p.currency || "USD") === c ? "selected" : ""}>${c}</option>`).join("")}
+                </select>
+                <select name="compensation_unit" style="padding:9px 8px; border:1px solid #cbd5e1; border-radius:8px; font-size:13px; background:#fff; outline:none;" ${!isAgeVerified ? 'disabled' : ''}>
+                  ${["Per hour", "Per class", "Per gig", "Per month", "Other"].map(u => `<option value="${u}" ${(p.compensation_unit || "Per hour") === u ? "selected" : ""}>${u}</option>`).join("")}
+                </select>
+              </div>
+            </div>
+            
+            <div>
+              <label class="form-label" style="font-size:12px; font-weight:600; color:#374151; margin-bottom:8px;">Languages you speak</label>
+              <div style="position:relative; width:100%;" class="profile-multi-dropdown" id="profile-lang-dropdown">
+                <button type="button" id="profile-lang-trigger" style="width:100%; text-align:left; min-height:40px; background:#fff; border:1px solid #cbd5e1; border-radius:8px; padding:8px 12px; display:flex; justify-content:space-between; align-items:center; font-size:13px; color:#1e293b; cursor:${!isAgeVerified ? 'not-allowed' : 'pointer'};" ${!isAgeVerified ? 'disabled' : ''} onclick="const d=document.getElementById('profile-lang-options'); const isOpen=d.style.display==='block'; document.querySelectorAll('.profile-dropdown-menu').forEach(x=>x.style.display='none'); d.style.display=isOpen?'none':'block';">
+                  <span id="profile-lang-summary" style="display:flex; flex-wrap:wrap; gap:6px; align-items:center; flex:1; padding-right:8px;">
+                    ${curLangs.length ? curLangs.map(l => {
+                      const match = langs.find(x => x.toLowerCase() === l) || l;
+                      return `<span style="background:#eff6ff; color:#2563eb; border:1px solid #bfdbfe; font-size:11.5px; font-weight:600; padding:2px 8px; border-radius:6px; display:inline-flex; align-items:center; gap:4px;">${esc(match)}</span>`;
+                    }).join("") : `<span style="color:#94a3b8;">Select languages spoken...</span>`}
+                  </span>
+                  <i class="ph ph-caret-down" style="font-size:15px; color:#64748b;"></i>
+                </button>
+                <div id="profile-lang-options" class="profile-dropdown-menu" style="display:none; position:absolute; top:calc(100% + 4px); left:0; right:0; background:#fff; border:1px solid #cbd5e1; border-radius:8px; z-index:100; max-height:220px; overflow-y:auto; box-shadow:0 8px 20px rgba(0,0,0,0.08); padding:6px;">
+                  ${langs.map(l => {
+                    const active = curLangs.includes(l.toLowerCase());
+                    return `<label style="display:flex; align-items:center; justify-content:space-between; padding:8px 10px; cursor:pointer; font-size:13px; color:#334155; border-radius:6px; margin:0; transition:background 0.15s ease;" onmouseover="this.style.background='#f8fafc'" onmouseout="this.style.background='transparent'">
+                      <span style="display:flex; align-items:center; gap:8px;">
+                        <input type="checkbox" name="languages" value="${esc(l)}" class="profile-lang-checkbox" ${active ? "checked" : ""} style="accent-color:#2563eb; width:15px; height:15px; cursor:pointer;" onchange="updateProfileLangSummary()">
+                        <span style="font-weight:${active ? '600' : '500'};">${esc(l)}</span>
+                      </span>
+                      ${active ? '<i class="ph-bold ph-check" style="color:#2563eb; font-size:13px;"></i>' : ''}
+                    </label>`;
+                  }).join("")}
+                </div>
+              </div>
+            </div>
+          </div>
+        </details>
+      </div>
+
+      <!-- 6. AGE VERIFICATION & DOB UPDATE BLOCK (Always active so user can re-verify age) -->
+      <div style="margin-bottom:24px; padding:16px; background:#ffffff; border:2px solid ${!isAgeVerified ? '#fca5a5' : '#e2e8f0'}; border-radius:12px; box-shadow:${!isAgeVerified ? '0 4px 12px rgba(239,68,68,0.08)' : 'none'};">
         <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
           <h4 style="font-size:14px; font-weight:700; color:#374151; margin:0; display:flex; align-items:center; gap:6px;">
-            <i class="ph ph-shield-check" style="font-size:17px; color:#059669;"></i> Age & Verification
+            <i class="ph ph-shield-check" style="font-size:17px; color:${!isAgeVerified ? '#dc2626' : '#059669'};"></i> Age Verification
           </h4>
           <span id="profile-badge-age-bot">
             ${isAgeVerified ? `
@@ -3218,24 +3236,26 @@ function profileForm() {
             `}
           </span>
         </div>
-        <p style="font-size:12px; color:#64748b; margin:0 0 12px 0; line-height:1.4;">
-          Your date of birth confirms eligibility to apply for dance opportunities. You can review or update it below.
-        </p>
-        <div style="margin-bottom:12px;">
-          <label class="form-label" style="font-size:11px; font-weight:600; color:#475569; margin-bottom:4px; display:block;">Date of Birth</label>
-          <input type="date" name="dob" id="profile-dob" value="${esc(ext().age?.dob || '')}" oninput="checkProfileAgeLive(this)" onchange="checkProfileAgeLive(this)" style="width:100%; padding:9px 12px; border:1px solid ${isAgeVerified ? '#cbd5e1' : '#ef4444'}; border-radius:8px; font-size:13px; background:${isAgeVerified ? '#fff' : '#fef2f2'}; outline:none; transition:all 0.15s ease;" />
-        </div>
 
-        <!-- Inline Under-18 Warning Banner -->
-        <div id="profile-age-warning" style="display:${isAgeVerified ? 'none' : 'flex'}; align-items:flex-start; gap:8px; background:#fef2f2; border:1px solid #fecaca; border-radius:8px; padding:10px 12px; margin-bottom:12px; font-size:12px; color:#b91c1c; line-height:1.4;">
-          <i class="ph-bold ph-warning" style="font-size:16px; color:#dc2626; margin-top:1px; flex-shrink:0;"></i>
+        <!-- Inline Under-18 Banner explaining why sections are locked -->
+        <div id="profile-age-warning" style="display:${isAgeVerified ? 'none' : 'flex'}; align-items:flex-start; gap:8px; background:#fef2f2; border:1px solid #fecaca; border-radius:8px; padding:12px; margin:10px 0 14px 0; font-size:12.5px; color:#b91c1c; line-height:1.4;">
+          <i class="ph-bold ph-lock-key" style="font-size:18px; color:#dc2626; margin-top:1px; flex-shrink:0;"></i>
           <div>
-            <strong>Under 18 restricted:</strong> You must be at least 18 years old to access and save profile for job opportunities on Hammer.
+            <strong style="display:block; font-size:13px; margin-bottom:2px;">Job Preferences Locked (Under 18)</strong>
+            You must verify that you are at least 18 years old to unlock and save preferences for casting calls. Update your Date of Birth below to verify.
           </div>
         </div>
 
+        <p style="font-size:12px; color:#64748b; margin:0 0 12px 0; line-height:1.4;">
+          Your date of birth confirms eligibility to apply for dance opportunities. Update your date of birth below to verify.
+        </p>
+        <div style="margin-bottom:12px;">
+          <label class="form-label" style="font-size:11px; font-weight:600; color:#475569; margin-bottom:4px; display:block;">Date of Birth</label>
+          <input type="date" name="dob" id="profile-dob" value="${esc(ext().age?.dob || '')}" oninput="checkProfileAgeLive(this)" onchange="checkProfileAgeLive(this)" style="width:100%; padding:10px 12px; border:1.5px solid ${isAgeVerified ? '#cbd5e1' : '#ef4444'}; border-radius:8px; font-size:13.5px; background:${isAgeVerified ? '#fff' : '#fef2f2'}; outline:none; transition:all 0.15s ease;" />
+        </div>
+
         <!-- Disclaimer & Agreement Confirmation Row -->
-        <div style="display:flex; align-items:flex-start; gap:10px; background:#fff; padding:10px 12px; border-radius:8px; border:1px solid #e2e8f0;">
+        <div style="display:flex; align-items:flex-start; gap:10px; background:#f8fafc; padding:10px 12px; border-radius:8px; border:1px solid #e2e8f0;">
           <input id="profile-agreement" name="agreement" type="checkbox" checked style="width:16px; height:16px; accent-color:#2563eb; cursor:pointer; margin-top:2px;">
           <div style="font-size:12.5px; line-height:1.4; color:#374151;">
             <label for="profile-agreement" style="cursor:pointer; font-weight:500;">
@@ -3249,7 +3269,9 @@ function profileForm() {
       </div>
 
       <div class="error-text" id="profile-error" role="alert"></div>
-      <button id="profile-save-btn" class="primary wide-button" type="submit" ${isAgeVerified ? '' : 'disabled'} style="padding:14px; font-size:15px; font-weight:700; border-radius:8px; background:#0f172a; color:#fff; width:100%; cursor:${isAgeVerified ? 'pointer' : 'not-allowed'}; opacity:${isAgeVerified ? '1' : '0.5'}; box-shadow:0 2px 6px rgba(0,0,0,0.15); transition:opacity 0.2s ease;">Save & View Jobs</button>
+      <button id="profile-save-btn" class="primary wide-button" type="submit" ${isAgeVerified ? '' : 'disabled'} style="padding:14px; font-size:15px; font-weight:700; border-radius:8px; background:#0f172a; color:#fff; width:100%; cursor:${isAgeVerified ? 'pointer' : 'not-allowed'}; opacity:${isAgeVerified ? '1' : '0.5'}; box-shadow:0 2px 6px rgba(0,0,0,0.15); transition:all 0.2s ease;">
+        ${isAgeVerified ? 'Save & View Jobs' : 'Verify Age 18+ to Save'}
+      </button>
     </form>
   </div>`;
 }
