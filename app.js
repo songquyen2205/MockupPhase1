@@ -2471,6 +2471,29 @@ function filteredJobs() {
     })
     .sort((a, b) => score(b).value - score(a).value);
 }
+
+const progressConfig = {
+    pending: { label: "Applied", step: 1, color: "#d97706", bg: "#fef3c7" },
+    interview: { label: "Interview", step: 2, color: "#2563eb", bg: "#dbeafe" },
+    booked: { label: "Confirmed", step: 3, color: "#059669", bg: "#d1fae5" },
+    rejected: { label: "Declined", step: 0, color: "#dc2626", bg: "#fee2e2" },
+};
+
+function renderStatusPill(jobId, curProg) {
+    const cfg = progressConfig[curProg] || progressConfig.pending;
+    return `
+      <div style="position:relative; display:inline-flex; align-items:center;" onclick="event.stopPropagation()">
+        <select data-action="update-job-progress" data-job="${jobId}" style="appearance:none; -webkit-appearance:none; background:${cfg.bg}; color:${cfg.color}; border:1px solid ${cfg.color}40; border-radius:14px; padding:3px 22px 3px 10px; font-size:11px; font-weight:700; cursor:pointer; outline:none; transition:all 0.15s; font-family:inherit;">
+          <option value="pending" ${curProg === "pending" ? "selected" : ""}>Applied</option>
+          <option value="interview" ${curProg === "interview" ? "selected" : ""}>Interview</option>
+          <option value="booked" ${curProg === "booked" ? "selected" : ""}>Confirmed</option>
+          <option value="rejected" ${curProg === "rejected" ? "selected" : ""}>Declined</option>
+        </select>
+        <i class="ph-bold ph-caret-down" style="position:absolute; right:7px; pointer-events:none; font-size:10px; color:${cfg.color};"></i>
+      </div>
+    `;
+}
+
 function jobCard(o, inHub = false) {
     const h = ext().history[o.id] || { saved: false, drafts: {}, applied_at: null }, open = available(o);
     const s = score(o);
@@ -2491,18 +2514,11 @@ function jobCard(o, inHub = false) {
     const hasDraft = Object.keys(h.drafts || {}).length > 0;
     const isSaved = !!h.saved;
     const progress = h.progress || "pending";
-
-    const progressConfig = {
-        pending: { label: "Applied", step: 1, color: "#d97706", bg: "#fef3c7" },
-        interview: { label: "Interview", step: 2, color: "#2563eb", bg: "#dbeafe" },
-        booked: { label: "Confirmed", step: 3, color: "#059669", bg: "#d1fae5" },
-        rejected: { label: "Declined", step: 0, color: "#dc2626", bg: "#fee2e2" },
-    };
     const currentProgress = progressConfig[progress] || progressConfig.pending;
 
     let hubBadge = "";
     if (isApplied) {
-        hubBadge = `<span style="background:#ecfdf5; color:#059669; border:1px solid #a7f3d0; font-size:10.5px; font-weight:700; padding:2px 8px; border-radius:12px; display:inline-flex; align-items:center; gap:4px;">Applied</span>`;
+        hubBadge = renderStatusPill(o.id, progress);
     } else if (hasDraft) {
         hubBadge = `<span style="background:#fffbeb; color:#d97706; border:1px solid #fde68a; font-size:10.5px; font-weight:700; padding:2px 8px; border-radius:12px; display:inline-flex; align-items:center; gap:4px;">Draft</span>`;
     }
@@ -2549,55 +2565,8 @@ function jobCard(o, inHub = false) {
     const interestedCount = (o.id * 7 % 30) + 3;
     const interestedPill = `<span style="font-size: 11px; color: #4b5563; font-weight: 600; display: flex; align-items: center; gap: 4px; background: #f3f4f6; padding: 4px 8px; border-radius: 4px;">👥 ${interestedCount} interested</span>`;
 
-    // 6. In-Hub Specific: Application Progress Timeline Stepper (ONLY shown if job is Applied)
+    // 6. In-Hub Specific: Application Progress is handled cleanly via top status pill dropdown
     let hubProgressSection = "";
-    if (inHub && isApplied) {
-        const curStep = currentProgress.step;
-        const isRejected = progress === "rejected";
-
-        const stepPill = (num, label, isPassed, isCurrent, customColor) => {
-            const activeColor = customColor || currentProgress.color;
-            const barBg = isPassed ? (isCurrent ? activeColor : '#0f172a') : '#e2e8f0';
-            const textColor = isCurrent ? activeColor : (isPassed ? '#0f172a' : '#94a3b8');
-            const weight = isCurrent ? '800' : (isPassed ? '700' : '500');
-            return `
-            <div style="flex:1; text-align:center;">
-                <div style="height:4px; border-radius:2px; background:${barBg}; margin-bottom:5px;"></div>
-                <div style="font-size:10px; font-weight:${weight}; color:${textColor}; text-transform:uppercase; letter-spacing:0.3px;">${label}</div>
-            </div>`;
-        };
-
-        const stepperHtml = isRejected
-            ? `
-                <div style="display:flex; gap:6px; align-items:center; margin-bottom:10px;">
-                    ${stepPill(1, "1. Applied", true, false)}
-                    ${stepPill(2, "✕ Declined", true, true, "#dc2626")}
-                    ${stepPill(3, "3. Confirmed", false, false)}
-                </div>
-            `
-            : `
-                <div style="display:flex; gap:6px; align-items:center; margin-bottom:10px;">
-                    ${stepPill(1, "1. Applied", curStep >= 1, curStep === 1)}
-                    ${stepPill(2, "2. Interview", curStep >= 2, curStep === 2)}
-                    ${stepPill(3, "3. Confirmed", curStep >= 3, curStep === 3)}
-                </div>
-            `;
-
-        hubProgressSection = `
-            <div style="background:#f8fafc; border:1px solid #e2e8f0; border-radius:8px; padding:10px 12px; margin:10px 0 6px 0;" onclick="event.stopPropagation()">
-                <div style="margin-bottom:8px;">
-                    <span style="font-size:10px; font-weight:800; color:#475569; letter-spacing:0.5px;">APPLICATION PROGRESS</span>
-                </div>
-                ${stepperHtml}
-                <select data-action="update-job-progress" data-job="${o.id}" style="width:100%; padding:7px 10px; background:#ffffff; border:1px solid #cbd5e1; border-radius:6px; font-size:12.5px; font-weight:600; color:#1e293b; outline:none; cursor:pointer;">
-                    <option value="pending" ${progress === "pending" ? "selected" : ""}>Applied</option>
-                    <option value="interview" ${progress === "interview" ? "selected" : ""}>Interview</option>
-                    <option value="booked" ${progress === "booked" ? "selected" : ""}>Confirmed</option>
-                    <option value="rejected" ${progress === "rejected" ? "selected" : ""}>Declined</option>
-                </select>
-            </div>
-        `;
-    }
 
     let hubExpiredNotice = "";
     if (inHub && !open) {
@@ -2680,12 +2649,6 @@ function jobCard(o, inHub = false) {
     const open = available(o);
     const isApplied = !!h.applied_at;
     const progress = h.progress || "pending";
-    const progressConfig = {
-        pending: { label: "Pending Response", step: 1, color: "#d97706", bg: "#fef3c7" },
-        interview: { label: "Interview / Casting", step: 2, color: "#2563eb", bg: "#dbeafe" },
-        booked: { label: "Booked!", step: 3, color: "#059669", bg: "#d1fae5" },
-        rejected: { label: "Declined", step: 0, color: "#dc2626", bg: "#fee2e2" },
-    };
     const currentProgress = progressConfig[progress] || progressConfig.pending;
       
     const ot = (o.opportunity_type || "").toLowerCase();
@@ -2768,58 +2731,17 @@ function jobCard(o, inHub = false) {
           <div style="height: 8px; background: #f8fafc; border-top: 1px solid #f1f5f9; border-bottom: 1px solid #f1f5f9; width: 100%;"></div>
           ` : ""}
 
-        <!-- Application Progress Section (Within Job Detail - shown if applied) -->
+        <!-- Application Status Section (Within Job Detail - shown if applied) -->
         ${(!ui.guest && isApplied) ? `
-        <div style="padding: 20px 20px 10px 20px;">
-            <div style="background: #f8fafc; border: 1.5px solid #e2e8f0; border-radius: 12px; padding: 16px; box-shadow: 0 1px 3px rgba(0,0,0,0.02);">
-                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom: 12px;">
-                    <div>
-                        <div style="font-size: 11px; font-weight: 800; color: #475569; letter-spacing: 0.5px; text-transform: uppercase;">APPLICATION PROGRESS</div>
-                        <div style="font-size: 12px; color: #64748b; margin-top: 2px;">Submitted: <strong>${stamp(h.applied_at)}</strong></div>
-                    </div>
+        <div style="padding: 16px 20px 8px 20px;">
+            <div style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 10px; padding: 12px 16px; display: flex; justify-content: space-between; align-items: center; box-shadow: 0 1px 2px rgba(0,0,0,0.03);">
+                <div>
+                    <div style="font-size: 10.5px; font-weight: 800; color: #64748b; letter-spacing: 0.5px; text-transform: uppercase;">APPLICATION STATUS</div>
+                    <div style="font-size: 12px; color: #475569; margin-top: 2px;">Submitted: <strong>${stamp(h.applied_at)}</strong></div>
                 </div>
-
-                ${progress === 'rejected'
-                    ? `
-                        <div style="display:flex; gap:8px; align-items:center; margin-bottom:14px;">
-                            <div style="flex:1; text-align:center;">
-                                 <div style="height:4px; border-radius:2px; background:#0f172a; margin-bottom:5px;"></div>
-                                 <div style="font-size:10.5px; font-weight:700; color:#0f172a; text-transform:uppercase;">1. Applied</div>
-                            </div>
-                            <div style="flex:1; text-align:center;">
-                                 <div style="height:4px; border-radius:2px; background:#dc2626; margin-bottom:5px;"></div>
-                                 <div style="font-size:10.5px; font-weight:800; color:#dc2626; text-transform:uppercase;">✕ Declined</div>
-                            </div>
-                            <div style="flex:1; text-align:center;">
-                                 <div style="height:4px; border-radius:2px; background:#e2e8f0; margin-bottom:5px;"></div>
-                                 <div style="font-size:10.5px; font-weight:500; color:#94a3b8; text-transform:uppercase;">3. Confirmed</div>
-                            </div>
-                        </div>
-                    `
-                    : `
-                        <div style="display:flex; gap:8px; align-items:center; margin-bottom:14px;">
-                            <div style="flex:1; text-align:center;">
-                                <div style="height:4px; border-radius:2px; background:${currentProgress.step >= 1 ? (currentProgress.step === 1 ? currentProgress.color : '#0f172a') : '#e2e8f0'}; margin-bottom:5px;"></div>
-                                <div style="font-size:10.5px; font-weight:${currentProgress.step === 1 ? '800' : (currentProgress.step >= 1 ? '700' : '500')}; color:${currentProgress.step === 1 ? currentProgress.color : (currentProgress.step >= 1 ? '#0f172a' : '#94a3b8')}; text-transform:uppercase;">1. Applied</div>
-                            </div>
-                            <div style="flex:1; text-align:center;">
-                                <div style="height:4px; border-radius:2px; background:${currentProgress.step >= 2 ? (currentProgress.step === 2 ? currentProgress.color : '#0f172a') : '#e2e8f0'}; margin-bottom:5px;"></div>
-                                <div style="font-size:10.5px; font-weight:${currentProgress.step === 2 ? '800' : (currentProgress.step >= 2 ? '700' : '500')}; color:${currentProgress.step === 2 ? currentProgress.color : (currentProgress.step >= 2 ? '#0f172a' : '#94a3b8')}; text-transform:uppercase;">2. Interview</div>
-                            </div>
-                            <div style="flex:1; text-align:center;">
-                                <div style="height:4px; border-radius:2px; background:${currentProgress.step >= 3 ? (currentProgress.step === 3 ? currentProgress.color : '#0f172a') : '#e2e8f0'}; margin-bottom:5px;"></div>
-                                <div style="font-size:10.5px; font-weight:${currentProgress.step === 3 ? '800' : (currentProgress.step >= 3 ? '700' : '500')}; color:${currentProgress.step === 3 ? currentProgress.color : (currentProgress.step >= 2 ? '#0f172a' : '#94a3b8')}; text-transform:uppercase;">3. Confirmed</div>
-                            </div>
-                        </div>
-                    `
-                }
-
-                <select data-action="update-job-progress" data-job="${o.id}" style="width: 100%; padding: 10px 12px; background: #ffffff; border: 1.5px solid #cbd5e1; border-radius: 8px; font-size: 13.5px; font-weight: 600; color: #1e293b; outline: none; cursor: pointer;">
-                    <option value="pending" ${progress === "pending" ? "selected" : ""}>Applied</option>
-                    <option value="interview" ${progress === "interview" ? "selected" : ""}>Interview</option>
-                    <option value="booked" ${progress === "booked" ? "selected" : ""}>Confirmed</option>
-                    <option value="rejected" ${progress === "rejected" ? "selected" : ""}>Declined</option>
-                </select>
+                <div>
+                    ${renderStatusPill(o.id, progress)}
+                </div>
             </div>
         </div>
         ` : ""}
