@@ -2922,6 +2922,17 @@ function profileForm() {
   const curRoles = (d.preferred_types || "Performance,Teaching").split(",").map(r => r.trim().toLowerCase());
   const curLangs = (d.languages || "English").split(",").map(l => l.trim().toLowerCase());
 
+  window.updateProfileLangSummary = function() {
+    const checked = Array.from(document.querySelectorAll('.profile-lang-checkbox:checked')).map(cb => cb.value);
+    const sumEl = document.getElementById('profile-lang-summary');
+    if (!sumEl) return;
+    if (checked.length === 0) {
+      sumEl.innerHTML = '<span style="color:#94a3b8;">Select languages spoken...</span>';
+    } else {
+      sumEl.innerHTML = checked.map(l => `<span style="background:#eff6ff; color:#2563eb; border:1px solid #bfdbfe; font-size:11.5px; font-weight:600; padding:2px 8px; border-radius:6px; display:inline-flex; align-items:center; gap:4px;">${esc(l)}</span>`).join("");
+    }
+  };
+
   const renderChips = (name, list, curArr) => {
     return `<div class="chip-group" style="margin-top:0; display:flex; flex-wrap:wrap; gap:8px;">${list.map(item => {
       const active = curArr.includes(item.toLowerCase());
@@ -3050,7 +3061,29 @@ function profileForm() {
           
           <div>
             <label class="form-label" style="font-size:12px; font-weight:600; color:#374151; margin-bottom:8px;">Languages you speak</label>
-            ${renderChips("languages", langs, curLangs)}
+            <div style="position:relative; width:100%;" class="profile-multi-dropdown" id="profile-lang-dropdown">
+              <button type="button" id="profile-lang-trigger" style="width:100%; text-align:left; min-height:40px; background:#fff; border:1px solid #cbd5e1; border-radius:8px; padding:8px 12px; display:flex; justify-content:space-between; align-items:center; font-size:13px; color:#1e293b; cursor:pointer;" onclick="const d=document.getElementById('profile-lang-options'); const isOpen=d.style.display==='block'; document.querySelectorAll('.profile-dropdown-menu').forEach(x=>x.style.display='none'); d.style.display=isOpen?'none':'block';">
+                <span id="profile-lang-summary" style="display:flex; flex-wrap:wrap; gap:6px; align-items:center; flex:1; padding-right:8px;">
+                  ${curLangs.length ? curLangs.map(l => {
+                    const match = langs.find(x => x.toLowerCase() === l) || l;
+                    return `<span style="background:#eff6ff; color:#2563eb; border:1px solid #bfdbfe; font-size:11.5px; font-weight:600; padding:2px 8px; border-radius:6px; display:inline-flex; align-items:center; gap:4px;">${esc(match)}</span>`;
+                  }).join("") : `<span style="color:#94a3b8;">Select languages spoken...</span>`}
+                </span>
+                <i class="ph ph-caret-down" style="font-size:15px; color:#64748b;"></i>
+              </button>
+              <div id="profile-lang-options" class="profile-dropdown-menu" style="display:none; position:absolute; top:calc(100% + 4px); left:0; right:0; background:#fff; border:1px solid #cbd5e1; border-radius:8px; z-index:100; max-height:220px; overflow-y:auto; box-shadow:0 8px 20px rgba(0,0,0,0.08); padding:6px;">
+                ${langs.map(l => {
+                  const active = curLangs.includes(l.toLowerCase());
+                  return `<label style="display:flex; align-items:center; justify-content:space-between; padding:8px 10px; cursor:pointer; font-size:13px; color:#334155; border-radius:6px; margin:0; transition:background 0.15s ease;" onmouseover="this.style.background='#f8fafc'" onmouseout="this.style.background='transparent'">
+                    <span style="display:flex; align-items:center; gap:8px;">
+                      <input type="checkbox" name="languages" value="${esc(l)}" class="profile-lang-checkbox" ${active ? "checked" : ""} style="accent-color:#2563eb; width:15px; height:15px; cursor:pointer;" onchange="updateProfileLangSummary()">
+                      <span style="font-weight:${active ? '600' : '500'};">${esc(l)}</span>
+                    </span>
+                    ${active ? '<i class="ph-bold ph-check" style="color:#2563eb; font-size:13px;"></i>' : ''}
+                  </label>`;
+                }).join("")}
+              </div>
+            </div>
           </div>
         </div>
       </details>
