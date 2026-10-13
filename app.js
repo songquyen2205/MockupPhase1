@@ -4458,17 +4458,13 @@ document.addEventListener("click", async (event) => {
       if (a === "submit-age-gate-next") {
         ui.mobile = "profile";
         render();
-        if (isUnder18) {
-          toast("⚠️ Note: You are under 18. Profile will be in Junior view mode.");
-        } else {
+        if (!isUnder18) {
           toast("18+ verified! Set up your job preferences.");
         }
       } else {
         ui.mobile = "feed";
         render();
-        if (isUnder18) {
-          toast("⚠️ Under 18 view mode: Job applications are restricted.");
-        } else {
+        if (!isUnder18) {
           toast("18+ verified! Welcome to Job Agent.");
         }
       }
