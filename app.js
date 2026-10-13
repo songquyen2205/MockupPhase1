@@ -2252,9 +2252,9 @@ function mobileNav() {
     };
 
     let appliedLabel = `Applied (${counts.applied})`;
-    if (appliedStatus === "pending") appliedLabel = `Pending (${statusCounts.pending})`;
+    if (appliedStatus === "pending") appliedLabel = `Applied (${statusCounts.pending})`;
     else if (appliedStatus === "interview") appliedLabel = `Interview (${statusCounts.interview})`;
-    else if (appliedStatus === "booked") appliedLabel = `Booked (${statusCounts.booked})`;
+    else if (appliedStatus === "booked") appliedLabel = `Confirmed (${statusCounts.booked})`;
     else if (appliedStatus === "rejected") appliedLabel = `Declined (${statusCounts.rejected})`;
 
     below = `
@@ -2265,9 +2265,9 @@ function mobileNav() {
         <div style="position:relative; display:inline-flex; align-items:center;">
           <select data-action="filter-hub-applied-status" style="appearance:none; -webkit-appearance:none; background:#ffffff; color:#0f172a; border:${appliedPillBorder}; border-radius:20px; padding:6px 28px 6px 14px; font-size:12.5px; font-weight:700; white-space:nowrap; cursor:pointer; transition:all 0.15s; box-shadow:0 1px 2px rgba(0,0,0,0.03); outline:none;">
             <option value="all" style="background:#ffffff; color:#0f172a;" ${appliedStatus === "all" ? "selected" : ""}>All Status (${counts.applied})</option>
-            <option value="pending" style="background:#ffffff; color:#0f172a;" ${appliedStatus === "pending" ? "selected" : ""}>Pending Response (${statusCounts.pending})</option>
-            <option value="interview" style="background:#ffffff; color:#0f172a;" ${appliedStatus === "interview" ? "selected" : ""}>Interview / Casting (${statusCounts.interview})</option>
-            <option value="booked" style="background:#ffffff; color:#0f172a;" ${appliedStatus === "booked" ? "selected" : ""}>Booked / Confirmed (${statusCounts.booked})</option>
+            <option value="pending" style="background:#ffffff; color:#0f172a;" ${appliedStatus === "pending" ? "selected" : ""}>Applied (${statusCounts.pending})</option>
+            <option value="interview" style="background:#ffffff; color:#0f172a;" ${appliedStatus === "interview" ? "selected" : ""}>Interview (${statusCounts.interview})</option>
+            <option value="booked" style="background:#ffffff; color:#0f172a;" ${appliedStatus === "booked" ? "selected" : ""}>Confirmed (${statusCounts.booked})</option>
             <option value="rejected" style="background:#ffffff; color:#0f172a;" ${appliedStatus === "rejected" ? "selected" : ""}>Declined (${statusCounts.rejected})</option>
           </select>
           <span style="position:absolute; left:14px; pointer-events:none; font-size:12.5px; font-weight:700; color:#0f172a; white-space:nowrap; display:none;">${appliedLabel}</span>
@@ -2459,9 +2459,9 @@ function jobCard(o, inHub = false) {
     const progress = h.progress || "pending";
 
     const progressConfig = {
-        pending: { label: "Pending Response", step: 1, color: "#d97706", bg: "#fef3c7" },
-        interview: { label: "Interview / Casting", step: 2, color: "#2563eb", bg: "#dbeafe" },
-        booked: { label: "Booked!", step: 3, color: "#059669", bg: "#d1fae5" },
+        pending: { label: "Applied", step: 1, color: "#d97706", bg: "#fef3c7" },
+        interview: { label: "Interview", step: 2, color: "#2563eb", bg: "#dbeafe" },
+        booked: { label: "Confirmed", step: 3, color: "#059669", bg: "#d1fae5" },
         rejected: { label: "Declined", step: 0, color: "#dc2626", bg: "#fee2e2" },
     };
     const currentProgress = progressConfig[progress] || progressConfig.pending;
@@ -2537,14 +2537,14 @@ function jobCard(o, inHub = false) {
                 <div style="display:flex; gap:6px; align-items:center; margin-bottom:10px;">
                     ${stepPill(1, "1. Applied", true, false)}
                     ${stepPill(2, "✕ Declined", true, true, "#dc2626")}
-                    ${stepPill(3, "3. Booked", false, false)}
+                    ${stepPill(3, "3. Confirmed", false, false)}
                 </div>
             `
             : `
                 <div style="display:flex; gap:6px; align-items:center; margin-bottom:10px;">
                     ${stepPill(1, "1. Applied", curStep >= 1, curStep === 1)}
                     ${stepPill(2, "2. Interview", curStep >= 2, curStep === 2)}
-                    ${stepPill(3, "3. Booked", curStep >= 3, curStep === 3)}
+                    ${stepPill(3, "3. Confirmed", curStep >= 3, curStep === 3)}
                 </div>
             `;
 
@@ -2555,9 +2555,9 @@ function jobCard(o, inHub = false) {
                 </div>
                 ${stepperHtml}
                 <select data-action="update-job-progress" data-job="${o.id}" style="width:100%; padding:7px 10px; background:#ffffff; border:1px solid #cbd5e1; border-radius:6px; font-size:12.5px; font-weight:600; color:#1e293b; outline:none; cursor:pointer;">
-                    <option value="pending" ${progress === "pending" ? "selected" : ""}>Applied (Pending Response)</option>
-                    <option value="interview" ${progress === "interview" ? "selected" : ""}>Interview / Casting</option>
-                    <option value="booked" ${progress === "booked" ? "selected" : ""}>Booked / Confirmed</option>
+                    <option value="pending" ${progress === "pending" ? "selected" : ""}>Applied</option>
+                    <option value="interview" ${progress === "interview" ? "selected" : ""}>Interview</option>
+                    <option value="booked" ${progress === "booked" ? "selected" : ""}>Confirmed</option>
                     <option value="rejected" ${progress === "rejected" ? "selected" : ""}>Declined</option>
                 </select>
             </div>
@@ -2748,16 +2748,16 @@ function jobCard(o, inHub = false) {
                     ? `
                         <div style="display:flex; gap:8px; align-items:center; margin-bottom:14px;">
                             <div style="flex:1; text-align:center;">
-                                <div style="height:4px; border-radius:2px; background:#0f172a; margin-bottom:5px;"></div>
-                                <div style="font-size:10.5px; font-weight:700; color:#0f172a; text-transform:uppercase;">1. Applied</div>
+                                 <div style="height:4px; border-radius:2px; background:#0f172a; margin-bottom:5px;"></div>
+                                 <div style="font-size:10.5px; font-weight:700; color:#0f172a; text-transform:uppercase;">1. Applied</div>
                             </div>
                             <div style="flex:1; text-align:center;">
-                                <div style="height:4px; border-radius:2px; background:#dc2626; margin-bottom:5px;"></div>
-                                <div style="font-size:10.5px; font-weight:800; color:#dc2626; text-transform:uppercase;">✕ Declined</div>
+                                 <div style="height:4px; border-radius:2px; background:#dc2626; margin-bottom:5px;"></div>
+                                 <div style="font-size:10.5px; font-weight:800; color:#dc2626; text-transform:uppercase;">✕ Declined</div>
                             </div>
                             <div style="flex:1; text-align:center;">
-                                <div style="height:4px; border-radius:2px; background:#e2e8f0; margin-bottom:5px;"></div>
-                                <div style="font-size:10.5px; font-weight:500; color:#94a3b8; text-transform:uppercase;">3. Booked</div>
+                                 <div style="height:4px; border-radius:2px; background:#e2e8f0; margin-bottom:5px;"></div>
+                                 <div style="font-size:10.5px; font-weight:500; color:#94a3b8; text-transform:uppercase;">3. Confirmed</div>
                             </div>
                         </div>
                     `
@@ -2773,16 +2773,16 @@ function jobCard(o, inHub = false) {
                             </div>
                             <div style="flex:1; text-align:center;">
                                 <div style="height:4px; border-radius:2px; background:${currentProgress.step >= 3 ? (currentProgress.step === 3 ? currentProgress.color : '#0f172a') : '#e2e8f0'}; margin-bottom:5px;"></div>
-                                <div style="font-size:10.5px; font-weight:${currentProgress.step === 3 ? '800' : (currentProgress.step >= 3 ? '700' : '500')}; color:${currentProgress.step === 3 ? currentProgress.color : (currentProgress.step >= 2 ? '#0f172a' : '#94a3b8')}; text-transform:uppercase;">3. Booked</div>
+                                <div style="font-size:10.5px; font-weight:${currentProgress.step === 3 ? '800' : (currentProgress.step >= 3 ? '700' : '500')}; color:${currentProgress.step === 3 ? currentProgress.color : (currentProgress.step >= 2 ? '#0f172a' : '#94a3b8')}; text-transform:uppercase;">3. Confirmed</div>
                             </div>
                         </div>
                     `
                 }
 
                 <select data-action="update-job-progress" data-job="${o.id}" style="width: 100%; padding: 10px 12px; background: #ffffff; border: 1.5px solid #cbd5e1; border-radius: 8px; font-size: 13.5px; font-weight: 600; color: #1e293b; outline: none; cursor: pointer;">
-                    <option value="pending" ${progress === "pending" ? "selected" : ""}>Applied (Pending Response)</option>
-                    <option value="interview" ${progress === "interview" ? "selected" : ""}>Interview / Casting</option>
-                    <option value="booked" ${progress === "booked" ? "selected" : ""}>Booked / Confirmed</option>
+                    <option value="pending" ${progress === "pending" ? "selected" : ""}>Applied</option>
+                    <option value="interview" ${progress === "interview" ? "selected" : ""}>Interview</option>
+                    <option value="booked" ${progress === "booked" ? "selected" : ""}>Confirmed</option>
                     <option value="rejected" ${progress === "rejected" ? "selected" : ""}>Declined</option>
                 </select>
             </div>
@@ -4688,13 +4688,13 @@ document.addEventListener("change", (event) => {
     persist();
     render();
     if (val === "booked") {
-      toast("🎉 Congratulations on getting Booked! Wishing you a fantastic gig!");
+      toast("🎉 Congratulations on getting Confirmed! Wishing you a fantastic gig!");
     } else if (val === "interview") {
       toast("👏 Great news! Interview / Audition scheduled. Best of luck!");
     } else if (val === "rejected") {
       toast("🤝 Application declined. Don't worry, new auditions & gigs are added daily!");
     } else {
-      toast("Application status updated to Pending Response.");
+      toast("Application status updated to Applied.");
     }
     return;
   }
