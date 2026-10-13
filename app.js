@@ -2505,8 +2505,6 @@ function jobCard(o, inHub = false) {
         hubBadge = `<span style="background:#ecfdf5; color:#059669; border:1px solid #a7f3d0; font-size:10.5px; font-weight:700; padding:2px 8px; border-radius:12px; display:inline-flex; align-items:center; gap:4px;">Applied</span>`;
     } else if (hasDraft) {
         hubBadge = `<span style="background:#fffbeb; color:#d97706; border:1px solid #fde68a; font-size:10.5px; font-weight:700; padding:2px 8px; border-radius:12px; display:inline-flex; align-items:center; gap:4px;">Draft</span>`;
-    } else if (isSaved) {
-        hubBadge = `<span style="background:#eff6ff; color:#2563eb; border:1px solid #bfdbfe; font-size:10.5px; font-weight:700; padding:2px 8px; border-radius:12px; display:inline-flex; align-items:center; gap:4px;">Saved</span>`;
     }
 
     // 3. Badge Logic
