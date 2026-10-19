@@ -1040,6 +1040,7 @@ function render() {
           ui.guest ? "guest" : "dancer",
         );
   $("#app").innerHTML = ui.mode === "cms" ? renderCMS() : renderDancer();
+  if (ui.mode === "dancer" && $("#dob")) window.checkGateAgeLive?.($("#dob"));
 }
 function renderCMS() {
   const pages = [
@@ -2081,8 +2082,8 @@ function mobileNav() {
     tools = "",
     below = "";
   
-  const hasDeclaredAge = !!ext().age?.dob;
-  if (!hasDeclaredAge || ext().agentSuspensions[dancer().id]) {
+  const needsAgeGate = !ageAllowed() && !ext().publicBrowse;
+  if (needsAgeGate || ext().agentSuspensions[dancer().id]) {
     if (ext().agentSuspensions[dancer().id]) {
         return `<div class="dancer-stage">
   
@@ -2095,26 +2096,43 @@ function mobileNav() {
     window.checkGateAgeLive = function(input) {
       const val = input.value;
       const warning = document.getElementById("gate-age-warning");
-      if (!val) return;
-      const d = new Date(val + "T00:00:00Z");
+      const consent = document.querySelector(".age-consent");
+      const next = document.getElementById("nextProfileBtn");
+      const skip = document.getElementById("skipBrowseBtn");
+      const agreement = document.getElementById("agreement");
+      const d = val ? new Date(val + "T00:00:00Z") : null;
       const n = new Date();
-      let years = n.getUTCFullYear() - d.getUTCFullYear();
-      if (
+      const valid = !!val && !Number.isNaN(d.getTime()) && d <= new Date(today() + "T00:00:00Z");
+      let years = valid ? n.getUTCFullYear() - d.getUTCFullYear() : null;
+      if (valid && (
         n.getUTCMonth() < d.getUTCMonth() ||
         (n.getUTCMonth() === d.getUTCMonth() && n.getUTCDate() < d.getUTCDate())
-      ) {
-        years--;
-      }
-      const isUnder18 = years < 18;
-      if (isUnder18) {
+      )) years--;
+      const isUnder18 = valid && years < 18;
+      const isAdult = valid && !isUnder18;
+
+      if (isUnder18 || (val && !valid)) {
         input.style.borderColor = "#ef4444";
         input.style.backgroundColor = "#fef2f2";
-        if (warning) warning.style.display = "flex";
       } else {
         input.style.borderColor = "";
         input.style.backgroundColor = "";
-        if (warning) warning.style.display = "none";
       }
+      if (warning) {
+        warning.style.display = isUnder18 || (val && !valid) ? "flex" : "none";
+        warning.innerHTML = isUnder18
+          ? '<i class="ph-bold ph-warning" style="font-size:16px; color:#dc2626; margin-top:1px; flex-shrink:0;"></i><div><strong>Under 18:</strong> You can browse public jobs. Personalized matching and AI pitch features are available from age 18.</div>'
+          : '<i class="ph-bold ph-warning" style="font-size:16px; color:#dc2626; margin-top:1px; flex-shrink:0;"></i><div>Please enter a valid date of birth that is not in the future.</div>';
+      }
+      if (consent) consent.style.display = isAdult ? "grid" : "none";
+      if (next) {
+        next.dataset.action = isUnder18 ? "submit-age-gate-browse" : "submit-age-gate-next";
+        next.innerHTML = isUnder18
+          ? 'Browse public jobs <i class="ph ph-arrow-right" aria-hidden="true"></i>'
+          : 'Continue to Profile Setup <i class="ph ph-arrow-right" aria-hidden="true"></i>';
+        next.disabled = isUnder18 ? false : !(isAdult && agreement?.checked);
+      }
+      if (skip) skip.hidden = isUnder18;
     };
 
     return `<div class="dancer-stage age-gate-stage">
@@ -2122,42 +2140,42 @@ function mobileNav() {
         <header class="age-gate-header">
           <span class="age-brand-mark" aria-hidden="true">H</span>
           <h1>Welcome to Hammer AI Jobs!</h1>
-          <p class="age-intro">Never miss casting calls, workshops, and studio gigs tailored to your dance styles.</p>
+          <p class="age-intro">Browse public dance opportunities. Personalized matching and AI pitch features are available to dancers aged 18+.</p>
         </header>
 
         <ul class="age-benefits" aria-label="Hammer AI Jobs features">
-          <li><i class="ph ph-target" aria-hidden="true"></i><span><strong>Style-Matched:</strong> Gigs tailored to your styles &amp; roles.</span></li>
+          <li><i class="ph ph-target" aria-hidden="true"></i><span><strong>Style-Matched (18+):</strong> Gigs tailored to your styles &amp; roles.</span></li>
           <li><i class="ph ph-shield-check" aria-hidden="true"></i><span><strong>Verified Sources:</strong> Reviewed casting calls with pay info.</span></li>
-          <li><i class="ph ph-chat-circle-dots" aria-hidden="true"></i><span><strong>AI Pitch Drafts:</strong> Ready-made introduction emails for 1-click apply.</span></li>
+          <li><i class="ph ph-chat-circle-dots" aria-hidden="true"></i><span><strong>AI Pitch Drafts (18+):</strong> Ready-made introduction emails for 1-click apply.</span></li>
         </ul>
 
         <form id="dialog-form" class="age-gate-form" data-kind="age">
           <div class="age-dob-field">
-            <label for="dob">Date of Birth <b>*</b></label>
-            <input type="date" id="dob" name="dob" value="${esc(ext().age?.dob || '')}" max="${today()}" oninput="checkGateAgeLive(this)" onchange="checkGateAgeLive(this)" required>
-            <small>You must be at least 18 years old to explore and apply for dance opportunities.</small>
+            <label for="dob">Date of Birth</label>
+            <input type="date" id="dob" name="dob" value="${esc(ext().age?.dob || '')}" max="${today()}" oninput="checkGateAgeLive(this)" onchange="checkGateAgeLive(this)">
+            <small>Enter your date of birth to unlock personalized matching and AI pitch features. Public jobs are available without age verification.</small>
           </div>
 
           <!-- Inline Under-18 Warning Banner on Welcome Gate -->
-          <div id="gate-age-warning" style="display:none; align-items:flex-start; gap:8px; background:#fef2f2; border:1px solid #fecaca; border-radius:8px; padding:10px 12px; margin-bottom:12px; font-size:12px; color:#b91c1c; line-height:1.4;">
+          <div id="gate-age-warning" role="status" aria-live="polite" style="display:none; align-items:flex-start; gap:8px; background:#fef2f2; border:1px solid #fecaca; border-radius:8px; padding:10px 12px; margin-bottom:12px; font-size:12px; color:#b91c1c; line-height:1.4;">
             <i class="ph-bold ph-warning" style="font-size:16px; color:#dc2626; margin-top:1px; flex-shrink:0;"></i>
             <div>
-              <strong>Under 18 restricted:</strong> You can still browse dance jobs, but <strong>job matching scores</strong> and <strong>AI application mail generation</strong> will be disabled.
+              <strong>Under 18:</strong> You can browse public jobs. Personalized matching and AI pitch features are available from age 18.
             </div>
           </div>
 
           <div class="age-consent">
-            <input id="agreement" name="agreement" type="checkbox">
+            <input id="agreement" name="agreement" type="checkbox" onchange="checkGateAgeLive(document.getElementById('dob'))">
             <div>
               <label for="agreement">I agree to the terms of the</label>
               <button type="button" data-action="open-disclaimer-modal" class="age-disclaimer-link">Job Agent Disclaimer</button>
-              <small>Required to explore and apply for dance opportunities.</small>
+              <small>Required to continue to profile setup and use AI job features.</small>
             </div>
           </div>
 
           <div class="error-text age-gate-error" id="dialog-error" role="alert"></div>
           <div class="age-gate-actions">
-            <button id="nextProfileBtn" type="button" data-action="submit-age-gate-next" class="age-primary-action">
+            <button id="nextProfileBtn" type="button" data-action="submit-age-gate-next" class="age-primary-action" disabled>
               Continue to Profile Setup <i class="ph ph-arrow-right" aria-hidden="true"></i>
             </button>
             <button id="skipBrowseBtn" type="button" data-action="submit-age-gate-skip" class="age-secondary-action">
@@ -3444,8 +3462,8 @@ function openFilters() {
     "filters",
     "Filter opportunities",
     `<div style="display:flex; flex-direction:column; gap:14px;">
-      <!-- Match Profile Preset Banner -->
-      <div style="background:#eff6ff; border:1px solid #bfdbfe; border-radius:10px; padding:12px 14px; display:flex; justify-content:space-between; align-items:center;">
+      <!-- Profile-based matching is restricted to age-verified users. -->
+      ${ageAllowed() ? `<div style="background:#eff6ff; border:1px solid #bfdbfe; border-radius:10px; padding:12px 14px; display:flex; justify-content:space-between; align-items:center;">
         <div>
           <div style="font-size:12px; font-weight:700; color:#1e3a8a;">Quick Match</div>
           <div style="font-size:11px; color:#3b82f6;">Fill filters using your saved Profile</div>
@@ -3453,7 +3471,7 @@ function openFilters() {
         <button type="button" data-action="filter-profile-defaults" style="background:#2563eb; color:white; border:none; padding:6px 12px; border-radius:6px; font-size:11px; font-weight:700; cursor:pointer;">
           Match My Profile
         </button>
-      </div>
+      </div>` : `<div style="background:#f8f9f8; border:1px solid #e2e6e4; border-radius:6px; padding:10px 12px; color:#626d68; font-size:11px; line-height:1.45;">Profile-based matching is available to dancers aged 18+.</div>`}
 
       <!-- 1. Dance Style (From Profile Sec 2) -->
       ${select("style", "Dance style", [["", "All dance styles"], ...stylesList], f.style)}
@@ -4061,7 +4079,7 @@ document.addEventListener("click", async (event) => {
   }
   if (
     ui.mode === "dancer" &&
-    !["mode", "reset", "age", "close", "sign-in", "job", "mobile", "feed-search", "continue-onboarding", "login-returning", "open-quick-setup", "dismiss-onboarding-hook", "dismiss-nudge", "toggle-open-to-work", "submit-quick-setup", "open-disclaimer-modal", "agree-disclaimer-from-modal", "submit-age-gate", "submit-age-gate-next", "submit-age-gate-skip", "toggle-quick-style", "toggle-quick-role", "toggle-boost"].includes(a) &&
+    !["mode", "reset", "age", "close", "sign-in", "job", "mobile", "feed-search", "filters", "reset-filters", "continue-onboarding", "login-returning", "open-quick-setup", "dismiss-onboarding-hook", "dismiss-nudge", "toggle-open-to-work", "submit-quick-setup", "open-disclaimer-modal", "agree-disclaimer-from-modal", "submit-age-gate", "submit-age-gate-next", "submit-age-gate-browse", "submit-age-gate-skip", "toggle-quick-style", "toggle-quick-role", "toggle-boost"].includes(a) &&
     !ensureAccess()
   )
     return;
@@ -4082,7 +4100,8 @@ document.addEventListener("click", async (event) => {
       v === "dancer" &&
       !ui.guest &&
       !ext().agentSuspensions[dancer().id] &&
-      !ageAllowed()
+      !ageAllowed() &&
+      !ext().publicBrowse
     )
       openAge();
   } else if (a === "cms") {
@@ -4340,24 +4359,29 @@ document.addEventListener("click", async (event) => {
         hiddenInput.value = selected.join(",");
       }
       return;
-    } else if (a === "submit-age-gate" || a === "submit-age-gate-next" || a === "submit-age-gate-skip") {
+    } else if (a === "submit-age-gate" || a === "submit-age-gate-next" || a === "submit-age-gate-browse" || a === "submit-age-gate-skip") {
       const dobInput = document.getElementById("dob");
       const agreementBox = document.getElementById("agreement");
       const dobVal = dobInput ? dobInput.value : "";
       const isAgreed = agreementBox ? agreementBox.checked : false;
 
-      if (!dobVal) {
-        toast("Please select your date of birth.");
-        dobInput?.focus();
-        return;
-      }
-      if (!isAgreed) {
-        toast("Please agree to the Job Agent Disclaimer to continue.");
-        agreementBox?.focus();
+      if (a === "submit-age-gate-skip") {
+        ext().publicBrowse = true;
+        persist();
+        ui.mobile = "feed";
+        render();
+        toast("Browsing public jobs. Age verification is needed for personalized features.");
         return;
       }
 
-      const d = new Date(dobVal + "T00:00:00Z");
+      const d = dobVal ? new Date(dobVal + "T00:00:00Z") : null;
+      const isValidDob = !!dobVal && !Number.isNaN(d.getTime()) && dobVal <= today();
+      if (!isValidDob) {
+        toast("Enter a valid date of birth, or skip to browse public jobs.");
+        dobInput?.focus();
+        return;
+      }
+
       const n = new Date();
       let years = n.getUTCFullYear() - d.getUTCFullYear();
       if (
@@ -4366,28 +4390,41 @@ document.addEventListener("click", async (event) => {
       )
         years--;
 
-      const isUnder18 = dobVal > today() || years < 18;
+      const isUnder18 = years < 18;
+      if (a === "submit-age-gate-browse") {
+        if (!isUnder18) {
+          toast("Use Continue to Profile Setup for age-verified features.");
+          return;
+        }
+        ext().age = { dob: dobVal };
+        ext().publicBrowse = true;
+        persist();
+        ui.mobile = "feed";
+        render();
+        toast("Public jobs are available. Personalized matching and AI pitch unlock at age 18.");
+        return;
+      }
+      if (isUnder18) {
+        toast("Under 18 accounts can browse public jobs only.");
+        return;
+      }
+      if (!isAgreed) {
+        toast("Please agree to the Job Agent Disclaimer to continue.");
+        agreementBox?.focus();
+        return;
+      }
 
       ext().age = {
         dob: dobVal,
         accepted_at: now()
       };
+      ext().publicBrowse = false;
       audit("age declared", dancer().id);
       persist();
 
-      if (a === "submit-age-gate-next") {
-        ui.mobile = "profile";
-        render();
-        if (!isUnder18) {
-          toast("18+ verified! Set up your job preferences.");
-        }
-      } else {
-        ui.mobile = "feed";
-        render();
-        if (!isUnder18) {
-          toast("18+ verified! Welcome to Job Agent.");
-        }
-      }
+      ui.mobile = "profile";
+      render();
+      toast("18+ verified! Set up your job preferences.");
       return;
     } else if (a === "open-disclaimer-modal") {
       openDisclaimerModal();

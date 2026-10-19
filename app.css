@@ -271,6 +271,7 @@ body:has(#mode-cms.active) .overlay button.link:hover { text-decoration: none; }
 .age-gate-actions { display:grid; gap:5px; margin-top:18px; }
 .age-primary-action { width:100%; min-height:44px; border-color:#202326; border-radius:6px; background:#202326; color:#fff; font-size:12px; }
 .age-primary-action:hover { background:#3b4443; }
+.age-primary-action:disabled { border-color:#a1a1aa; background:#a1a1aa; color:#fff; cursor:not-allowed; }
 .age-secondary-action { min-height:36px; border:0; background:transparent; color:#58635e; font-size:11px; font-weight:600; }
 .age-secondary-action:hover { background:#f4f6f5; color:#202326; }
 @media(max-width:700px) {
