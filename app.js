@@ -2096,7 +2096,6 @@ function mobileNav() {
     window.checkGateAgeLive = function(input) {
       const val = input.value;
       const warning = document.getElementById("gate-age-warning");
-      const consent = document.querySelector(".age-consent");
       const next = document.getElementById("nextProfileBtn");
       const skip = document.getElementById("skipBrowseBtn");
       const agreement = document.getElementById("agreement");
@@ -2124,15 +2123,14 @@ function mobileNav() {
           ? '<i class="ph-bold ph-warning" style="font-size:16px; color:#dc2626; margin-top:1px; flex-shrink:0;"></i><div><strong>Under 18:</strong> You can browse public jobs. Personalized matching and AI pitch features are available from age 18.</div>'
           : '<i class="ph-bold ph-warning" style="font-size:16px; color:#dc2626; margin-top:1px; flex-shrink:0;"></i><div>Please enter a valid date of birth that is not in the future.</div>';
       }
-      if (consent) consent.style.display = isAdult ? "grid" : "none";
       if (next) {
         next.dataset.action = isUnder18 ? "submit-age-gate-browse" : "submit-age-gate-next";
         next.innerHTML = isUnder18
           ? 'Browse public jobs <i class="ph ph-arrow-right" aria-hidden="true"></i>'
           : 'Continue to Profile Setup <i class="ph ph-arrow-right" aria-hidden="true"></i>';
-        next.disabled = isUnder18 ? false : !(isAdult && agreement?.checked);
+        next.disabled = !(valid && agreement?.checked);
       }
-      if (skip) skip.hidden = isUnder18;
+      if (skip) skip.hidden = false;
     };
 
     return `<div class="dancer-stage age-gate-stage">
@@ -2169,7 +2167,6 @@ function mobileNav() {
             <div>
               <label for="agreement">I agree to the terms of the</label>
               <button type="button" data-action="open-disclaimer-modal" class="age-disclaimer-link">Job Agent Disclaimer</button>
-              <small>Required to continue to profile setup and use AI job features.</small>
             </div>
           </div>
 
@@ -4396,7 +4393,12 @@ document.addEventListener("click", async (event) => {
           toast("Use Continue to Profile Setup for age-verified features.");
           return;
         }
-        ext().age = { dob: dobVal };
+        if (!isAgreed) {
+          toast("Please agree to the Job Agent Disclaimer to continue.");
+          agreementBox?.focus();
+          return;
+        }
+        ext().age = { dob: dobVal, accepted_at: now() };
         ext().publicBrowse = true;
         persist();
         ui.mobile = "feed";
@@ -4405,7 +4407,7 @@ document.addEventListener("click", async (event) => {
         return;
       }
       if (isUnder18) {
-        toast("Under 18 accounts can browse public jobs only.");
+        toast("Under 18 accounts can browse public jobs only. Use Browse public jobs to continue.");
         return;
       }
       if (!isAgreed) {
