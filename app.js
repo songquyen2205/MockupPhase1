@@ -2934,7 +2934,6 @@ function profileForm() {
 
   window.checkProfileAgeLive = function(input) {
     const val = input.value;
-    const badgeTop = document.getElementById("profile-badge-age-top");
     const badgeBot = document.getElementById("profile-badge-age-bot");
     const warning = document.getElementById("profile-age-warning");
     const saveBtn = document.getElementById("profile-save-btn");
@@ -2977,7 +2976,6 @@ function profileForm() {
         openWorkSwitch.checked = false;
       }
       const underBadge = `<span style="background:#fef2f2; color:#dc2626; border:1px solid #fecaca; font-size:10.5px; font-weight:700; padding:2px 8px; border-radius:10px; display:inline-flex; align-items:center; gap:4px;"><i class="ph-bold ph-warning-circle"></i> Under 18</span>`;
-      if (badgeTop) badgeTop.innerHTML = underBadge;
       if (badgeBot) badgeBot.innerHTML = underBadge;
     } else {
       input.style.borderColor = "#cbd5e1";
@@ -3004,7 +3002,6 @@ function profileForm() {
         openWorkSwitch.checked = true;
       }
       const verifiedBadge = `<span style="background:#ecfdf5; color:#059669; border:1px solid #a7f3d0; font-size:10.5px; font-weight:700; padding:2px 8px; border-radius:10px; display:inline-flex; align-items:center; gap:4px;"><i class="ph-bold ph-shield-check"></i> 18+ Verified</span>`;
-      if (badgeTop) badgeTop.innerHTML = verifiedBadge;
       if (badgeBot) badgeBot.innerHTML = verifiedBadge;
     }
   };
@@ -3040,19 +3037,8 @@ function profileForm() {
         <input id="open-to-work-profile" name="availibility" class="switch" type="checkbox" ${d.availibility !== false && isAgeVerified ? "checked" : ""} ${!isAgeVerified ? "disabled" : ""}>
       </div>
 
-      <div style="display:flex; justify-content:space-between; align-items:center; margin:0 0 16px;">
+      <div style="margin:0 0 16px;">
         <h3 style="font-size:18px; font-weight:800; color:#111827; margin:0;">Basic Info</h3>
-        <span id="profile-badge-age-top">
-          ${isAgeVerified ? `
-            <span style="background:#ecfdf5; color:#059669; border:1px solid #a7f3d0; font-size:11px; font-weight:700; padding:3px 10px; border-radius:12px; display:inline-flex; align-items:center; gap:4px;">
-              <i class="ph-bold ph-shield-check"></i> 18+ Verified
-            </span>
-          ` : `
-            <span style="background:#fef2f2; color:#dc2626; border:1px solid #fecaca; font-size:11px; font-weight:700; padding:3px 8px; border-radius:12px; display:inline-flex; align-items:center; gap:4px;">
-              <i class="ph-bold ph-warning-circle"></i> Under 18
-            </span>
-          `}
-        </span>
       </div>
       
       <!-- Preferences Container (Disabled & dimmed if under 18) -->
