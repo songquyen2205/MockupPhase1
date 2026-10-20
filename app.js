@@ -40,7 +40,7 @@ const ui = {
   search: "",
   status: "",
   feedSearch: "",
-  filters: { country: "", city: "", style: "", role: "", skill_level: "", radius: null, include_intl_online: false, min: 0 },
+  filters: { countries: [], cities: [], styles: [], roles: [], skill_level: "", languages: [], include_online: false, work_abroad: false },
   running: false,
   dialog: null,
   metrics: null,
@@ -2409,13 +2409,25 @@ function mobileNav() {
   <section class="mobile-app" style="position:relative;"><div id="mobile-toast" class="mobile-toast" role="status" aria-live="polite"></div><header class="mobile-top"><div class="mobile-title" style="${title ? '' : 'display:none;'}"><h1>${title}</h1><div class="actions">${tools}</div></div>${below}</header><div class="mobile-body">${alert}${body}</div>${mobileNav()}<div id="mobile-overlay-root">${ui.dialog && ui.dialogState ? renderMobileDialogHTML(ui.dialogState) : ""}</div></section></div>`;
 }
 function filteredJobs() {
-  const dUser = dancer();
+  const countryName = (value) => {
+    const normalized = String(value || "").trim().toLowerCase();
+    for (const region of Object.values(geoData)) {
+      for (const [code, item] of Object.entries(region)) {
+        if (code.toLowerCase() === normalized || item.name.toLowerCase() === normalized) return item.name;
+      }
+    }
+    return String(value || "").trim();
+  };
+  const isRemote = (o) => /remote|online|work from anywhere/i.test(`${o.location_text || ""} ${o.city || ""}`);
+  const jobLanguages = (o) => {
+    const requirements = o.requirements && !Array.isArray(o.requirements) ? o.requirements : {};
+    const value = requirements.languages_required || requirements.required_languages || requirements.languages || requirements.language;
+    return (Array.isArray(value) ? value : String(value || "").split(/[,;|]/)).map((x) => String(x).trim().toLowerCase()).filter(Boolean);
+  };
   return db.ai_opportunities
     .filter(available)
     .filter((o) => {
-      const f = ui.filters,
-        d = distance(o),
-        c = o.compensation;
+      const f = ui.filters;
 
       // 1. Keyword search (title, org, city, styles)
       if (ui.feedSearch) {
@@ -2425,43 +2437,42 @@ function filteredJobs() {
         if (!text.includes(ui.feedSearch.toLowerCase())) return false;
       }
 
-      // 2. Country & City Location filter
-      if (f.country && o.country !== f.country) {
-        const isIntlOrOnline = !o.country || (o.country && dUser.country && o.country !== dUser.country);
-        if (!f.include_intl_online || !isIntlOrOnline) return false;
-      }
-      if (f.city && o.city !== f.city) {
-        const isIntlOrOnline = !o.city || (o.country && dUser.country && o.country !== dUser.country);
-        if (!f.include_intl_online || !isIntlOrOnline) return false;
+      // Location options expand a selected area instead of applying a distance radius.
+      const countries = (f.countries || []).map((x) => countryName(x).toLowerCase());
+      const cities = f.cities || [];
+      const jobCountry = countryName(o.country).toLowerCase();
+      const jobCityKey = `${countryName(o.country)}::${String(o.city || "").trim()}`;
+      const hasLocationFilter = countries.length > 0 || cities.length > 0;
+      const inSelectedArea = cities.length
+        ? cities.includes(jobCityKey)
+        : countries.includes(jobCountry);
+      const outsideSelectedCountries = countries.length > 0
+        ? !countries.includes(jobCountry)
+        : cities.length > 0 && !cities.some((key) => countryName(key.split("::")[0]).toLowerCase() === jobCountry);
+      const remoteAllowed = !hasLocationFilter || f.include_online;
+      const abroadAllowed = !hasLocationFilter || f.work_abroad;
+      if (isRemote(o) && !remoteAllowed) return false;
+      if (hasLocationFilter && !isRemote(o) && !inSelectedArea && !(outsideSelectedCountries && abroadAllowed)) return false;
+      if (hasLocationFilter && isRemote(o) && !inSelectedArea && !remoteAllowed && !(outsideSelectedCountries && abroadAllowed)) return false;
+
+      // Within a filter group, any selected value is accepted; groups combine with AND.
+      if (f.styles?.length) {
+        const jobStyles = (o.dance_styles || []).map((x) => String(x).toLowerCase());
+        if (!f.styles.some((style) => jobStyles.some((item) => item === style.toLowerCase() || item.includes(style.toLowerCase()) || style.toLowerCase().includes(item)))) return false;
       }
 
-      // 3. Dance Style filter (from Profile Sec 2)
-      if (f.style) {
-        const sLower = f.style.toLowerCase();
-        const hasStyle = (o.dance_styles || []).some((s) => {
-          const itemLower = s.toLowerCase();
-          return itemLower === sLower || itemLower.includes(sLower) || sLower.includes(itemLower);
-        });
-        if (!hasStyle) return false;
+      if (f.roles?.length) {
+        const text = [o.title, o.description, o.opportunity_type].join(" ").toLowerCase();
+        const roleMatches = (role) => {
+          const key = role.toLowerCase();
+          if (key === "teaching") return o.opportunity_type === "workshop" || /teach|workshop|class|instructor/.test(text);
+          if (key === "performance") return ["audition", "commercial", "battle", "touring", "casting"].includes(o.opportunity_type) || /dancer|perform|show|mv/.test(text);
+          if (key === "choreography") return text.includes("choreo");
+          return text.includes(key);
+        };
+        if (!f.roles.some(roleMatches)) return false;
       }
 
-      // 4. Preferred Role filter (from Profile Sec 3)
-      if (f.role) {
-        const rLower = f.role.toLowerCase();
-        const titleAndDesc = [o.title, o.description, o.opportunity_type].join(" ").toLowerCase();
-        if (rLower === "teaching") {
-          const isTeaching = o.opportunity_type === "workshop" || titleAndDesc.includes("teach") || titleAndDesc.includes("workshop") || titleAndDesc.includes("class") || titleAndDesc.includes("instructor");
-          if (!isTeaching) return false;
-        } else if (rLower === "performance") {
-          const isPerf = ["audition", "commercial", "battle", "touring", "casting"].includes(o.opportunity_type) || titleAndDesc.includes("dancer") || titleAndDesc.includes("perform") || titleAndDesc.includes("show") || titleAndDesc.includes("mv");
-          if (!isPerf) return false;
-        } else if (rLower === "choreography") {
-          const isChoreo = titleAndDesc.includes("choreo");
-          if (!isChoreo) return false;
-        }
-      }
-
-      // 5. Skill Level filter (from Profile Sec 4)
       if (f.skill_level) {
         const reqLevel = o.requirements?.skill_level;
         if (reqLevel && reqLevel !== "All levels" && reqLevel.toLowerCase() !== f.skill_level.toLowerCase()) {
@@ -2469,17 +2480,9 @@ function filteredJobs() {
         }
       }
 
-      // 6. Travel Radius filter (from Profile Sec 1)
-      if (f.radius !== null) {
-        if (d !== null && d > f.radius) {
-          const isIntlOrOnline = !o.city || (o.country && dUser.country && o.country !== dUser.country);
-          if (!f.include_intl_online || !isIntlOrOnline) return false;
-        }
-      }
-
-      // 7. Minimum Pay filter (from Profile Sec 5)
-      if (f.min && +f.min > 0) {
-        if (!c || c.amount < +f.min) return false;
+      if (f.languages?.length) {
+        const required = jobLanguages(o);
+        if (required.length && !f.languages.some((language) => required.includes(language.toLowerCase()))) return false;
       }
 
       return true;
@@ -3434,78 +3437,165 @@ function showJob(id) {
   ui.pendingJob = null;
   render();
 }
+function filterCountryRows(selected = []) {
+  const all = new Map();
+  for (const region of Object.values(geoData)) {
+    for (const [code, item] of Object.entries(region)) all.set(item.name, item.name);
+  }
+  for (const o of db.ai_opportunities) if (o.country) all.set(countryDisplayName(o.country), countryDisplayName(o.country));
+  return [...all.values()].sort((a, b) => a.localeCompare(b)).map((name) =>
+    `<label class="filter-option" data-filter-option="country"><input type="checkbox" name="countries" value="${esc(name)}" ${selected.includes(name) ? "checked" : ""}><span>${esc(name)}</span></label>`,
+  ).join("");
+}
+function countryDisplayName(value) {
+  const normalized = String(value || "").trim().toLowerCase();
+  for (const region of Object.values(geoData)) {
+    for (const [code, item] of Object.entries(region)) {
+      if (code.toLowerCase() === normalized || item.name.toLowerCase() === normalized) return item.name;
+    }
+  }
+  return String(value || "").trim();
+}
+function filterCityChoices(countriesSelected = [], selected = []) {
+  const all = new Map();
+  const chosen = new Set(countriesSelected.map((x) => countryDisplayName(x).toLowerCase()));
+  if (chosen.size) {
+    for (const region of Object.values(geoData)) {
+      for (const item of Object.values(region)) {
+        if (chosen.has(item.name.toLowerCase())) for (const city of item.cities || []) all.set(`${item.name}::${city}`, { country: item.name, city });
+      }
+    }
+  }
+  for (const o of db.ai_opportunities) {
+    if (!o.city || !o.country) continue;
+    const country = countryDisplayName(o.country);
+    if (!chosen.size || chosen.has(country.toLowerCase())) all.set(`${country}::${o.city}`, { country, city: o.city });
+  }
+  return [...all.entries()].sort((a, b) => a[1].country.localeCompare(b[1].country) || a[1].city.localeCompare(b[1].city));
+}
+function filterCityRows(countriesSelected = [], selected = []) {
+  const rows = filterCityChoices(countriesSelected, selected);
+  if (!rows.length) return '<div class="filter-empty">Choose a country to see its cities.</div>';
+  return rows.map(([key, item]) =>
+    `<label class="filter-option" data-filter-option="city"><input type="checkbox" name="cities" value="${esc(key)}" ${selected.includes(key) ? "checked" : ""}><span>${esc(item.city)} <small>${esc(item.country)}</small></span></label>`,
+  ).join("");
+}
+function selectedFilterChips(values, labels = {}) {
+  return values.length
+    ? values.map((value) => `<span class="filter-selected-chip">${esc(labels[value] || value)}</span>`).join("")
+    : '<span class="filter-selection-empty">Any</span>';
+}
+function filterChipChoices(name, values, selected = []) {
+  return `<div class="filter-chip-list">${values.map((value) =>
+    `<label class="filter-chip ${selected.includes(value) ? "selected" : ""}"><input type="checkbox" name="${name}" value="${esc(value)}" ${selected.includes(value) ? "checked" : ""}><span>${esc(value)}</span></label>`,
+  ).join("")}</div>`;
+}
+function filterLanguageDropdown(values, selected = []) {
+  return `<div class="filter-language-dropdown">
+    <button type="button" class="filter-language-trigger" aria-expanded="false" aria-controls="filter-language-options">
+      <span class="filter-language-summary">${selected.length ? selected.map((language) => `<span class="filter-language-tag">${esc(language)}</span>`).join("") : '<span class="filter-language-placeholder">Any required language</span>'}</span>
+      <i class="ph ph-caret-down" aria-hidden="true"></i>
+    </button>
+    <div class="filter-language-options" id="filter-language-options" role="group" aria-label="Required languages">
+      ${values.map((language) => `<label class="filter-language-option"><input type="checkbox" name="languages" value="${esc(language)}" ${selected.includes(language) ? "checked" : ""}><span>${esc(language)}</span></label>`).join("")}
+    </div>
+  </div>`;
+}
+function updateFilterSelectionPreviews(form) {
+  const countries = Array.from(new FormData(form).getAll("countries"));
+  const cities = Array.from(new FormData(form).getAll("cities"));
+  const languages = Array.from(new FormData(form).getAll("languages"));
+  const countryPreview = form.querySelector("#filter-country-selected");
+  const cityPreview = form.querySelector("#filter-city-selected");
+  if (countryPreview) {
+    countryPreview.innerHTML = selectedFilterChips(countries);
+    countryPreview.style.display = countries.length ? "flex" : "none";
+  }
+  if (cityPreview) {
+    cityPreview.innerHTML = selectedFilterChips(cities, Object.fromEntries(cities.map((value) => {
+    const [country, city] = value.split("::");
+    return [value, `${city} · ${country}`];
+    })));
+    cityPreview.style.display = cities.length ? "flex" : "none";
+  }
+  for (const [id, values] of [["filter-country-summary", countries], ["filter-city-summary", cities]]) {
+    const summary = form.querySelector(`#${id}`);
+    if (summary) summary.textContent = values.length ? `${values.length} selected` : "Any";
+  }
+  form.querySelectorAll(".filter-chip").forEach((chip) => chip.classList.toggle("selected", chip.querySelector("input")?.checked));
+  const languageSummary = form.querySelector(".filter-language-summary");
+  if (languageSummary) languageSummary.innerHTML = languages.length
+    ? languages.map((language) => `<span class="filter-language-tag">${esc(language)}</span>`).join("")
+    : '<span class="filter-language-placeholder">Any required language</span>';
+}
 function openFilters() {
   const f = ui.filters;
   const d = dancer();
   const stylesList = ["Hip-hop", "Contemporary", "Ballet", "Jazz", "K-pop", "Open Choreo", "Heels", "Other"];
   const rolesList = ["Performance", "Teaching", "Choreography", "Other"];
-  const levelsList = ["Beginner", "Intermediate", "Advanced"];
-
+  const languageList = ["English", "Japanese", "Korean", "Vietnamese", "Mandarin", "Spanish", "French", "German", "Thai", "Indonesian", "Other"];
+  const countryPreview = selectedFilterChips(f.countries);
+  const cityLabels = Object.fromEntries((f.cities || []).map((value) => {
+    const [country, city] = value.split("::");
+    return [value, `${city} · ${country}`];
+  }));
   dialog(
     "filters",
     "Filter opportunities",
-    `<div style="display:flex; flex-direction:column; gap:14px;">
-      <!-- Profile-based matching is restricted to age-verified users. -->
-      ${ageAllowed() ? `<div style="background:#eff6ff; border:1px solid #bfdbfe; border-radius:10px; padding:12px 14px; display:flex; justify-content:space-between; align-items:center;">
-        <div>
-          <div style="font-size:12px; font-weight:700; color:#1e3a8a;">Quick Match</div>
-          <div style="font-size:11px; color:#3b82f6;">Fill filters using your saved Profile</div>
-        </div>
-        <button type="button" data-action="filter-profile-defaults" style="background:#2563eb; color:white; border:none; padding:6px 12px; border-radius:6px; font-size:11px; font-weight:700; cursor:pointer;">
-          Match My Profile
-        </button>
-      </div>` : `<div style="background:#f8f9f8; border:1px solid #e2e6e4; border-radius:6px; padding:10px 12px; color:#626d68; font-size:11px; line-height:1.45;">Profile-based matching is available to dancers aged 18+.</div>`}
-
-      <!-- 1. Dance Style (From Profile Sec 2) -->
-      ${select("style", "Dance style", [["", "All dance styles"], ...stylesList], f.style)}
-
-      <!-- 2. Preferred Role (From Profile Sec 3) -->
-      ${select("role", "Preferred role", [["", "All roles"], ...rolesList], f.role)}
-
-      <!-- 3. Skill Level (From Profile Sec 4) -->
-      ${select("skill_level", "Skill level", [["", "All levels"], ...levelsList], f.skill_level)}
-
-      <!-- 4. Location: Country & City on 1 row (From Profile Sec 1) -->
-      <div style="display:flex; flex-direction:column; gap:6px;">
-        <div style="display:flex; gap:10px;">
-          <div style="flex:1;">
-            ${select("country", "Country", [["", "All countries"], ...countries], f.country)}
-          </div>
-          <div style="flex:1;">
-            ${select("city", "City", [["", "All cities"], ...cities], f.city)}
-          </div>
-        </div>
-        
-        <label class="check-row" style="margin:2px 0 0 0;">
-          <input type="checkbox" name="limit_radius" ${f.radius !== null ? "checked" : ""}>
-          <span style="font-size:12px; font-weight:600; color:#374151;">Limit distance from my city</span>
-        </label>
-        
-        <label class="field" style="margin-bottom:0;">
-          <span class="range-value" style="font-size:12px; font-weight:600; display:flex; justify-content:space-between;">
-            <span>Travel radius</span>
-            <output id="filter-radius" style="color:#059669; font-weight:700;">${f.radius ?? (d.travelRadiusKm || 25)} km</output>
-          </span>
-          <input type="range" name="radius" min="5" max="100" value="${f.radius ?? (d.travelRadiusKm || 25)}" data-output="filter-radius" data-unit=" km">
-        </label>
-
-        <label class="check-row" style="margin:0;">
-          <input type="checkbox" name="include_intl_online" ${f.include_intl_online ? "checked" : ""}>
-          <span style="font-size:12px; color:#475569;">Include international & online/remote gigs</span>
-        </label>
+    `<div class="job-filter-form">
+      <div class="filter-quick-match">
+        <div><strong>Quick Match</strong><small>Use preferences from your saved profile</small></div>
+        ${ageAllowed() ? '<button type="button" class="primary" data-action="filter-profile-defaults">Match My Profile</button>' : '<span class="filter-age-note">Available after age verification</span>'}
       </div>
-
-      <!-- 5. Minimum Pay (From Profile Sec 5) -->
-      <div>
-        ${field("min", `Minimum pay (${esc(ext().profile.currency)} / ${esc(ext().profile.compensation_unit)})`, f.min ? f.min : "", "number", 'min="0" step="10" placeholder="e.g. ' + (d.min_compensation || 300) + '"')}
-        <small style="color:#64748b; font-size:11px; margin-top:4px; display:block;">Your profile min rate: ${d.min_compensation || 300} ${esc(ext().profile.currency)}. Opportunities below this will be excluded.</small>
+      <div class="filter-section">
+        <div class="filter-section-heading"><h3>Location</h3><span>Choose one or more</span></div>
+        <div class="filter-selection-preview" id="filter-country-selected" style="display:${f.countries.length ? "flex" : "none"}">${countryPreview}</div>
+        <details class="filter-disclosure"><summary>Countries <span id="filter-country-summary">${f.countries.length ? `${f.countries.length} selected` : "Any"}</span></summary>
+          <div class="filter-disclosure-body"><input class="filter-search" type="search" data-filter-search="country" placeholder="Search countries" aria-label="Search countries"><div class="filter-option-list" id="filter-country-options">${filterCountryRows(f.countries)}</div></div>
+        </details>
+        <div class="filter-selection-preview" id="filter-city-selected" style="display:${f.cities.length ? "flex" : "none"}">${selectedFilterChips(f.cities, cityLabels)}</div>
+        <details class="filter-disclosure"><summary>Cities <span id="filter-city-summary">${f.cities.length ? `${f.cities.length} selected` : "Any"}</span></summary>
+          <div class="filter-disclosure-body"><input class="filter-search" type="search" data-filter-search="city" placeholder="Search cities" aria-label="Search cities"><div class="filter-option-list" id="filter-city-options">${filterCityRows(f.countries, f.cities)}</div></div>
+        </details>
+        <div class="filter-location-options">
+          <label class="filter-toggle"><input type="checkbox" name="include_online" ${f.include_online ? "checked" : ""}><span>Include online / remote jobs</span></label>
+          <label class="filter-toggle"><input type="checkbox" name="work_abroad" ${f.work_abroad ? "checked" : ""}><span>Include jobs in other countries</span></label>
+        </div>
       </div>
+      <div class="filter-section"><div class="filter-section-heading"><h3>Dance styles</h3><span>Optional</span></div>${filterChipChoices("styles", stylesList, f.styles)}</div>
+      <div class="filter-section"><div class="filter-section-heading"><h3>Preferred roles</h3><span>Optional</span></div>${filterChipChoices("roles", rolesList, f.roles)}</div>
+      <div class="filter-section"><div class="filter-section-heading"><h3>Experience</h3><span>By level</span></div>${select("skill_level", "", [["", "All levels"], ["Beginner", "Beginner"], ["Intermediate", "Intermediate"], ["Advanced", "Advanced"]], f.skill_level, 'class="filter-level-select"')}</div>
+      <div class="filter-section"><div class="filter-section-heading"><h3>Required language</h3><span>Language requested by the job</span></div>${filterLanguageDropdown(languageList, f.languages)}</div>
     </div>`,
     "Apply filters",
     btn("reset-filters", "Reset"),
     "sheet",
   );
+  updateFilterSelectionPreviews($("#dialog-form"));
 }
+document.addEventListener("click", (event) => {
+  const trigger = event.target.closest(".filter-language-trigger");
+  const dropdown = trigger?.closest(".filter-language-dropdown");
+  const insideDropdown = event.target.closest(".filter-language-dropdown");
+  document.querySelectorAll(".filter-language-dropdown.open").forEach((item) => {
+    if (!insideDropdown && item !== dropdown) {
+      item.classList.remove("open");
+      item.classList.remove("open-up");
+      item.querySelector(".filter-language-trigger")?.setAttribute("aria-expanded", "false");
+    }
+  });
+  if (!dropdown) return;
+  const isOpen = dropdown.classList.toggle("open");
+  if (isOpen) {
+    const body = dropdown.closest(".mobile-sheet-body");
+    const menu = dropdown.querySelector(".filter-language-options");
+    const spaceBelow = body ? body.getBoundingClientRect().bottom - trigger.getBoundingClientRect().bottom : Infinity;
+    dropdown.classList.toggle("open-up", spaceBelow < Math.min(220, menu.scrollHeight || 220));
+  } else {
+    dropdown.classList.remove("open-up");
+  }
+  trigger.setAttribute("aria-expanded", String(isOpen));
+});
 function draftFor(id, lang) {
   const h = history(id),
     o = job(id),
@@ -4158,31 +4248,31 @@ document.addEventListener("click", async (event) => {
   } else if (a === "filters") openFilters();
   else if (a === "reset-filters") {
     ui.filters = {
-      country: "",
-      city: "",
-      style: "",
-      role: "",
+      countries: [],
+      cities: [],
+      styles: [],
+      roles: [],
       skill_level: "",
-      radius: null,
-      include_intl_online: false,
-      min: 0,
+      languages: [],
+      include_online: false,
+      work_abroad: false,
     };
     ui.feedSearch = "";
     closeDialog(true);
     render();
   } else if (a === "filter-profile-defaults") {
     const d = dancer();
-    const primaryStyle = (d.dance_styles || "").split(",")[0]?.trim() || "";
-    const primaryRole = (d.preferred_types || "").split(",")[0]?.trim() || "";
+    const profileCountry = countryDisplayName(d.country);
+    const profileCity = d.city ? `${profileCountry}::${d.city}` : "";
     ui.filters = {
-      country: d.country || "",
-      city: d.city || "",
-      style: primaryStyle,
-      role: primaryRole,
+      countries: profileCountry ? [profileCountry] : [],
+      cities: profileCity ? [profileCity] : [],
+      styles: (d.dance_styles || "").split(",").map((x) => x.trim()).filter(Boolean),
+      roles: (d.preferred_types || "").split(",").map((x) => x.trim()).filter(Boolean),
       skill_level: d.skill_level || "",
-      radius: d.travelRadiusKm || 25,
-      include_intl_online: !!d.work_abroad || !!d.include_online,
-      min: d.min_compensation || 0,
+      languages: (d.languages || "").split(",").map((x) => x.trim()).filter(Boolean),
+      include_online: !!d.include_online,
+      work_abroad: !!d.work_abroad,
     };
     closeDialog(true);
     render();
@@ -4770,6 +4860,14 @@ document.addEventListener("click", async (event) => {
 });
 document.addEventListener("input", (event) => {
   const t = event.target;
+  if (t.dataset.filterSearch) {
+    const list = document.querySelector(`#filter-${t.dataset.filterSearch}-options`);
+    const query = t.value.trim().toLowerCase();
+    list?.querySelectorAll("[data-filter-option]").forEach((row) => {
+      row.hidden = !row.textContent.toLowerCase().includes(query);
+    });
+    return;
+  }
   if (t.dataset.output) {
     document.getElementById(t.dataset.output).textContent =
       t.value + (t.dataset.unit || "");
@@ -4780,10 +4878,29 @@ document.addEventListener("input", (event) => {
   } else if (t.id === "feed-search") {
     ui.feedSearch = t.value;
     preserveFocusRender(t.id);
+  } else if (t.closest('#dialog-form[data-kind="filters"]')) {
+    ui.dirty = true;
+    updateFilterSelectionPreviews(t.form);
   } else if (t.closest("#profile-form,#dialog-form")) ui.dirty = true;
 });
 document.addEventListener("change", (event) => {
   const t = event.target;
+  if (t.form?.dataset.kind === "filters") {
+    ui.dirty = true;
+    if (t.name === "countries") {
+      const form = t.form;
+      const countriesSelected = Array.from(new FormData(form).getAll("countries"));
+      const citiesSelected = Array.from(new FormData(form).getAll("cities"));
+      const available = new Set(filterCityChoices(countriesSelected, citiesSelected).map(([key]) => key));
+      const keptCities = citiesSelected.filter((key) => available.has(key));
+      const cityOptions = form.querySelector("#filter-city-options");
+      if (cityOptions) cityOptions.innerHTML = filterCityRows(countriesSelected, keptCities);
+      const citySearch = form.querySelector('[data-filter-search="city"]');
+      if (citySearch) citySearch.value = "";
+    }
+    updateFilterSelectionPreviews(t.form);
+    return;
+  }
   if (t.dataset.action === "update-job-progress") {
     const jobId = Number(t.dataset.job);
     const val = t.value;
@@ -5059,7 +5176,7 @@ document.addEventListener("submit", (event) => {
     toast("Read-only access.");
     return;
   }
-  if (ui.mode === "dancer" && kind !== "age" && !ensureAccess()) return;
+  if (ui.mode === "dancer" && !["age", "filters"].includes(kind) && !ensureAccess()) return;
   if (kind === "add-prospect") {
     const prospects = cmsProspects();
     const nextNumber = Math.max(0, ...prospects.map((item) => Number(String(item.id).replace("P-", "")) || 0)) + 1;
@@ -5111,14 +5228,14 @@ document.addEventListener("submit", (event) => {
     toast("\uD83C\uDF89 X\u00E1c th\u1EF1c 18+ th\u00E0nh c\u00F4ng!");
   } else if (kind === "filters") {
     ui.filters = {
-      country: v.country || "",
-      city: v.city || "",
-      style: v.style || "",
-      role: v.role || "",
+      countries: fd.getAll("countries"),
+      cities: fd.getAll("cities"),
+      styles: fd.getAll("styles"),
+      roles: fd.getAll("roles"),
       skill_level: v.skill_level || "",
-      radius: v.limit_radius ? +v.radius : null,
-      include_intl_online: !!v.include_intl_online,
-      min: v.min ? +v.min : 0,
+      languages: fd.getAll("languages"),
+      include_online: !!v.include_online,
+      work_abroad: !!v.work_abroad,
     };
     closeDialog(true);
     render();
@@ -5430,7 +5547,6 @@ document.addEventListener("submit", (event) => {
         compensation_unit: v.compensation_unit || ext().profile.compensation_unit || "Per class",
       });
       ext().push.enabled = !!v.push;
-      ui.filters.radius = +(v.travelRadiusKm || 20);
       ext().onboardingCompleted = true;
       ext().nudgeDismissed = true;
       ext().profileLastUpdated = now();
