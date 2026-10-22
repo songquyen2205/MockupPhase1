@@ -2741,7 +2741,7 @@ function jobCard(o, inHub = false) {
           <!-- AI Match Box -->
           <div style="padding: 0 20px 24px 20px;">
               <div style="background: #eff6ff; border: 1px solid #bfdbfe; border-radius: 8px; padding: 16px;">
-                  <div style="font-size: 12px; font-weight: 800; color: #1e40af; margin-bottom: 6px; display:flex; align-items:center; gap:6px;"><i class="ph-fill ph-sparkle"></i> AI MATCH REASON:</div>
+                  <div style="font-size: 12px; font-weight: 800; color: #1e40af; margin-bottom: 6px; display:flex; align-items:center; gap:6px;"><i class="ph-fill ph-sparkle"></i> Why you matched this job</div>
                   <div style="font-size: 14px; color: #2563eb; line-height: 1.5;">${esc(matchStr)}.</div>
               </div>
           </div>
