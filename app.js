@@ -3864,7 +3864,7 @@ function reportDialog(id) {
   dialog(
     "report",
     "Report this job",
-    `<p><strong>${esc(o.title)}</strong></p><div class="divider"></div>${select("reason", "Reason *", ["Broken link", "Incorrect compensation", "Spam or scam", "Other"], "Broken link")}${area("note", "Additional details", "", 'maxlength="1000"')}`,
+    `<p><strong>${esc(o.title)}</strong></p><div class="divider"></div>${select("reason", "Reason *", ["Broken link", "Incorrect information", "Job closed or expired", "Duplicate job", "Spam or scam", "Other"], "Broken link")}${area("note", "Additional details", "", 'maxlength="1000"')}`,
     "Submit report",
   );
 }
