@@ -3413,7 +3413,7 @@ function formError(message) {
         
         <div style="font-size: 13px; color: #4b5563; line-height: 1.5; display: flex; flex-direction: column; gap: 12px;">
           <p style="margin: 0;">
-            Hammer helps dancers discover jobs, auditions, casting calls, and events. Some opportunities are collected from external websites. Details may change or be incomplete, so please check the original post for the latest information. This notice applies only to external listings, not events created and hosted on Hammer.
+            Hammer helps dancers discover jobs, auditions, casting calls, and events. Some opportunities come from external sources. Details may change or be incomplete, so please check the original post for the latest information. This notice applies only to external listings, not events created and hosted on Hammer.
           </p>
           <ul style="margin: 0; padding-left: 20px; display: flex; flex-direction: column; gap: 8px; color: #374151;">
             <li><strong>Contact and applications:</strong> You decide whether to contact, register, or apply with the organizer. For external jobs, Hammer is not the employer, does not make hiring decisions or negotiate terms, and cannot guarantee employment.</li>
