@@ -28,6 +28,27 @@
 .job-form-section-title{grid-column:1/-1;margin:24px 0 12px;border-bottom:1px solid var(--line);padding-bottom:8px;color:var(--ink);font-size:14px}.source-reference{display:flex;align-items:center;justify-content:space-between;gap:16px;background:#f8faf9;padding:12px;border:1px solid #e5e7eb;border-radius:6px;margin-bottom:12px}.source-reference div{display:flex;flex-direction:column;gap:4px;min-width:0}.source-reference small{line-height:1.35}.source-reference a{display:inline-flex;align-items:center;gap:6px;white-space:nowrap;font-size:12px;font-weight:600}.application-fields-note{color:var(--muted);font-size:12px;line-height:1.5;margin:-2px 0 14px}
 @media(max-width:700px){.source-reference{align-items:flex-start;flex-direction:column}}
 
+/* Organization logo treatment for the dancer job feed and detail. */
+.organization-logo{position:relative;display:grid;place-items:center;flex:0 0 auto;overflow:hidden;background:#fff;border:1px solid #e5e7eb;border-radius:7px;color:#374151}
+.organization-logo--feed{width:40px;height:40px}
+.organization-logo--detail{width:52px;height:52px;border-radius:8px}
+.organization-logo__fallback{display:grid;place-items:center;width:100%;height:100%;background:#202326;color:#fff;font-size:20px;font-weight:800;line-height:1}
+.organization-logo--detail .organization-logo__fallback{font-size:25px}
+.organization-logo img{position:absolute;inset:0;width:100%;height:100%;object-fit:contain;padding:3px;background:#fff}
+.job-brand-row{display:flex;align-items:center;gap:11px;min-width:0;margin-bottom:4px}
+.job-brand-copy{flex:1;min-width:0}
+.job-card-title{margin:0 0 4px;font-size:16px;font-weight:700;line-height:1.35;color:#111827}
+.job-card-title button{display:-webkit-box;width:100%;overflow:hidden;-webkit-box-orient:vertical;-webkit-line-clamp:2;text-align:left;padding:0;border:0;background:transparent;color:inherit;font:inherit;line-height:inherit}
+.job-card-orgline{display:flex;align-items:baseline;gap:6px;min-width:0;color:#59635f;font-size:11.5px;line-height:1.3}
+.job-card-orgline strong{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-weight:600}
+.job-card-orgline span{flex:0 0 auto;color:#76807c;white-space:nowrap}
+.job-detail-heading{padding:0 20px 20px}
+.job-detail-heading h1{margin:0 0 12px;color:#0f172a;font-size:24px;font-weight:800;line-height:1.25}
+.job-detail-orgline{display:flex;align-items:center;gap:11px;min-width:0}
+.job-detail-orgcopy{display:flex;flex-direction:column;gap:4px;min-width:0;font-size:13px;line-height:1.35}
+.job-detail-orgcopy strong{overflow-wrap:anywhere;color:#26332e;font-weight:650}
+.job-detail-orgcopy span{color:#64748b}
+
 
 /* Pro UI Overrides */
 details > summary { list-style: none; }

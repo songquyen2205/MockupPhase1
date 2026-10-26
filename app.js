@@ -6,6 +6,12 @@ try {
 } catch {}
 if (!db || db.version !== 79) db = HammerSeed();
 
+// Keep the sample Red Bull listing visibly distinct in existing local demo data.
+const redBullSample = db.ai_opportunities?.find((item) => item.canonical_key === "sample-102");
+if (redBullSample && !redBullSample.organization_logo_url) {
+  redBullSample.organization_logo_url = "assets/red-bull-logo.svg";
+}
+
 // Auto-migrate old statuses
 const statusMap = {
   complete: "published",
@@ -79,6 +85,22 @@ const dateLabel = (v) =>
   v ? new Date(v).toLocaleDateString("en-GB") : "Not provided";
 const icon = (n) =>
   `<i class="${n.endsWith("-fill") ? "ph-fill" : "ph"} ph-${n.replace(/-fill$/, "")}" aria-hidden="true"></i>`;
+const organizationLogo = (item, size = "feed") => {
+  const name = String(item.organization || item.organizer || "").trim();
+  const candidate = item.organization_logo_url || item.studio_logo_url || item.logo_url;
+  let logoUrl = "";
+  if (typeof candidate === "string" && candidate.trim()) {
+    try {
+      const parsed = new URL(candidate.trim(), window.location.href);
+      if (["http:", "https:"].includes(parsed.protocol) || (parsed.protocol === "file:" && window.location.protocol === "file:")) logoUrl = parsed.href;
+    } catch {}
+  }
+
+  return `<span class="organization-logo organization-logo--${size}" role="img" aria-label="${esc(logoUrl ? `${name || "Organization"} logo` : "Hammer default icon")}">
+    <span class="organization-logo__fallback" aria-hidden="true">H</span>
+    ${logoUrl ? `<img src="${esc(logoUrl)}" alt="" loading="lazy" decoding="async" onerror="this.remove()">` : ""}
+  </span>`;
+};
 const btn = (action, label, value = "", cls = "", disabled = false) =>
   `<button data-action="${action}" data-value="${esc(value)}" class="${cls}" ${disabled ? "disabled" : ""}>${label}</button>`;
 const ib = (action, label, symbol, value = "", disabled = false) =>
@@ -2165,8 +2187,8 @@ function mobileNav() {
           <div class="age-consent">
             <input id="agreement" name="agreement" type="checkbox" onchange="checkGateAgeLive(document.getElementById('dob'))">
             <div>
-              <label for="agreement">I agree to the terms of the</label>
-              <button type="button" data-action="open-disclaimer-modal" class="age-disclaimer-link">Job Agent Disclaimer</button>
+              <label for="agreement">I have read the</label>
+              <button type="button" data-action="open-disclaimer-modal" class="age-disclaimer-link">External Listing Disclaimer</button>
             </div>
           </div>
 
@@ -2520,7 +2542,7 @@ function jobCard(o, inHub = false) {
     const ot = (o.opportunity_type || "").toLowerCase();
     const isShowcase = ot.includes("audition") || ot.includes("battle") || ot.includes("jam") || ot.includes("contest") || ot.includes("competition") || ot.includes("casting") || ot.includes("workshop");
     const loc = o.city ? `${o.city}${o.country ? ", " + o.country : ""}` : "Worldwide";
-    const orgLoc = `${esc(o.organization || "Private")} &bull; ${esc(loc)}`;
+    const orgName = o.organization || "Organizer not provided";
 
     let compMain = "Contact Organizer";
     if (o.compensation && (o.compensation.min_amount || o.compensation.max_amount || o.compensation.amount)) {
@@ -2627,12 +2649,17 @@ function jobCard(o, inHub = false) {
         </div>
       </div>
 
-      <!-- Title & Org -->
-      <h3 style="margin: 0 0 4px 0; font-size: 16px; font-weight: 700; color: #111827;">
-        <button data-action="job" data-value="${o.id}" class="link" style="color: inherit; text-decoration: none; text-align: left; background: none; border: none; padding: 0; font-family: inherit; font-size: inherit; font-weight: inherit; cursor: pointer;">${esc(o.title)}</button>
-      </h3>
-      <div style="font-size: 12px; color: #6b7280; margin-bottom: 4px; font-weight: 500;">
-        ${orgLoc}
+      <!-- Organization identity stays separate from the source/job board. -->
+      <div class="job-brand-row">
+        ${organizationLogo(o, "feed")}
+        <div class="job-brand-copy">
+          <h3 class="job-card-title">
+            <button data-action="job" data-value="${o.id}" class="link">${esc(o.title)}</button>
+          </h3>
+          <div class="job-card-orgline">
+            <strong>${esc(orgName)}</strong><span>${esc(loc)}</span>
+          </div>
+        </div>
       </div>
       
       <!-- Clean Meta: Styles & Dates -->
@@ -2707,10 +2734,16 @@ function jobCard(o, inHub = false) {
               ${!ui.guest ? (open ? `<span ${s.est ? `onclick="toast('${s.est_reason.replace(/'/g, "\\'")}')" style="cursor: pointer; border: 1px solid #10b981; color: #10b981; font-size: 11px; font-weight: 600; padding: 2px 8px; border-radius: 4px; background: rgba(16,185,129,0.05);"` : `style="border: 1px solid #10b981; color: #10b981; font-size: 11px; font-weight: 600; padding: 2px 8px; border-radius: 4px; background: rgba(16,185,129,0.05);"`}>+ ${s.value}%${s.est ? ' * est' : ' Match'}</span>` : `<span style="border: 1px solid #ef4444; color: #ef4444; font-size: 11px; font-weight: 600; padding: 2px 8px; border-radius: 4px; background: rgba(239,68,68,0.05);">Closed</span>`) : (!open ? `<span style="border: 1px solid #ef4444; color: #ef4444; font-size: 11px; font-weight: 600; padding: 2px 8px; border-radius: 4px; background: rgba(239,68,68,0.05);">Closed</span>` : "")}
           </div>
   
-          <!-- Title -->
-        <div style="padding: 0 20px 20px 20px;">
-            <h1 style="font-size: 24px; font-weight: 800; line-height: 1.25; margin: 0 0 8px 0; color: #0f172a;">${esc(o.title)}</h1>
-            <p style="font-size: 14px; color: #64748b; margin: 0;">${esc(o.organization || "Private")} &bull; ${esc(loc)}</p>
+        <!-- Title and hiring organization identity -->
+        <div class="job-detail-heading">
+            <h1>${esc(o.title)}</h1>
+            <div class="job-detail-orgline">
+                ${organizationLogo(o, "detail")}
+                <div class="job-detail-orgcopy">
+                    <strong>${esc(o.organization || "Organizer not provided")}</strong>
+                    <span>${esc(loc)}</span>
+                </div>
+            </div>
         </div>
 
         <!-- Meta Data (Clean layout, no boxes) -->
@@ -3206,10 +3239,10 @@ function profileForm() {
           <input id="profile-agreement" name="agreement" type="checkbox" checked style="width:16px; height:16px; accent-color:#2563eb; cursor:pointer; margin-top:2px;">
           <div style="font-size:12.5px; line-height:1.4; color:#374151;">
             <label for="profile-agreement" style="cursor:pointer; font-weight:500;">
-              I agree to the terms of the 
+              I have read the
             </label>
             <button type="button" data-action="open-disclaimer-modal" style="color:#2563eb; font-weight:600; text-decoration:underline; background:none; border:none; padding:0; cursor:pointer; font-size:12.5px;">
-              Job Agent Disclaimer
+              External Listing Disclaimer
             </button>
           </div>
         </div>
@@ -3375,25 +3408,25 @@ function formError(message) {
     const html = `
       <div style="text-align: left; padding: 4px 2px;">
         <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom: 16px;">
-          <h2 style="font-size: 18px; font-weight: 700; color: #111827; margin: 0;">Job Agent Disclaimer</h2>
+          <h2 style="font-size: 18px; font-weight: 700; color: #111827; margin: 0;">External Listing Disclaimer</h2>
         </div>
         
         <div style="font-size: 13px; color: #4b5563; line-height: 1.5; display: flex; flex-direction: column; gap: 12px;">
           <p style="margin: 0;">
-            Hammer provides curated dance jobs, casting calls, and audition listings. Before exploring opportunities, please keep in mind:
+            Hammer helps dancers discover jobs, auditions, casting calls, and events. Some opportunities are collected from external websites. Details may change or be incomplete, so please check the original post for the latest information. This notice applies only to external listings, not events created and hosted on Hammer.
           </p>
           <ul style="margin: 0; padding-left: 20px; display: flex; flex-direction: column; gap: 8px; color: #374151;">
-            <li><strong>Discovery platform, not an agency:</strong> Hammer aggregates and curates dance opportunities. We do not act as an agency or employer, and do not issue or manage contracts.</li>
-            <li><strong>Direct connection & application:</strong> Dancers review listings and independently contact, register, or apply directly with studios and organizers.</li>
-            <li><strong>Your own arrangements:</strong> Any working arrangements, schedules, casting participation, and payments are handled directly between you and the organizer.</li>
+            <li><strong>Contact and applications:</strong> You decide whether to contact, register, or apply with the organizer. For external jobs, Hammer is not the employer, does not make hiring decisions or negotiate terms, and cannot guarantee employment.</li>
+            <li><strong>Your arrangements:</strong> Work arrangements, schedules, participation, and payments are handled directly between you and the organizer.</li>
+            <li><strong>Report an issue:</strong> Use <strong>Report Job</strong> to flag a job issue. Listing owners can request a correction or removal at <a href="mailto:support@hammer.sg" style="color:#087f68;text-decoration:underline;overflow-wrap:anywhere;">support@hammer.sg</a>. The Hammer team will review the request.</li>
           </ul>
           <p style="font-weight: 600; color: #1f2937; margin: 4px 0 0 0;">
-            By checking the box, you confirm that you are 18+ and understand Hammer serves as a discovery platform to help you connect independently.
+            By checking the box, you confirm that you have read this notice for externally sourced opportunities.
           </p>
         </div>
 
         <button type="button" data-action="agree-disclaimer-from-modal" style="width: 100%; margin-top: 20px; padding: 12px 18px; background: #2563eb; color: white; border: none; border-radius: 12px; font-weight: 600; font-size: 14px; cursor: pointer; box-shadow: 0 2px 8px rgba(37,99,235,0.25);">
-          Got it, I agree!
+          I Understand
         </button>
       </div>
     `;
@@ -4348,7 +4381,7 @@ document.addEventListener("click", async (event) => {
       if (!isAlreadyVerified) {
         const ageConfirm = document.getElementById("quick-age-confirm")?.checked;
         if (!ageConfirm) {
-          toast("Please agree to the Job Agent Disclaimer to continue.");
+          toast("Please acknowledge the External Listing Disclaimer to continue.");
           return;
         }
         dobVal = document.getElementById("quick-dob-input")?.value;
@@ -4470,7 +4503,7 @@ document.addEventListener("click", async (event) => {
           return;
         }
         if (!isAgreed) {
-          toast("Please agree to the Job Agent Disclaimer to continue.");
+          toast("Please acknowledge the External Listing Disclaimer to continue.");
           agreementBox?.focus();
           return;
         }
@@ -4487,7 +4520,7 @@ document.addEventListener("click", async (event) => {
         return;
       }
       if (!isAgreed) {
-        toast("Please agree to the Job Agent Disclaimer to continue.");
+        toast("Please acknowledge the External Listing Disclaimer to continue.");
         agreementBox?.focus();
         return;
       }
@@ -4511,7 +4544,7 @@ document.addEventListener("click", async (event) => {
       closeDialog();
       const cb = document.getElementById("agreement") || document.getElementById("quick-age-confirm") || document.getElementById("profile-agreement");
       if (cb) cb.checked = true;
-      toast("Disclaimer agreed!");
+      toast("Thanks for reviewing the external listing notice.");
       return;
     } else if (a === "open-quick-setup") {
       openQuickSetupModal();
@@ -5207,8 +5240,8 @@ document.addEventListener("submit", (event) => {
       return;
     }
     if (!agreed) {
-      formError("Please agree to the Job Agent Disclaimer to continue.");
-      toast("Vui lòng đồng ý với điều khoản Job Agent Disclaimer.");
+      formError("Please acknowledge the External Listing Disclaimer to continue.");
+      toast("Vui lòng xác nhận đã đọc External Listing Disclaimer.");
       return;
     }
     ext().age = { dob: dobVal, accepted_at: now() };
@@ -5496,7 +5529,7 @@ document.addEventListener("submit", (event) => {
     // Check disclaimer agreement checkbox if present in form
     const agreementBox = document.getElementById("profile-agreement");
     if (agreementBox && !agreementBox.checked) {
-      error.textContent = "Please agree to the Job Agent Disclaimer terms.";
+      error.textContent = "Please acknowledge the External Listing Disclaimer.";
       return;
     }
 
