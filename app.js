@@ -1068,7 +1068,7 @@ function renderCMS() {
   const pages = [
     ["jobs", "briefcase", "Danh sách Job"],
     ["sources", "globe", "Nguồn dữ liệu"],
-    ["queue", "tray", "Hàng đợi duyệt"],
+    ["queue", "tray", "Submissions & Reports"],
     ["dancers", "users", "Users & Job Activity"],
     ["operations", "chart-bar", "Cấu hình vận hành"],
   ];
