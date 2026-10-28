@@ -33,13 +33,14 @@ if (db && db.ai_opportunities) {
   if (migrated) localStorage.setItem(STORE, JSON.stringify(db));
 }
 const ui = {
-  mode: "dancer",
-  cms: "jobs",
+  mode: "cms",
+  cms: "overview",
   mobile: "feed",
   role: "admin",
   guest: false,
   sourceTab: "sources",
   queueTab: "community",
+  reviewTab: "submissions",
   hub: "all",
   job: null,
   lang: "en",
@@ -128,8 +129,8 @@ const kv = (items) =>
   `<dl class="kv">${items.map(([k, v]) => `<dt>${esc(k)}</dt><dd>${esc(v ?? "Not provided")}</dd>`).join("")}</dl>`;
 const empty = (title, text = "", action = "") =>
   `<div class="empty"><h3>${title}</h3><p>${text}</p>${action}</div>`;
-const table = (heads, rows) =>
-  `<div class="table-wrap"><table><thead><tr>${heads.map((h) => `<th>${h}</th>`).join("")}</tr></thead><tbody>${rows.length ? rows.join("") : `<tr><td colspan="${heads.length}">${empty("No records", "Try a different search or filter.")}</td></tr>`}</tbody></table></div>`;
+const table = (heads, rows, minWidth = "") =>
+  `<div class="table-wrap"><table${minWidth ? ` style="min-width:${minWidth};"` : ""}><thead><tr>${heads.map((h) => `<th>${h}</th>`).join("")}</tr></thead><tbody>${rows.length ? rows.join("") : `<tr><td colspan="${heads.length}">${empty("No records", "Try a different search or filter.")}</td></tr>`}</tbody></table></div>`;
 const row = (cells) => `<tr>${cells.map((c) => `<td>${c}</td>`).join("")}</tr>`;
 const types = ["audition", "workshop", "commercial"];
 const statuses = [
@@ -1066,20 +1067,136 @@ function render() {
 }
 function renderCMS() {
   const pages = [
-    ["jobs", "briefcase", "Danh sách Job"],
-    ["sources", "globe", "Nguồn dữ liệu"],
+    ["overview", "squares-four", "Agent overview"],
+    ["jobs", "briefcase", "Job list"],
+    ["sources", "globe", "Crawler sources"],
     ["queue", "tray", "Submissions & Reports"],
-    ["dancers", "users", "Users & Job Activity"],
-    ["operations", "chart-bar", "Cấu hình vận hành"],
+    ["dancers", "users", "Dancers"],
+    ["templates", "text-t", "Pitch templates"],
   ];
   const content = {
+    overview: cmsOverview,
     jobs: cmsJobs,
     sources: cmsSources,
     queue: cmsQueue,
     dancers: cmsDancers,
-    operations: cmsOperations,
+    templates: cmsTemplates,
   }[ui.cms]();
-  return `<div class="layout"><aside class="sidebar"><div class="sidebar-title">JOB AGENT</div>${pages.map(([id, i, l]) => btn("cms", icon(i) + l, id, ui.cms === id ? "active" : "")).join("")}<div class="footnote">Phase 1 delivery<br>07 Sep – 13 Nov 2026<br><br>Sprint 1 demo · 21 Sep</div></aside><section class="workspace">${!editable() ? '<div class="permission">Read-only access</div>' : ""}${content}</section></div>`;
+  const nav = pages
+    .map(([id, glyph, label]) =>
+      btn("cms", icon(glyph) + `<span>${label}</span>`, id, ui.cms === id ? "active" : ""),
+    )
+    .join("");
+  const timezone = ext().schedule?.timezone || "UTC";
+  const timezones = [["UTC", "UTC"], ["Asia/Singapore", "Singapore"], ["Asia/Ho_Chi_Minh", "Ho Chi Minh City"], ["Asia/Tokyo", "Tokyo"], ["America/Los_Angeles", "Los Angeles"], ["Europe/London", "London"]];
+  return `<div class="cms-shell"><aside class="sidebar cms-sidebar"><div class="cms-sidebar-brand"><b>H</b><span>Admin CMS</span></div><nav aria-label="CMS navigation"><div class="cms-nav-item">${icon("squares-four")}<span>Dashboard</span></div><div class="cms-nav-group"><div class="cms-nav-heading">${icon("users")}<span>Accounts</span>${icon("caret-down")}</div><div class="cms-nav-muted">Users<br>Instructors<br>Administrator</div></div><div class="cms-nav-group is-open"><div class="cms-nav-heading">${icon("briefcase")}<span>Jobs</span>${icon("caret-up")}</div><div class="cms-agent-links">${nav}</div></div><div class="cms-nav-item">${icon("play-circle")}<span>Videos</span></div><div class="cms-nav-item">${icon("calendar-check")}<span>Events</span>${icon("caret-down")}</div><div class="cms-nav-item">${icon("book-open-text")}<span>Course</span>${icon("caret-down")}</div><div class="cms-nav-item">${icon("currency-circle-dollar")}<span>Transactions</span>${icon("caret-down")}</div><div class="cms-nav-item">${icon("warning-circle")}<span>Reports</span></div><div class="cms-nav-item">${icon("headset")}<span>Support Center</span></div><div class="cms-nav-group"><div class="cms-nav-heading">${icon("gear")}<span>Content Settings</span>${icon("caret-down")}</div><div class="cms-nav-muted">Exchange Rate<br>Hashtag<br>Dance Styles<br>Announcements<br>Banners<br>User’s Music<br><button type="button" class="cms-templates-shortcut" data-action="cms" data-value="templates">Pitch templates</button></div></div></nav></aside><div class="cms-main"><header class="cms-topbar"><span class="cms-menu-toggle" aria-hidden="true">☰</span><div class="cms-breadcrumb">Jobs <span>/</span> ${pages.find(([id]) => id === ui.cms)?.[2] || "Agent overview"}</div><div class="cms-topbar-actions"><span class="cms-timezone">${icon("clock")}<select data-cms-timezone aria-label="CMS time zone" ${!editable() ? "disabled" : ""}>${options(timezones, timezone)}</select></span><span>${icon("globe")} &nbsp;EN</span><span class="cms-admin-name">Forest Lam <b>FO</b></span></div></header><section class="workspace">${!editable() ? '<div class="permission">Read-only access</div>' : ""}${content}</section></div></div>`;
+}
+function cmsOverview() {
+  const needsReview = 632;
+  const submissions = 1;
+  const reports = 0;
+  const queueAction = (title, count, detail, target, tone = "") => `<button class="agent-work-item ${tone}" data-action="cms" data-value="${target}"><span><strong>${title}</strong><small>${detail}</small></span><b>${count}</b></button>`;
+  const stat = (label, value, hint, glyph) => `<div class="agent-stat"><span class="agent-stat-icon">${icon(glyph)}</span><div><small>${label}</small><strong>${value}</strong>${hint ? `<span>${hint}</span>` : ""}</div></div>`;
+  return heading("JOBS · AGENT OPERATIONS", "Agent overview", "Job Agent activity and settings.") +
+    `<div class="overview-updated">Updated 26 Oct 2026</div>` +
+    `<div class="agent-stats agent-stats--ratios">${stat("Profile updated / total accounts", "— / 141", "", "user-circle")}${stat("Open to Work / total accounts", "— / 141", "", "toggle-right")}${stat("Live jobs / total jobs", "— / 850", "", "briefcase")}</div>` +
+    `<section class="agent-panel agent-queues-panel"><div class="section-heading"><h3>Needs attention</h3><small>Updated 26 Oct 2026</small></div><div class="agent-work-list">${queueAction("Jobs needing review", needsReview, "Review before publishing.", "jobs", "amber")}${queueAction("Dancer submissions", submissions, "Waiting for review.", "queue", "blue")}${queueAction("Open job reports", reports, "Reported jobs awaiting action.", "queue")}</div></section>` +
+    `<section class="agent-panel schedule-config-panel"><div class="section-heading"><h3>Automation schedule</h3></div>${scheduleConfigForm()}</section>` +
+    `<details class="agent-panel agent-api-settings"><summary><span><strong>AI services & API settings</strong><small>AI provider and extraction settings</small></span></summary><div class="api-settings-list"><div><strong>Gemini</strong><span>API key</span></div><div><strong>Firecrawl</strong><span>API key</span></div><div><strong>AI model</strong><span>Model selection</span></div><div><strong>Playwright</strong><span>Browser availability</span></div><div><strong>Extraction prompt</strong><span>Job data extraction instructions</span></div></div></details>`;
+}
+function scheduleConfigForm() {
+  const schedule = ext().schedule || {};
+  const pipelineEnabled = {
+    discovery: schedule.discovery_enabled ?? true,
+    source_crawl: schedule.source_crawl_enabled ?? true,
+  };
+  const source = schedulePresetFromCron(schedule.source_crawl_cron || "0 * * * *");
+  const discovery = schedulePresetFromCron(schedule.discovery_cron || "0 8 * * *");
+  const timezone = schedule.timezone || "UTC";
+  const notificationFrequency = schedule.notification_frequency || "new_match";
+  const notificationTime = schedule.notification_time || "09:00";
+  const recurringOptions = [["hourly", "Every hour"], ["every_6_hours", "Every 6 hours"], ["every_12_hours", "Every 12 hours"], ["daily", "Every day"], ["weekly", "Every week"]];
+  const weekdayOptions = [["0", "Sunday"], ["1", "Monday"], ["2", "Tuesday"], ["3", "Wednesday"], ["4", "Thursday"], ["5", "Friday"], ["6", "Saturday"]];
+  const scheduleFields = (key, label, preset) => `<section class="schedule-choice"><div class="schedule-choice-heading"><strong>${label}</strong><small data-schedule-summary="${key}">${preset.kind === "custom" ? "Custom schedule" : schedulePresetSummary(preset)}</small></div><label class="check-row schedule-pipeline-toggle"><input type="checkbox" name="${key}_enabled" ${pipelineEnabled[key] ? "checked" : ""} ${!editable() ? "disabled" : ""}><span>Run this pipeline automatically</span></label>${select(`${key}_frequency`, "How often?", [...recurringOptions, ...(preset.kind === "custom" ? [["custom", "Custom schedule"]] : [])], preset.kind, `data-schedule-frequency="${key}" ${!editable() ? "disabled" : ""}`)}<div class="schedule-details" data-schedule-detail="${key}" ${preset.kind !== "daily" && preset.kind !== "weekly" ? "hidden" : ""}>${field(`${key}_time`, `What time? (${timezone})`, preset.time || "08:00", "time", `data-schedule-time="${key}" ${preset.kind !== "daily" && preset.kind !== "weekly" ? "disabled" : ""} ${!editable() ? "disabled" : ""}`)}<div data-schedule-weekday-wrap="${key}" ${preset.kind !== "weekly" ? "hidden" : ""}>${select(`${key}_weekday`, "Which day?", weekdayOptions, preset.weekday || "1", `data-schedule-weekday="${key}" ${preset.kind !== "weekly" ? "disabled" : ""} ${!editable() ? "disabled" : ""}`)}</div></div><p class="schedule-custom-note" data-schedule-custom="${key}" ${preset.kind !== "custom" ? "hidden" : ""}>This schedule uses a custom setting. Contact your technical admin before changing it.</p><p class="schedule-help" data-schedule-help="${key}" ${preset.kind === "custom" ? "hidden" : ""}>${preset.kind === "custom" ? "" : schedulePresetHelp(preset)}</p></section>`;
+  const hasCustom = source.kind === "custom" || discovery.kind === "custom";
+  return `<form id="schedule-form" data-kind="schedule"><div class="schedule-human-fields">${scheduleFields("discovery", "Find job links from keywords", discovery)}${scheduleFields("source_crawl", "Check job links for updates", source)}</div><section class="notification-schedule"><div><strong>Dancer notifications</strong><span>Choose when dancers receive job-match alerts</span></div><div class="notification-controls">${select("notification_frequency", "Send alerts", [["new_match", "When a new match is found"], ["daily", "Once a day"], ["every_3_days", "Every 3 days"], ["weekly", "Once a week"]], notificationFrequency, `data-notification-frequency ${!editable() ? "disabled" : ""}`)}<div data-notification-time-wrap ${notificationFrequency === "new_match" ? "hidden" : ""}>${field("notification_time", `Send time (${timezone})`, notificationTime, "time", `data-notification-time ${notificationFrequency === "new_match" ? "disabled" : "required"} ${!editable() ? "disabled" : ""}`)}</div></div></section><div class="actions">${btn("save-schedule", icon("floppy-disk") + "Save", "", "primary", !editable() || hasCustom)}<button type="button" data-action="cms" data-value="sources">Open Crawler Sources</button></div></form>`;
+}
+function schedulePresetFromCron(cron) {
+  const parts = String(cron).trim().split(/\s+/);
+  if (parts.length !== 5 || !/^[0-9]{1,2}$/.test(parts[0]) || Number(parts[0]) > 59) return { kind: "custom" };
+  if (parts[0] === "0" && parts[1] === "*" && parts.slice(2).every((part) => part === "*")) return { kind: "hourly" };
+  if (parts[0] === "0" && ["6", "12"].some((hours) => parts[1] === `*/${hours}` && parts.slice(2).every((part) => part === "*"))) return { kind: `every_${parts[1].slice(2)}` };
+  if (/^[0-9]{1,2}$/.test(parts[1]) && Number(parts[1]) < 24 && parts[2] === "*" && parts[3] === "*" && parts[4] === "*") return { kind: "daily", time: `${parts[1].padStart(2, "0")}:${parts[0].padStart(2, "0")}` };
+  if (/^[0-9]{1,2}$/.test(parts[1]) && Number(parts[1]) < 24 && parts[2] === "*" && parts[3] === "*" && /^[0-6]$/.test(parts[4])) return { kind: "weekly", time: `${parts[1].padStart(2, "0")}:${parts[0].padStart(2, "0")}`, weekday: parts[4] };
+  return { kind: "custom" };
+}
+function schedulePresetSummary(preset) {
+  if (preset.kind === "hourly") return "Runs at the start of every hour";
+  if (preset.kind === "every_6_hours") return "Runs every 6 hours, on the hour";
+  if (preset.kind === "every_12_hours") return "Runs every 12 hours, on the hour";
+  if (preset.kind === "daily") return `Runs every day at ${preset.time}`;
+  if (preset.kind === "weekly") return `Runs every ${["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"][Number(preset.weekday ?? 1)]} at ${preset.time}`;
+  return "Custom schedule";
+}
+function schedulePresetHelp(preset) {
+  if (preset.kind === "hourly") return "The system starts this task once every hour.";
+  if (preset.kind === "every_6_hours") return "Runs every 6 hours, on the hour.";
+  if (preset.kind === "every_12_hours") return "Runs every 12 hours, on the hour.";
+  if (preset.kind === "daily") return "Choose the time this task should run each day.";
+  return "Choose a day and time for this task to run each week.";
+}
+function schedulePresetToCron(kind, time, weekday) {
+  if (kind === "hourly") return "0 * * * *";
+  if (kind === "every_6_hours") return "0 */6 * * *";
+  if (kind === "every_12_hours") return "0 */12 * * *";
+  const [hour, minute] = String(time || "08:00").split(":").map(Number);
+  if (!Number.isInteger(hour) || hour < 0 || hour > 23 || !Number.isInteger(minute) || minute < 0 || minute > 59) return null;
+  if (kind === "daily") return `${minute} ${hour} * * *`;
+  if (kind === "weekly" && /^[0-6]$/.test(String(weekday))) return `${minute} ${hour} * * ${weekday}`;
+  return null;
+}
+function updateScheduleChoice(form, key) {
+  const kind = form.elements[`${key}_frequency`]?.value || "hourly";
+  const timeField = form.elements[`${key}_time`];
+  const weekdayField = form.elements[`${key}_weekday`];
+  const details = form.querySelector(`[data-schedule-detail="${key}"]`);
+  const weekdayWrap = form.querySelector(`[data-schedule-weekday-wrap="${key}"]`);
+  const summary = form.querySelector(`[data-schedule-summary="${key}"]`);
+  const help = form.querySelector(`[data-schedule-help="${key}"]`);
+  const customNote = form.querySelector(`[data-schedule-custom="${key}"]`);
+  const isTimed = kind === "daily" || kind === "weekly";
+  if (details) details.hidden = !isTimed;
+  if (weekdayWrap) weekdayWrap.hidden = kind !== "weekly";
+  if (timeField) timeField.disabled = !isTimed || !editable();
+  if (weekdayField) weekdayField.disabled = kind !== "weekly" || !editable();
+  if (summary && kind !== "custom") summary.textContent = schedulePresetSummary({ kind, time: timeField?.value || "08:00", weekday: weekdayField?.value || "1" });
+  if (help) { help.hidden = kind === "custom"; if (kind !== "custom") help.textContent = schedulePresetHelp({ kind }); }
+  if (customNote) customNote.hidden = kind !== "custom";
+}
+function updateNotificationSchedule(form) {
+  const frequency = form.elements.notification_frequency?.value || "new_match";
+  const timeWrap = form.querySelector("[data-notification-time-wrap]");
+  const timeField = form.elements.notification_time;
+  const needsTime = frequency !== "new_match";
+  if (timeWrap) timeWrap.hidden = !needsTime;
+  if (timeField) {
+    timeField.disabled = !needsTime || !editable();
+    timeField.required = needsTime;
+  }
+}
+function cmsTemplates() {
+  const rows = [
+    ["general_excellent_en_01", "general · excellent · confident · en 01", "en", "any", "excellent", "Yes", "3"],
+    ["general_partial_en_01", "general · partial · confident · en 01", "en", "any", "partial", "Yes", "3"],
+    ["general_potential_en_01", "general · potential · confident · en 01", "en", "any", "potential", "Yes", "3"],
+    ["agency_signup_excellent_en_01", "agency_signup · excellent · confident · en 01", "en", "agency_signup", "excellent", "Yes", "3"],
+  ];
+  return heading("CONTENT SETTINGS · PITCH TEMPLATES", "Pitch templates", "Manage the templates used to prepare dancer application drafts.") +
+    `<div class="prototype-snapshot"><strong>Live CMS snapshot · 26 Oct 2026</strong><span>408 templates observed in CMS. Four representative sample rows below; they are not a live export.</span></div>` +
+    `<div class="template-note"><strong>Current CMS behavior</strong><span>Admins can edit an existing template and enable/disable it. New templates and deletions are managed through the YAML source, not this screen.</span></div>` +
+    `<div class="toolbar"><input type="search" aria-label="Search templates" placeholder="Search code or name" disabled><select aria-label="Filter language" disabled><option>All languages</option><option>English</option><option>Japanese</option></select><select aria-label="Filter type" disabled><option>All types</option></select><select aria-label="Filter tier" disabled><option>All tiers</option></select></div>` +
+    table(["Code", "Name", "Language", "Type", "Tier", "Enabled", "Priority", "Action"], rows.map((r) => row([`<strong>${esc(r[0])}</strong>`, esc(r[1]), esc(r[2]), esc(r[3]), pill(esc(r[4]), r[4] === "excellent" ? "green" : ""), esc(r[5]), esc(r[6]), `<button type="button" disabled title="Prototype sample only">Edit</button>`])), "1050px") +
+    `<p class="summary-line">Controls are shown as disabled because this is a sample-only prototype. Confirm template editing and EN/JA content quality in the live CMS before Sprint 3 acceptance.</p>`;
 }
 function searchBar(statusList = []) {
   return `<div class="toolbar"><input type="search" id="cms-search" aria-label="Search records" placeholder="Search title, organization, city or URL" value="${esc(ui.search)}">${statusList.length ? `<select id="cms-status" aria-label="Filter status">${options([["", "All statuses"], ...statusList], ui.status)}</select>` : ""}</div>`;
@@ -1711,50 +1828,90 @@ function runTable() {
   );
 }
 function cmsQueue() {
+  const reviewTab = ui.reviewTab || "submissions";
   const community = ui.queueTab === "community";
-  const rows = (
-    community ? ext().submissions : db.ai_discovered_source_candidates
-  ).filter(matches);
-  return (
-    heading(
-      "CMS-03 · SPRINT 4",
-      "Review queue",
-      "Approve a source for ingestion; review extracted jobs in the pipeline.",
-    ) +
-    `<div class="tabs">${btn("queue-tab", "Dancer contributions", "community", community ? "active" : "")}${btn("queue-tab", "Discovered sources", "discovery", !community ? "active" : "")}</div>` +
-    searchBar(["pending_review", "approved", "rejected", "duplicate"]) +
-    table(
-      [
-        "Submitted source",
-        community ? "Contributor" : "Discovery keyword",
-        "Note",
-        "Review reason",
-        helpHeading(
-          "Status",
-          "Review decision. Statuses: Pending, Approved, Rejected, Duplicate.",
-        ),
-        "Action",
-      ],
-      rows.map((s) =>
-        row([
-          external(s.url, s.url),
-          community ? `Dancer #${s.dancer_id}` : esc(s.keyword),
-          esc(s.note || s.snippet || "—"),
-          esc(s.reason || "—"),
-          pill(
-            s.status,
-            s.status === "approved"
-              ? "green"
-              : s.status === "rejected"
-                ? "red"
-                : "amber",
-          ),
-          s.status === "pending_review"
-            ? `<div class="actions">${btn("approve", "Approve source", s.id, "", !editable())}${btn("reject", "Reject", s.id, "danger", !editable())}</div>`
-            : "Reviewed",
-        ]),
+  const submissions = ext().submissions;
+  const discoveries = db.ai_discovered_source_candidates;
+  const pendingSubmissionCount = submissions.filter((s) => s.status === "pending_review").length;
+  const pendingDiscoveryCount = discoveries.filter((s) => s.status === "pending_review").length;
+  const pendingReports = ext().reports.filter((r) => r.status === "pending");
+  const openReportJobCount = new Set(pendingReports.map((r) => r.opportunity_id)).size;
+
+  const tab = (id, label, count, active) =>
+    `<button type="button" role="tab" aria-selected="${active}" data-action="review-tab" data-value="${id}" class="${active ? "active" : ""}"><span>${label}</span><span class="tab-count" style="display:inline-flex;align-items:center;justify-content:center;min-width:22px;height:20px;padding:0 6px;border-radius:10px;background:${active ? "#e7f5ef" : "#eef1f2"};color:${active ? "#07664e" : "#566269"};font-size:10px;font-weight:700;">${count}</span></button>`;
+
+  const intro = heading(
+    "CMS-03 · SPRINT 4",
+    "Submissions & Reports",
+    "Review dancer-submitted sources and reports about job listings.",
+  );
+  const tabs = `<div class="tabs review-tabs" role="tablist" aria-label="Review queue">${tab("submissions", "Submissions", pendingSubmissionCount + pendingDiscoveryCount, reviewTab === "submissions")}${tab("reports", "Reports", openReportJobCount, reviewTab === "reports")}</div>`;
+
+  if (reviewTab === "reports") {
+    const grouped = new Map();
+    for (const report of ext().reports) {
+      const key = report.opportunity_id;
+      if (!grouped.has(key)) grouped.set(key, []);
+      grouped.get(key).push(report);
+    }
+    const reportRows = [...grouped.entries()].map(([jobId, reports]) => {
+      const listing = job(jobId);
+      const ordered = reports.slice().sort((a, b) => String(a.created_at).localeCompare(String(b.created_at)));
+      const latest = ordered.at(-1);
+      const pending = ordered.filter((r) => r.status === "pending");
+      const reasons = [...new Set(ordered.map((r) => r.reason).filter(Boolean))];
+      const reporters = new Set(ordered.map((r) => r.dancer_id)).size;
+      const moderation = ext().moderation[jobId];
+      const displayStatus = moderation === "hidden" ? "Hidden" : moderation === "removed" ? "Removed" : listing?.status === "published" ? "Published" : listing?.status === "closed" ? "Closed" : listing?.status === "needs_review" ? "Needs review" : listing?.status || "Unavailable";
+      const statusKind = moderation === "removed" || displayStatus === "Closed" ? "red" : moderation === "hidden" || displayStatus === "Needs review" ? "amber" : displayStatus === "Published" ? "green" : "";
+      const rowData = {
+        jobId,
+        title: listing?.title || "Unavailable job",
+        organization: listing?.organization || "",
+        status: pending.length ? "pending" : "resolved",
+        reports,
+      };
+      if (!matches(rowData)) return null;
+      return row([
+        `<strong>${esc(listing?.title || "Unavailable job")}</strong><small>Job #${esc(jobId)}${listing?.organization ? ` · ${esc(listing.organization)}` : ""}</small>`,
+        pill(displayStatus, statusKind),
+        `<strong>${pending.length}</strong><small>of ${ordered.length} total</small>`,
+        esc(reasons.join(", ") || "—"),
+        esc(latest?.note || "—"),
+        `${reporters} ${reporters === 1 ? "dancer" : "dancers"}`,
+        stamp(latest?.created_at),
+        pending.length ? btn("moderate", "Review", pending[pending.length - 1].id, "", !editable()) : "Resolved",
+      ]);
+    }).filter(Boolean);
+
+    const reportToolbar = `<div class="toolbar"><input type="search" id="cms-search" aria-label="Search reports" placeholder="Search job, reason or reporter note" value="${esc(ui.search)}"><select id="cms-status" aria-label="Filter report status">${options([["", "All reports"], ["pending", "Needs review"], ["resolved", "Resolved"]], ui.status)}</select></div>`;
+    const notice = `<div class="review-notice" style="margin:0 0 16px;padding:11px 13px;border:1px solid var(--line);border-radius:5px;background:#fff;color:var(--muted);font-size:12px;line-height:1.5;"><strong style="color:var(--ink);">Jobs with open reports: ${openReportJobCount}.</strong> Jobs reported by 3 dancers are hidden automatically. Review the reports below before taking action.</div>`;
+    return intro + tabs + notice + reportToolbar + table(
+      ["Job", "Job status", "Open reports", "Reasons", "Latest note", "Reporters", "Last reported", "Action"],
+      reportRows,
+      "1120px",
+    );
+  }
+
+  const rows = (community ? submissions : discoveries).filter(matches);
+  const sourceControl = `<label class="review-source-filter" for="review-origin" style="display:flex;align-items:center;gap:7px;color:var(--muted);font-size:12px;">Source<select id="review-origin" aria-label="Submission source" style="max-width:210px;">${options([["community", "Dancer submissions"], ["discovery", "Agent discoveries"]], ui.queueTab)}</select></label>`;
+  const submissionToolbar = `<div class="toolbar review-toolbar"><input type="search" id="cms-search" aria-label="Search submissions" placeholder="Search URL, contributor or note" value="${esc(ui.search)}">${sourceControl}<select id="cms-status" aria-label="Filter submission status">${options([["", "All statuses"], ["pending_review", "Pending review"], ["approved", "Approved"], ["rejected", "Rejected"], ["duplicate", "Duplicate"]], ui.status)}</select></div>`;
+
+  return intro + tabs + submissionToolbar + table(
+    ["Submitted source", community ? "Contributor" : "Discovered by", "Note", "Submitted", "Status", "Action"],
+    rows.map((s) => row([
+      external(s.url, s.url),
+      community ? `Dancer #${esc(s.dancer_id)}` : esc(s.keyword || "Agent discovery"),
+      esc(s.note || s.snippet || "—"),
+      stamp(s.submitted_at || s.created_at),
+      pill(
+        s.status === "pending_review" ? "Pending review" : s.status,
+        s.status === "approved" ? "green" : s.status === "rejected" || s.status === "invalid" ? "red" : "amber",
       ),
-    )
+      s.status === "pending_review"
+        ? `<div class="actions">${btn("approve", "Approve", s.id, "", !editable())}${btn("reject", "Reject", s.id, "danger", !editable())}</div>`
+        : esc(s.reason || "Reviewed"),
+    ])),
   );
 }
 
@@ -1882,6 +2039,14 @@ function cmsDancers() {
   if (ui.cmsDancerId) return cmsDancerDetail(ui.cmsDancerId, ui.cmsUserKind || "user");
   const prospects = cmsProspects();
   const users = db.dancers.filter(matches);
+  const ageStatus = (user) => {
+    if (!user.dob) return "DOB missing";
+    const birth = new Date(`${user.dob}T00:00:00Z`);
+    const todayDate = new Date();
+    let age = todayDate.getUTCFullYear() - birth.getUTCFullYear();
+    if (todayDate.getUTCMonth() < birth.getUTCMonth() || (todayDate.getUTCMonth() === birth.getUTCMonth() && todayDate.getUTCDate() < birth.getUTCDate())) age--;
+    return age >= 18 ? "18+" : "Under 18";
+  };
   
   const allRecords = [
     ...users.map(u => ({ ...u, _type: 'user', _isNew: false })), 
@@ -1889,7 +2054,7 @@ function cmsDancers() {
   ];
 
   const listTable = table(
-    ["ID", "Dancer Info", "Contact", "Profile Health", "Open to work", "Status", "Matched", "Applied", "Action"],
+    ["ID", "Dancer Info", "Contact", "Profile Health", "Age status", "Terms", "Open to work", "Status", "Matched", "Applied", "Action"],
     allRecords.map((user) => {
       const isProspect = user._type === 'prospect';
       const records = userJobRecords(user, isProspect);
@@ -1915,6 +2080,8 @@ function cmsDancers() {
         nameCol,
         contactCol,
         profileHealthCol,
+        isProspect ? "Not available" : pill(ageStatus(user), ageStatus(user) === "18+" ? "green" : "amber"),
+        isProspect ? "Not available" : (user.terms_accepted ?? user.agreement_accepted ? pill("Accepted", "green") : pill("Not accepted", "amber")),
         openToWorkCol,
         statusCol,
         `<strong>${records.filter((item) => item.matchStatus === "Matched").length}</strong>`,
@@ -1937,71 +2104,6 @@ function cmsDancers() {
   `;
 }
 
-function operationsConfig() {
-  const c = ext().operationsConfig || {
-    emergency_stop: false,
-    publish_score: 7,
-    reject_score: 3,
-    expiry_days: 30,
-    report_limit: 3,
-    push_threshold: 85,
-  };
-  return `<div class="section-heading"><h3>Global configuration</h3><small>Proposed settings · local prototype only</small></div><form id="operations-config-form"><fieldset ${!editable() ? "disabled" : ""} style="border:0;padding:0;margin:0"><label class="check-row"><input type="checkbox" role="switch" name="emergency_stop" ${c.emergency_stop ? "checked" : ""}>Emergency kill switch</label><div class="form-grid">${field("publish_score", "Auto-publish score (0–9)", c.publish_score, "number", 'min="0" max="9" step="1" required')}${field("reject_score", "Auto-reject score (0–9)", c.reject_score, "number", 'min="0" max="9" step="1" required')}${field("expiry_days", "Job expiry duration (days)", c.expiry_days, "number", 'min="1" max="3650" step="1" required')}${field("report_limit", "Report suspension limit (dancers)", c.report_limit, "number", 'min="1" max="10000" step="1" required')}${field("push_threshold", "Push notification threshold (%)", c.push_threshold, "number", 'min="0" max="100" step="1" required')}</div><div class="error-text" id="operations-config-error" role="alert"></div><button type="submit" class="primary">Save configuration</button></fieldset></form>`;
-}
-function cmsOperations() {
-  const m = (ui.metrics ||= metrics());
-  return (
-    heading(
-      "CMS-05 · SPRINT 5",
-      "Operations",
-      "Periodic operational summary.",
-      btn("refresh-metrics", icon("arrows-clockwise") + "Refresh summary"),
-    ) +
-    `<small>Snapshot updated ${stamp(m.at)} · All sample records</small><div class="stats">${[
-      ["Crawl attempts", m.crawls],
-      ["Available jobs", m.jobs],
-      ["Copied drafts", m.copied],
-      ["Self-reported applications", m.applied],
-    ]
-      .map(
-        ([l, v]) =>
-          `<div class="stat"><span>${helpHeading(l, { "Crawl attempts": "Recorded individual source crawl attempts, including failures.", "Available jobs": "Jobs currently available under prototype visibility rules.", "Copied drafts": "Jobs with a recorded draft copy, not confirmed applications.", "Self-reported applications": "Jobs marked as applied by dancers, not verified submissions to employers." }[l])}</span><b>${v}</b></div>`,
-      )
-      .join("")}</div>
-    <div class="section-heading"><h3>Quality review</h3><small>Final UAT window</small></div>${table(["Metric", "Target", "Measured result"], [row(["Verified job precision", "≥ 70%", "Not measured · audit sample required"]), row(["Hidden opportunity discovery", "≥ 40%", "Not measured · reference-board comparison required"])])}
-    <div class="section-heading"><h3>Crawler schedule</h3></div><form id="schedule-form"><div class="form-grid">${field("crawl_time", "Daily run time", ext().schedule.crawl_time, "time", "required")}${select("timezone", "Time zone", ["Asia/Singapore", "Asia/Tokyo", "UTC"], ext().schedule.timezone)}</div><label class="check-row"><input name="enabled" type="checkbox" ${ext().schedule.enabled ? "checked" : ""} ${!editable() ? "disabled" : ""}>Scheduled crawling enabled</label>${btn("save-schedule", "Save schedule", "", "", !editable())}</form>
-    ${operationsConfig()}<div class="section-heading"><h3>Reported jobs</h3><small>No automatic source suspension</small></div>${table(
-      [
-        "Job",
-        "Reason",
-        "Note",
-        helpHeading(
-          "Status",
-          "Pending reports await review. Resolved reports have an admin decision.",
-        ),
-        "Action",
-      ],
-      ext().reports.map((r) =>
-        row([
-          `<strong>${esc(job(r.opportunity_id)?.title || "Unavailable job")}</strong><small>#${r.opportunity_id}</small>`,
-          esc(r.reason),
-          esc(r.note || "—"),
-          pill(r.status, r.status === "pending" ? "amber" : "green"),
-          btn("moderate", "Review", r.id),
-        ]),
-      ),
-    )}
-    <div class="section-heading"><h3>Recent discovery runs</h3></div>${discoveryTable()}<div class="section-heading"><h3>Pipeline health · crawl runs</h3></div>${runTable()}<p class="summary-line">${ui.running ? "A sample pipeline is running." : "No sample pipeline running."}</p>
-    <div class="section-heading"><h3>Recent activity</h3></div>${table(
-      ["Time", "Actor", "Action", "Record"],
-      ext()
-        .audit.slice(0, 10)
-        .map((a) =>
-          row([stamp(a.at), esc(a.actor), esc(a.action), esc(a.entity)]),
-        ),
-    )}`
-  );
-}
 function mobileNav() {
   return `<nav class="mobile-bottom" aria-label="Dancer navigation">${[
     ["home", "house", "Home", true],
@@ -4214,7 +4316,12 @@ document.addEventListener("click", async (event) => {
     ui.cms = v;
     ui.search = "";
     ui.status = "";
-    if (v === "operations") ui.metrics = null;
+    if (v === "queue") ui.reviewTab = "submissions";
+    render();
+  } else if (a === "review-tab") {
+    ui.reviewTab = v;
+    ui.search = "";
+    ui.status = "";
     render();
   } else if (a === "mobile") {
     if (ui.mobile === "profile" && ui.dirty && v !== "profile") {
@@ -4882,8 +4989,9 @@ document.addEventListener("click", async (event) => {
     ui.metrics = metrics();
     render();
     toast("Summary refreshed.");
-  } else if (a === "save-schedule") $("#schedule-form").requestSubmit();
-  else if (a === "reset") {
+  } else if (a === "save-schedule") {
+    document.getElementById("schedule-form")?.requestSubmit();
+  } else if (a === "reset") {
     if (!confirm("Reset all sample data on this computer?")) return;
     db = HammerSeed();
     persist();
@@ -4918,6 +5026,28 @@ document.addEventListener("input", (event) => {
 });
 document.addEventListener("change", (event) => {
   const t = event.target;
+  if (t.matches("[data-cms-timezone]")) {
+    ext().schedule = { ...(ext().schedule || {}), timezone: t.value };
+    persist();
+    render();
+    return;
+  }
+  if (t.matches("[data-notification-frequency]")) {
+    updateNotificationSchedule(t.form);
+    return;
+  }
+  if (t.matches("[data-schedule-frequency]")) {
+    const form = t.form;
+    const keys = ["source_crawl", "discovery"];
+    keys.forEach((key) => updateScheduleChoice(form, key));
+    const save = form.querySelector('[data-action="save-schedule"]');
+    if (save) save.disabled = !editable() || keys.some((key) => form.elements[`${key}_frequency`]?.value === "custom");
+    return;
+  }
+  if (t.matches("[data-schedule-time], [data-schedule-weekday]")) {
+    updateScheduleChoice(t.form, t.dataset.scheduleTime || t.dataset.scheduleWeekday);
+    return;
+  }
   if (t.form?.dataset.kind === "filters") {
     ui.dirty = true;
     if (t.name === "countries") {
@@ -5166,6 +5296,11 @@ document.addEventListener("change", (event) => {
   } else if (t.id === "cms-status") {
     ui.status = t.value;
     render();
+  } else if (t.id === "review-origin") {
+    ui.queueTab = t.value;
+    ui.search = "";
+    ui.status = "";
+    render();
   } else if (t.dataset.sourceToggle) {
     if (!editable() || ui.running) {
       render();
@@ -5278,6 +5413,26 @@ document.addEventListener("submit", (event) => {
     closeDialog(true);
     render();
     toast("Draft saved for this job and language.");
+  } else if (kind === "schedule") {
+    const sourceCron = schedulePresetToCron(v.source_crawl_frequency, v.source_crawl_time, v.source_crawl_weekday);
+    const discoveryCron = schedulePresetToCron(v.discovery_frequency, v.discovery_time, v.discovery_weekday);
+    if (!sourceCron || !discoveryCron) {
+      toast("Choose a standard schedule for both tasks. Contact your technical admin for custom schedules.");
+      return;
+    }
+    ext().schedule = {
+      discovery_enabled: !!f.elements.discovery_enabled?.checked,
+      source_crawl_enabled: !!f.elements.source_crawl_enabled?.checked,
+      source_crawl_cron: sourceCron,
+      discovery_cron: discoveryCron,
+      timezone: ext().schedule?.timezone || "UTC",
+      notification_frequency: v.notification_frequency || "new_match",
+      notification_time: v.notification_time || "09:00",
+    };
+    audit("automation schedule changed", "crawler");
+    persist();
+    render();
+    toast("Schedule saved.");
   } else if (kind === "source") {
     const isSource = ui.sourceTab === "sources";
     const list = isSource ? db.ai_source_links : db.ai_discovery_queries;
@@ -5637,33 +5792,6 @@ document.addEventListener("submit", (event) => {
       "Thank you for contributing",
       "<p>Your link is waiting for admin review. It will not appear in the job feed until it has been reviewed and processed.</p>",
     );
-  } else if (f.id === "operations-config-form") {
-    if (!editable()) return;
-    const c = {
-      emergency_stop: !!v.emergency_stop,
-      publish_score: +v.publish_score,
-      reject_score: +v.reject_score,
-      expiry_days: +v.expiry_days,
-      report_limit: +v.report_limit,
-      push_threshold: +v.push_threshold,
-    };
-    if (c.reject_score >= c.publish_score) {
-      $("#operations-config-error").textContent =
-        "Auto-reject score must be lower than auto-publish score.";
-      return;
-    }
-    ext().operationsConfig = c;
-    audit("proposed configuration saved", "operations");
-    render();
-    toast("Configuration saved locally. Backend rules unchanged.");
-  } else if (f.id === "schedule-form") {
-    ext().schedule = {
-      enabled: !!v.enabled,
-      crawl_time: v.crawl_time,
-      timezone: v.timezone,
-    };
-    audit("schedule saved", "crawler");
-    toast("Sample schedule saved.");
   }
 });
 document.addEventListener("keydown", (e) => {
