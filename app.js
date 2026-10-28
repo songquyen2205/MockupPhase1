@@ -4043,7 +4043,7 @@ function jobReportDetail(id) {
     const adminTitle = `Admin: ${admin}${item.resolved_at ? ` · Actioned: ${stamp(item.resolved_at)}` : ""}${item.resolution_note ? ` · Note: ${item.resolution_note}` : ""}`;
     return row([`#${esc(item.id)}`, `Dancer #${esc(item.dancer_id)}`, esc(item.reason || "Other"), stamp(item.created_at), pill(item.status === "pending" ? "New" : "Actioned", item.status === "pending" ? "amber" : "green"), `<span title="${esc(adminTitle)}">${esc(action)}</span>`]);
   });
-  const reportActions = '<button type="submit" name="decision" value="keep_live" class="primary">Keep live</button><button type="submit" name="decision" value="keep_hidden">Keep hidden</button>';
+  const reportActions = '<button type="submit" name="decision" value="keep_live" class="primary">Keep live</button><button type="submit" name="decision" value="keep_hidden">Hide job</button>';
   const canChooseJobVisibility = ["published", "needs_review"].includes(o.status);
   const actionForm = openReports.length && editable() && canChooseJobVisibility
     ? `<form id="job-report-action-form" data-kind="job-report-action"><p class="report-action-guidance">Choose how this job should appear. Your choice will close all ${openReports.length} open report${openReports.length === 1 ? "" : "s"}; the history stays available.</p><label class="field"><span>Admin note (optional)</span><textarea name="admin_note" maxlength="1000" rows="2" placeholder="Add a short note"></textarea></label><p id="job-report-error" class="form-error" role="alert"></p><div class="actions">${reportActions}</div></form>`
@@ -5725,7 +5725,7 @@ document.addEventListener("submit", (event) => {
     }
     if (!['keep_live', 'keep_hidden'].includes(v.decision)) {
       const message = document.getElementById("job-report-error");
-      if (message) message.textContent = "Choose Keep live or Keep hidden.";
+      if (message) message.textContent = "Choose Keep live or Hide job.";
       return;
     }
     if (v.decision === "keep_live") {
