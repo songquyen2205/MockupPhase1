@@ -1,10 +1,10 @@
 "use strict";
-const STORE = "hammer.phase1.review.v79";
+const STORE = "hammer.phase1.review.v82";
 let db;
 try {
   db = JSON.parse(localStorage.getItem(STORE));
 } catch {}
-if (!db || db.version !== 79) db = HammerSeed();
+if (!db || db.version !== 82) db = HammerSeed();
 
 // Keep the sample Red Bull listing visibly distinct in existing local demo data.
 const redBullSample = db.ai_opportunities?.find((item) => item.canonical_key === "sample-102");
@@ -40,7 +40,8 @@ const ui = {
   guest: false,
   sourceTab: "sources",
   queueTab: "community",
-  reviewTab: "submissions",
+  reportDetailId: null,
+  reportJobFilter: null,
   hub: "all",
   job: null,
   lang: "en",
@@ -1346,6 +1347,19 @@ function cmsJobs() {
     });
   }
 
+  const openReportCount = (jobId) =>
+    new Set(
+      ext().reports
+        .filter((r) => r.opportunity_id === jobId && r.status === "pending")
+        .map((r) => r.dancer_id),
+    ).size;
+  const needsReportFollowUp = (item) =>
+    (item.status === "needs_review" && ext().moderation[item.id]?.state === "threshold") ||
+    (item.status === "needs_review" && ext().moderation[item.id]?.state === "confirmed");
+  filteredJobs.sort((a, b) => {
+    return Number(needsReportFollowUp(b)) - Number(needsReportFollowUp(a)) || openReportCount(b.id) - openReportCount(a.id);
+  });
+
   const p = ui.pagination?.jobs || { page: 1, limit: 10 };
   const totalPaginated = filteredJobs.length;
   const start = (p.page - 1) * p.limit;
@@ -1376,18 +1390,33 @@ function cmsJobs() {
         '<div style="text-align:right">Action</div>',
       ],
       paginatedJobs.map((o) => {
+        const jobReports = ext().reports?.filter((r) => r.opportunity_id === o.id) || [];
         const pendingReports =
           ext().reports?.filter(
             (r) => r.opportunity_id === o.id && r.status === "pending",
           ) || [];
-        const badges = pendingReports.length
-          ? `<span class="pill red">🚩 ${pendingReports.length}</span>`
+        const uniquePending = new Set(pendingReports.map((report) => report.dancer_id)).size;
+        const reportModeration = ext().moderation[o.id];
+        const flaggedForReportReview = reportModeration?.state === "threshold" && o.status === "needs_review";
+        const visibleJobStatus = o.status === "needs_review" && ["threshold", "admin_kept_hidden"].includes(reportModeration?.state)
+          ? "Hidden"
+          : statuses.find((s) => s[0] === o.status)?.[1] || o.status;
+        const badges = jobReports.length
+          ? `<button type="button" class="pill ${flaggedForReportReview ? "red" : pendingReports.length ? "amber" : ""}" data-action="moderate" data-value="${o.id}" title="View report history">${jobReports.length} report${jobReports.length === 1 ? "" : "s"}${pendingReports.length ? ` · ${uniquePending} open` : ""}</button>${flaggedForReportReview ? '<small class="report-flag-note">Auto-hidden · Admin review needed</small>' : ""}`
           : "—";
         const quickActions = [];
-        if (o.status === "needs_review" || o.status === "suspended")
+        if (o.status === "needs_review" || o.status === "suspended") {
+          const openReporterCount = new Set(
+            ext().reports.filter((report) => report.opportunity_id === o.id && report.status === "pending").map((report) => report.dancer_id),
+          ).size;
           quickActions.push(
-            ib("quick-approve", "Duyệt ngay", "check", o.id, !editable()),
+            openReporterCount >= 3
+              ? ib("moderate", "Review reports", "warning-circle", o.id, !editable())
+              : flaggedForReportReview
+                ? ib("job-drawer", "Review job", "arrow-square-out", o.id, !editable())
+                : ib("quick-approve", "Duyệt ngay", "check", o.id, !editable()),
           );
+        }
         if (o.status === "published")
           quickActions.push(
             ib("quick-suspend", "Tạm ẩn", "pause", o.id, !editable()),
@@ -1412,8 +1441,10 @@ function cmsJobs() {
             "Not provided",
           `<div style="font-size:0.85em"><span style="color:${o.completeness_score * 10 < 6 ? "#ef4444" : "#10b981"}">Info: ${(o.completeness_score * 10).toFixed(1)}</span> | <span style="color:${o.confidence * 10 < 7 ? "#ef4444" : "#10b981"}">Trust: ${(o.confidence * 10).toFixed(1)}</span></div>`,
           pill(
-            statuses.find((s) => s[0] === o.status)?.[1] || o.status,
-            o.status === "closed"
+            visibleJobStatus,
+            flaggedForReportReview || reportModeration?.state === "admin_kept_hidden"
+              ? "amber"
+              : o.status === "closed"
               ? "red"
               : o.status === "suspended"
                 ? "amber"
@@ -1828,91 +1859,76 @@ function runTable() {
   );
 }
 function cmsQueue() {
-  const reviewTab = ui.reviewTab || "submissions";
   const community = ui.queueTab === "community";
   const submissions = ext().submissions;
-  const discoveries = db.ai_discovered_source_candidates;
-  const pendingSubmissionCount = submissions.filter((s) => s.status === "pending_review").length;
-  const pendingDiscoveryCount = discoveries.filter((s) => s.status === "pending_review").length;
-  const pendingReports = ext().reports.filter((r) => r.status === "pending");
-  const openReportJobCount = new Set(pendingReports.map((r) => r.opportunity_id)).size;
+  const reportsByJob = new Map();
+  for (const report of ext().reports) {
+    const reports = reportsByJob.get(report.opportunity_id) || [];
+    reports.push(report);
+    reportsByJob.set(report.opportunity_id, reports);
+  }
+  const reportRows = ext().reports.map((report) => {
+    const related = reportsByJob.get(report.opportunity_id) || [];
+    const open = related.filter((item) => item.status === "pending");
+    const relatedJob = job(report.opportunity_id);
+    const moderation = ext().moderation[report.opportunity_id];
+    return { report, job: relatedJob, totalCount: related.length, openCount: open.length, uniqueOpen: new Set(open.map((item) => item.dancer_id)).size, autoHidden: relatedJob?.status === "needs_review" && moderation?.state === "threshold" };
+  }).filter((item) => item.job && (!ui.reportJobFilter || String(item.report.opportunity_id) === String(ui.reportJobFilter)) && (!ui.search || JSON.stringify(item).toLowerCase().includes(ui.search.toLowerCase())))
+    .sort((a, b) => Number(b.autoHidden) - Number(a.autoHidden) || Number(b.report.status === "pending") - Number(a.report.status === "pending") || String(b.report.created_at).localeCompare(String(a.report.created_at)));
 
-  const tab = (id, label, count, active) =>
-    `<button type="button" role="tab" aria-selected="${active}" data-action="review-tab" data-value="${id}" class="${active ? "active" : ""}"><span>${label}</span><span class="tab-count" style="display:inline-flex;align-items:center;justify-content:center;min-width:22px;height:20px;padding:0 6px;border-radius:10px;background:${active ? "#e7f5ef" : "#eef1f2"};color:${active ? "#07664e" : "#566269"};font-size:10px;font-weight:700;">${count}</span></button>`;
+  const tab = (id, label, active) =>
+    `<button type="button" role="tab" aria-selected="${active}" data-action="queue-tab" data-value="${id}" class="${active ? "active" : ""}">${label}</button>`;
 
   const intro = heading(
-    "CMS-03 · SPRINT 4",
-    "Submissions & Reports",
-    "Review dancer-submitted sources and reports about job listings.",
+    "",
+    "Review queue",
+    "Review dancer submissions and reports on discovered job opportunities.",
   );
-  const tabs = `<div class="tabs review-tabs" role="tablist" aria-label="Review queue">${tab("submissions", "Submissions", pendingSubmissionCount + pendingDiscoveryCount, reviewTab === "submissions")}${tab("reports", "Reports", openReportJobCount, reviewTab === "reports")}</div>`;
+  const tabs = `<div class="tabs review-tabs" role="tablist" aria-label="Review queue">${tab("community", "Dancer contributions", community)}${tab("discovery", "Job reports", !community)}</div>`;
+  const rows = community ? submissions.filter(matches) : [];
+  const submissionToolbar = `<div class="toolbar review-toolbar"><input type="search" id="cms-search" aria-label="Search queue" placeholder="${community ? "Search URL, contributor or note" : "Search report, dancer, job or source URL"}" value="${esc(ui.search)}"><select id="cms-status" aria-label="Filter queue status">${options(community ? [["", "All statuses"], ["pending_review", "Pending review"], ["approved", "Approved"], ["rejected", "Rejected"], ["duplicate", "Duplicate"]] : [["", "All reports"], ["open", "New"], ["hidden", "Hidden jobs"], ["resolved", "Actioned"]], ui.status)}</select></div>`;
 
-  if (reviewTab === "reports") {
-    const grouped = new Map();
-    for (const report of ext().reports) {
-      const key = report.opportunity_id;
-      if (!grouped.has(key)) grouped.set(key, []);
-      grouped.get(key).push(report);
-    }
-    const reportRows = [...grouped.entries()].map(([jobId, reports]) => {
-      const listing = job(jobId);
-      const ordered = reports.slice().sort((a, b) => String(a.created_at).localeCompare(String(b.created_at)));
-      const latest = ordered.at(-1);
-      const pending = ordered.filter((r) => r.status === "pending");
-      const reasons = [...new Set(ordered.map((r) => r.reason).filter(Boolean))];
-      const reporters = new Set(ordered.map((r) => r.dancer_id)).size;
-      const moderation = ext().moderation[jobId];
-      const displayStatus = moderation === "hidden" ? "Hidden" : moderation === "removed" ? "Removed" : listing?.status === "published" ? "Published" : listing?.status === "closed" ? "Closed" : listing?.status === "needs_review" ? "Needs review" : listing?.status || "Unavailable";
-      const statusKind = moderation === "removed" || displayStatus === "Closed" ? "red" : moderation === "hidden" || displayStatus === "Needs review" ? "amber" : displayStatus === "Published" ? "green" : "";
-      const rowData = {
-        jobId,
-        title: listing?.title || "Unavailable job",
-        organization: listing?.organization || "",
-        status: pending.length ? "pending" : "resolved",
-        reports,
-      };
-      if (!matches(rowData)) return null;
-      return row([
-        `<strong>${esc(listing?.title || "Unavailable job")}</strong><small>Job #${esc(jobId)}${listing?.organization ? ` · ${esc(listing.organization)}` : ""}</small>`,
-        pill(displayStatus, statusKind),
-        `<strong>${pending.length}</strong><small>of ${ordered.length} total</small>`,
-        esc(reasons.join(", ") || "—"),
-        esc(latest?.note || "—"),
-        `${reporters} ${reporters === 1 ? "dancer" : "dancers"}`,
-        stamp(latest?.created_at),
-        pending.length ? btn("moderate", "Review", pending[pending.length - 1].id, "", !editable()) : "Resolved",
-      ]);
-    }).filter(Boolean);
-
-    const reportToolbar = `<div class="toolbar"><input type="search" id="cms-search" aria-label="Search reports" placeholder="Search job, reason or reporter note" value="${esc(ui.search)}"><select id="cms-status" aria-label="Filter report status">${options([["", "All reports"], ["pending", "Needs review"], ["resolved", "Resolved"]], ui.status)}</select></div>`;
-    const notice = `<div class="review-notice" style="margin:0 0 16px;padding:11px 13px;border:1px solid var(--line);border-radius:5px;background:#fff;color:var(--muted);font-size:12px;line-height:1.5;"><strong style="color:var(--ink);">Jobs with open reports: ${openReportJobCount}.</strong> Jobs reported by 3 dancers are hidden automatically. Review the reports below before taking action.</div>`;
-    return intro + tabs + notice + reportToolbar + table(
-      ["Job", "Job status", "Open reports", "Reasons", "Latest note", "Reporters", "Last reported", "Action"],
-      reportRows,
-      "1120px",
-    );
-  }
-
-  const rows = (community ? submissions : discoveries).filter(matches);
-  const sourceControl = `<label class="review-source-filter" for="review-origin" style="display:flex;align-items:center;gap:7px;color:var(--muted);font-size:12px;">Source<select id="review-origin" aria-label="Submission source" style="max-width:210px;">${options([["community", "Dancer submissions"], ["discovery", "Agent discoveries"]], ui.queueTab)}</select></label>`;
-  const submissionToolbar = `<div class="toolbar review-toolbar"><input type="search" id="cms-search" aria-label="Search submissions" placeholder="Search URL, contributor or note" value="${esc(ui.search)}">${sourceControl}<select id="cms-status" aria-label="Filter submission status">${options([["", "All statuses"], ["pending_review", "Pending review"], ["approved", "Approved"], ["rejected", "Rejected"], ["duplicate", "Duplicate"]], ui.status)}</select></div>`;
+  const reportRowsFiltered = reportRows.filter((item) => {
+    if (ui.status === "open" && item.report.status !== "pending") return false;
+    if (ui.status === "hidden" && !item.autoHidden && !(item.job.status === "needs_review" && ext().moderation[item.job.id]?.state === "admin_kept_hidden")) return false;
+    if (ui.status === "resolved" && item.report.status === "pending") return false;
+    return true;
+  });
 
   return intro + tabs + submissionToolbar + table(
-    ["Submitted source", community ? "Contributor" : "Discovered by", "Note", "Submitted", "Status", "Action"],
-    rows.map((s) => row([
+    community
+      ? ["Submitted source", "Contributor", "Note", "Submitted", "Status", "Action"]
+      : ["ID", "Requested by", "Job", "Total reports", "Reason", "Description", "Job status", "Status", "Created", "Modified", "Action"],
+    (community ? rows : reportRowsFiltered).map((s) => community ? row([
       external(s.url, s.url),
-      community ? `Dancer #${esc(s.dancer_id)}` : esc(s.keyword || "Agent discovery"),
+      `Dancer #${esc(s.dancer_id)}`,
       esc(s.note || s.snippet || "—"),
       stamp(s.submitted_at || s.created_at),
-      pill(
-        s.status === "pending_review" ? "Pending review" : s.status,
-        s.status === "approved" ? "green" : s.status === "rejected" || s.status === "invalid" ? "red" : "amber",
-      ),
+      pill(s.status === "pending_review" ? "pending_review" : s.status, s.status === "approved" ? "green" : s.status === "rejected" || s.status === "invalid" ? "red" : "amber"),
       s.status === "pending_review"
-        ? `<div class="actions">${btn("approve", "Approve", s.id, "", !editable())}${btn("reject", "Reject", s.id, "danger", !editable())}</div>`
+        ? `<div class="actions">${btn("approve", "Approve source", s.id, "", !editable())}${btn("reject", "Reject", s.id, "danger", !editable())}</div>`
         : esc(s.reason || "Reviewed"),
-    ])),
-  );
+    ]) : (() => {
+      const { report, job: j, totalCount } = s;
+      const moderation = ext().moderation[j.id];
+      const jobStatus = j.status === "needs_review" && ["threshold", "admin_kept_hidden"].includes(moderation?.state) ? "Hidden" : j.status === "needs_review" ? "Needs review" : j.status === "published" ? "Live" : j.status;
+      const reportStatus = report.status === "pending" ? "New" : "Actioned";
+      return row([
+        `#${esc(report.id)}`,
+        `Dancer #${esc(report.dancer_id)}`,
+        `<a href="#" data-action="job-drawer" data-value="${esc(j.id)}">#${esc(j.id)} · ${esc(j.title)}</a>`,
+        String(totalCount),
+        esc(report.reason || "Other"),
+        esc(report.note || "—"),
+        pill(jobStatus, j.status === "needs_review" ? "amber" : j.status === "published" ? "green" : "red"),
+        pill(reportStatus, report.status === "pending" ? "amber" : "green"),
+        stamp(report.created_at),
+        report.resolved_at ? stamp(report.resolved_at) : "—",
+        `<div class="actions report-actions">${btn("report-detail", "View", report.id)}</div>`,
+      ]);
+    })()),
+    community ? "" : "1500px",
+  ) + (community || !ui.reportDetailId ? "" : jobReportDetail(ui.reportDetailId));
 }
 
 function cmsProspects() {
@@ -3995,6 +4011,10 @@ function jobDrawer(id) {
 }
 function reportDialog(id) {
   const o = job(id);
+  if (ext().reports.some((r) => r.opportunity_id === o.id && r.dancer_id === dancer().id)) {
+    toast("You have already reported this job.");
+    return;
+  }
   ui.job = o.id;
   dialog(
     "report",
@@ -4003,26 +4023,43 @@ function reportDialog(id) {
     "Submit report",
   );
 }
-function moderationDialog(id) {
-  const r = ext().reports.find((r) => r.id === Number(id)),
-    o = job(r.opportunity_id);
-  ui.reportId = r.id;
-  dialog(
-    "moderation",
-    `Review report #${r.id}`,
-    `<h3>${esc(o.title)}</h3><p class="muted compact">${esc(o.organization)} · Job #${o.id}</p><div class="notice">${esc(r.reason)}<br>${esc(r.note)}</div>${external(o.raw_url, "Open original listing")}<div class="divider"></div><div class="form-grid">${field("title", "Corrected title *", o.title, "text", "required")}${field("amount", "Compensation amount", o.compensation?.amount ?? "", "number", 'min="0" step="0.01"')}${select("currency", "Currency", ["USD", "SGD", "JPY"], o.compensation?.currency || "USD")}${select("unit", "Pay basis", ["project", "day", "hour"], o.compensation?.unit || "project")}${field("deadline", "Deadline", o.deadline, "date")}</div>${select(
-      "action",
-      "Resolution",
-      [
-        ["correct", "Save correction & restore job"],
-        ["hide", "Hide this job"],
-        ["remove", "Remove this job from the feed"],
-        ["dismiss", "Dismiss report & restore job"],
-      ],
-      ext().moderation[o.id] ? "dismiss" : "correct",
-    )}${area("resolution_note", "Review note *", "", 'required maxlength="1000"')}`,
-    "Confirm resolution",
-  );
+function jobReportDetail(id) {
+  const report = ext().reports.find((item) => String(item.id) === String(id));
+  const o = report && job(report.opportunity_id);
+  if (!report || !o) {
+    ui.reportDetailId = null;
+    return cmsQueue();
+  }
+  const related = ext().reports.filter((item) => item.opportunity_id === o.id).sort((a, b) => String(b.created_at).localeCompare(String(a.created_at)));
+  const openReports = related.filter((item) => item.status === "pending");
+  const moderation = ext().moderation[o.id];
+  const isAutoHidden = o.status === "needs_review" && moderation?.state === "threshold";
+  const isReportHidden = o.status === "needs_review" && ["threshold", "admin_kept_hidden"].includes(moderation?.state);
+  const status = isReportHidden ? "Hidden" : o.status === "needs_review" ? "Needs review" : o.status === "published" ? "Live" : o.status;
+  const resolutionLabels = { keep_live: "Kept live", keep_hidden: "Kept hidden", dismiss: "Report dismissed", hide: "Job hidden for review", remove: "Job removed" };
+  const historyRows = related.map((item) => {
+    const action = resolutionLabels[item.resolution] || (item.status === "pending" ? "Awaiting review" : "Actioned");
+    const admin = item.resolved_by || "No Admin action yet";
+    const adminTitle = `Admin: ${admin}${item.resolved_at ? ` · Actioned: ${stamp(item.resolved_at)}` : ""}${item.resolution_note ? ` · Note: ${item.resolution_note}` : ""}`;
+    return row([`#${esc(item.id)}`, `Dancer #${esc(item.dancer_id)}`, esc(item.reason || "Other"), stamp(item.created_at), pill(item.status === "pending" ? "New" : "Actioned", item.status === "pending" ? "amber" : "green"), `<span title="${esc(adminTitle)}">${esc(action)}</span>`]);
+  });
+  const reportActions = '<button type="submit" name="decision" value="keep_live" class="primary">Keep live</button><button type="submit" name="decision" value="keep_hidden">Keep hidden</button>';
+  const canChooseJobVisibility = ["published", "needs_review"].includes(o.status);
+  const actionForm = openReports.length && editable() && canChooseJobVisibility
+    ? `<form id="job-report-action-form" data-kind="job-report-action"><p class="report-action-guidance">Choose how this job should appear. Your choice will close all ${openReports.length} open report${openReports.length === 1 ? "" : "s"}; the history stays available.</p><label class="field"><span>Admin note (optional)</span><textarea name="admin_note" maxlength="1000" rows="2" placeholder="Add a short note"></textarea></label><p id="job-report-error" class="form-error" role="alert"></p><div class="actions">${reportActions}</div></form>`
+    : openReports.length && !editable()
+      ? '<p class="notice">Read-only access. You can view reports but cannot take action.</p>'
+      : openReports.length && !canChooseJobVisibility
+        ? `<p class="notice">This job is ${esc(status)}. Its status cannot be changed from report review.</p>`
+        : `<p class="notice">All reports for this job have been actioned. The history remains available below.</p>`;
+  const statusGuidance = isAutoHidden
+    ? '<p class="notice report-rule-note">Hidden automatically after reports from 3 different dancers. Review the reports, then choose whether to keep it hidden or return it to live.</p>'
+    : status === "Live"
+      ? '<p class="muted report-status-note">This job is live. Review the reports and choose whether it should stay live or be hidden.</p>'
+      : isReportHidden
+        ? '<p class="muted report-status-note">This job is hidden from dancers. You can keep it hidden or return it to live after reviewing.</p>'
+        : "";
+  return `<div class="overlay drawer report-drawer"><section class="dialog" role="dialog" aria-modal="true" aria-label="Job report history"><header class="dialog-head"><div><h2>Job report history</h2><small>#${esc(o.id)} · ${esc(o.title)}</small></div><button type="button" class="icon-button" aria-label="Close report history" data-action="report-list">×</button></header><div class="dialog-body report-drawer-body"><div class="report-job-summary"><div><strong>Job status</strong>${pill(status, isReportHidden ? "amber" : o.status === "published" ? "green" : "red")}</div><div><strong>Reports</strong><span>${openReports.length} open · ${related.length} total</span></div><div><strong>Original post</strong>${external(o.raw_url, "Open original post")}</div></div>${statusGuidance}<section class="report-selected-summary"><h3>Report details · #${esc(report.id)}</h3><p><strong>Dancer #${esc(report.dancer_id)}</strong> · ${esc(report.reason || "Other")} · ${pill(report.status === "pending" ? "New" : "Actioned", report.status === "pending" ? "amber" : "green")}</p><p>${esc(report.note || "No additional details provided.")}</p></section><section class="report-history-section"><h3>Report history</h3>${table(["Report", "Requested by", "Reason", "Reported", "Status", "Previous Admin action"], historyRows, "720px")}</section><section class="report-admin-action"><h3>${openReports.length ? "Admin decision" : "Report status"}</h3>${actionForm}</section></div></section></div>`;
 }
 async function copyText(text) {
   try {
@@ -4316,12 +4353,9 @@ document.addEventListener("click", async (event) => {
     ui.cms = v;
     ui.search = "";
     ui.status = "";
-    if (v === "queue") ui.reviewTab = "submissions";
-    render();
-  } else if (a === "review-tab") {
-    ui.reviewTab = v;
-    ui.search = "";
-    ui.status = "";
+    ui.reportDetailId = null;
+    ui.reportJobFilter = null;
+    if (v === "queue") ui.queueTab = "community";
     render();
   } else if (a === "mobile") {
     if (ui.mobile === "profile" && ui.dirty && v !== "profile") {
@@ -4694,6 +4728,22 @@ document.addEventListener("click", async (event) => {
     ui.queueTab = v;
     ui.search = "";
     ui.status = "";
+    ui.reportDetailId = null;
+    ui.reportJobFilter = null;
+    render();
+  } else if (a === "report-detail") {
+    ui.reportDetailId = v;
+    render();
+  } else if (a === "report-list") {
+    ui.reportDetailId = null;
+    render();
+  } else if (a === "moderate") {
+    ui.cms = "queue";
+    ui.queueTab = "discovery";
+    ui.reportDetailId = null;
+    ui.reportJobFilter = v;
+    ui.search = "";
+    ui.status = "";
     render();
   } else if (a === "source-edit") sourceDialog(v);
   else if (a === "job-drawer") jobDrawer(v);
@@ -4877,9 +4927,20 @@ document.addEventListener("click", async (event) => {
     }
   } else if (a === "bulk-job-approve") {
     const selected = db.ai_opportunities.filter((o) => selectedJobs.has(o.id));
+    const blockedByReports = selected.filter((item) => new Set(ext().reports.filter((report) => report.opportunity_id === item.id && report.status === "pending").map((report) => report.dancer_id)).size >= 3);
+    if (blockedByReports.length) {
+      toast("Review and resolve the 3-report alert before publishing selected jobs.");
+      return;
+    }
     if (selected.length) {
-      selected.forEach((j) => (j.status = "published"));
+      selected.forEach((j) => {
+        j.status = "published";
+        j.status_updated_at = now();
+        delete ext().moderation[j.id];
+        audit("job published after Admin review", j.id);
+      });
       selectedJobs.clear();
+      persist();
       rebuildRecommendations();
       render();
       toast("Đã duyệt các Job được chọn");
@@ -4984,8 +5045,7 @@ document.addEventListener("click", async (event) => {
       `<p>This affects Job Agent only. Existing Hammer classes and wallet access are unchanged.</p>${area("reason", "Reason *", "", "required")}`,
       "Confirm",
     );
-  } else if (a === "moderate") moderationDialog(v);
-  else if (a === "refresh-metrics") {
+  } else if (a === "refresh-metrics") {
     ui.metrics = metrics();
     render();
     toast("Summary refreshed.");
@@ -5296,11 +5356,6 @@ document.addEventListener("change", (event) => {
   } else if (t.id === "cms-status") {
     ui.status = t.value;
     render();
-  } else if (t.id === "review-origin") {
-    ui.queueTab = t.value;
-    ui.search = "";
-    ui.status = "";
-    render();
   } else if (t.dataset.sourceToggle) {
     if (!editable() || ui.running) {
       render();
@@ -5337,6 +5392,7 @@ document.addEventListener("submit", (event) => {
   if (!f.reportValidity()) return;
   const fd = new FormData(f);
   const v = Object.fromEntries(fd);
+  if (event.submitter?.name) v[event.submitter.name] = event.submitter.value;
   for (const el of f.querySelectorAll("select[multiple]"))
     v[el.name] = fd.getAll(el.name).join(",");
   const kind = f.dataset.kind;
@@ -5539,6 +5595,12 @@ document.addEventListener("submit", (event) => {
       return;
     }
     const o = job(ui.editId);
+    const priorStatus = o.status;
+    const pendingUniqueReports = new Set(ext().reports.filter((report) => report.opportunity_id === o.id && report.status === "pending").map((report) => report.dancer_id)).size;
+    if (v.status === "published" && pendingUniqueReports >= 3) {
+      formError("Resolve the open reports before publishing this job.");
+      return;
+    }
     Object.assign(o, {
       title: v.title.trim(),
       organization: v.organization.trim() || null,
@@ -5578,6 +5640,13 @@ document.addEventListener("submit", (event) => {
         .map(([type, value]) => ({ type, value })),
       updated_at: now(),
     });
+    if (o.status !== priorStatus) o.status_updated_at = o.updated_at;
+    const reportModeration = ext().moderation[o.id];
+    if (o.status === "published" && reportModeration) {
+      delete ext().moderation[o.id];
+    } else if (reportModeration?.state === "threshold" && o.status !== priorStatus) {
+      reportModeration.auto_status = false;
+    }
     rebuildRecommendations();
     audit("job corrected", o.id);
     closeDialog(true);
@@ -5612,19 +5681,12 @@ document.addEventListener("submit", (event) => {
       closeDialog(true);
       sourceDialog(Number(v.target_id));
     } else if (kind === "report") {
-    if (
-      ext().reports.some(
-        (r) =>
-          r.opportunity_id === ui.job &&
-          r.dancer_id === dancer().id &&
-          r.status === "pending",
-      )
-    ) {
-      formError("You already have an open report for this job.");
+    if (ext().reports.some((r) => r.opportunity_id === ui.job && r.dancer_id === dancer().id)) {
+      formError("You have already reported this job.");
       return;
     }
     ext().reports.push({
-      id: Date.now(),
+      id: Math.max(0, ...ext().reports.map((item) => Number(item.id) || 0)) + 1,
       opportunity_id: ui.job,
       dancer_id: dancer().id,
       reason: v.reason,
@@ -5632,36 +5694,65 @@ document.addEventListener("submit", (event) => {
       status: "pending",
       created_at: now(),
     });
-    audit("job reported", ui.job);
+    const openReporters = new Set(
+      ext().reports
+        .filter((r) => r.opportunity_id === ui.job && r.status === "pending")
+        .map((r) => r.dancer_id),
+    ).size;
+    const reportedJob = job(ui.job);
+    if (openReporters >= 3 && reportedJob.status === "published") {
+      const prior = ext().moderation[ui.job];
+      ext().moderation[ui.job] = {
+        state: "threshold",
+        previous_status: reportedJob.status,
+        auto_status: true,
+        round: (prior?.round || 0) + 1,
+        flagged_at: now(),
+      };
+      reportedJob.status = "needs_review";
+      reportedJob.status_updated_at = ext().moderation[ui.job].flagged_at;
+    }
+    audit(openReporters >= 3 ? "job auto-flagged after 3 unique reports" : "job reported", ui.job);
     closeDialog(true);
-    toast("Report submitted for admin review.");
-  } else if (kind === "moderation") {
-    if (!v.title.trim() || !v.resolution_note.trim()) {
-      formError("Job title and review note are required.");
+    toast(openReporters >= 3 ? "Three different dancers reported this job. It is now hidden and at the top of the review queues." : "Report submitted. The job remains live and is in the review queue.");
+  } else if (kind === "job-report-action") {
+    const report = ext().reports.find((item) => String(item.id) === String(ui.reportDetailId));
+    const o = report && job(report.opportunity_id);
+    const openReports = o ? ext().reports.filter((item) => item.opportunity_id === o.id && item.status === "pending") : [];
+    if (!report || !o || !openReports.length) {
+      formError("There are no open reports left to action for this job.");
       return;
     }
-    const r = ext().reports.find((r) => r.id === ui.reportId),
-      o = job(r.opportunity_id);
-    if (v.action === "correct") {
-      o.title = v.title.trim();
-      o.compensation =
-        v.amount === ""
-          ? null
-          : { amount: +v.amount, currency: v.currency, unit: v.unit };
-      o.deadline = v.deadline || null;
+    if (!['keep_live', 'keep_hidden'].includes(v.decision)) {
+      const message = document.getElementById("job-report-error");
+      if (message) message.textContent = "Choose Keep live or Keep hidden.";
+      return;
     }
-    if (["correct", "dismiss"].includes(v.action))
+    if (v.decision === "keep_live") {
+      o.status = "published";
+      o.status_updated_at = now();
       delete ext().moderation[o.id];
-    else ext().moderation[o.id] = v.action === "hide" ? "hidden" : "removed";
-    r.status = "resolved";
-    r.resolution = v.action;
-    r.resolution_note = v.resolution_note;
-    r.resolved_at = now();
+    } else if (v.decision === "keep_hidden") {
+      o.status = "needs_review";
+      o.status_updated_at = now();
+      ext().moderation[o.id] = { ...(ext().moderation[o.id] || {}), state: "admin_kept_hidden", auto_status: false, round: ext().moderation[o.id]?.round || 1 };
+    }
+    const actionedAt = now();
+    const adminNote = String(v.admin_note || "").trim();
+    const adminName = ui.role === "admin" ? "Forest Lam" : "Reviewer";
+    openReports.forEach((openReport) => {
+      openReport.status = "resolved";
+      openReport.resolution = v.decision;
+      openReport.resolution_note = adminNote;
+      openReport.resolved_at = actionedAt;
+      openReport.resolved_by = adminName;
+    });
     rebuildRecommendations();
-    audit("report resolved: " + v.action, r.id);
-    closeDialog(true);
+    audit(`${openReports.length} job report(s) actioned: ${v.decision}`, o.id);
+    ui.reportDetailId = null;
+    persist();
     render();
-    toast("Review recorded. Source settings were not changed.");
+    toast(`${openReports.length} report${openReports.length === 1 ? "" : "s"} actioned. Job is ${v.decision === "keep_live" ? "live" : "hidden"}.`);
   } else if (f.id === "profile-form") {
     const error = $("#profile-error");
     const selectedStyles = fd.getAll("dance_styles").join(",");
