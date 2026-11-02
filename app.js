@@ -32,6 +32,90 @@ if (db && db.ai_opportunities) {
   });
   if (migrated) localStorage.setItem(STORE, JSON.stringify(db));
 }
+
+function ensureJobFeedPreviewSamples() {
+  const extensions = db.extensions || (db.extensions = {});
+  if (extensions.jobFeedPreviewSamples === 1) return;
+
+  const base = db.ai_opportunities?.[0];
+  if (!base) return;
+  const futureDate = (offset) => {
+    const value = new Date();
+    value.setUTCDate(value.getUTCDate() + offset);
+    return value.toISOString().slice(0, 10);
+  };
+  const matchedJobs = [
+    ["K-pop MV backup dancers", "Seoul Frame Studio", "Seoul", "South Korea", ["Hip-Hop"], "commercial"],
+    ["Hip-hop instructor for weekend classes", "Northside Dance Lab", "Tokyo", "Japan", ["Hip-Hop"], "teaching"],
+    ["Street dance campaign performers", "Brightline Creative", "Osaka", "Japan", ["Open Choreo"], "casting"],
+    ["Commercial dancers for a summer campaign", "Mori Media House", "Tokyo", "Japan", ["Hip-Hop"], "commercial"],
+    ["Touring ensemble dancers", "StageWorks Asia", "Singapore", "Singapore", ["Open Choreo"], "touring"],
+    ["Dance instructor, beginner hip-hop", "Move Studio Kyoto", "Kyoto", "Japan", ["Hip-Hop"], "teaching"],
+    ["Video campaign dancer casting", "Kite Film Collective", "Tokyo", "Japan", ["Open Choreo"], "casting"],
+    ["Backup dancers for live music show", "Echo Production", "Yokohama", "Japan", ["Hip-Hop"], "performance"],
+    ["Choreography assistant for studio project", "Frame Dance Company", "Osaka", "Japan", ["Open Choreo"], "choreography"],
+    ["Dance crew for brand launch event", "Goodday Creative", "Tokyo", "Japan", ["Hip-Hop"], "performance"],
+  ];
+  const exploreJobs = [
+    ["Ballet dancers for theatre production", "Harbor Stage Company", "Osaka", "Japan", ["Ballet"]],
+    ["Breaking crew for international tour", "Global Beat Agency", "Bangkok", "Thailand", ["Breaking"]],
+    ["Jazz dancers for hotel entertainment", "Palm House Resorts", "Singapore", "Singapore", ["Jazz"]],
+    ["Contemporary dance residency", "River Arts Centre", "Kyoto", "Japan", ["Contemporary"]],
+    ["Latin dance performers for cruise shows", "Blue Horizon Entertainment", "Worldwide", "Worldwide", ["Latin"]],
+    ["Ballet teacher for youth programme", "Little Steps Academy", "Nagoya", "Japan", ["Ballet"]],
+    ["Traditional dance cast for cultural festival", "East Gate Productions", "Taipei", "Taiwan", ["Traditional"]],
+    ["Jazz funk dancers for music video", "Lumen Pictures", "Manila", "Philippines", ["Jazz"]],
+    ["Contemporary performers for gallery project", "Open Room Arts", "Fukuoka", "Japan", ["Contemporary"]],
+    ["Breaking instructor for community classes", "Corner Studio", "Hanoi", "Vietnam", ["Breaking"]],
+  ];
+  const buildJob = (sample, index, matched) => {
+    const [title, organization, city, country, dance_styles, opportunity_type] = sample;
+    const id = 1600 + index;
+    const sourceUrl = `https://example.org/hammer-preview/job-${id}`;
+    const deadline = futureDate(18 + index);
+    return {
+      ...base,
+      id,
+      source_link_id: 1,
+      title,
+      organization,
+      opportunity_type: opportunity_type || "audition",
+      description: matched
+        ? "Seeking experienced dancers for an upcoming production."
+        : "Open call for dancers to join an upcoming dance opportunity.",
+      dance_styles,
+      city,
+      country,
+      location_text: city === "Worldwide" ? "Worldwide" : `${city}, ${country}`,
+      requirements: {
+        skill_level: matched ? "Advanced" : "All levels",
+        years_experience: matched ? 2 : 8,
+      },
+      compensation: matched
+        ? { amount: 450 + (index % 4) * 100, currency: "USD", unit: "Per hour" }
+        : { amount: 150, currency: "USD", unit: "Per hour" },
+      application_url: sourceUrl,
+      raw_url: sourceUrl,
+      contact_email: `casting${id}@example.org`,
+      deadline,
+      event_start_date: futureDate(25 + index),
+      event_end_date: futureDate(26 + index),
+      status: "published",
+      canonical_key: `job-feed-preview-${id}`,
+      confidence: 0.92,
+      completeness_score: 0.95,
+      missing_fields: [],
+    };
+  };
+
+  db.ai_opportunities.push(
+    ...matchedJobs.map((sample, index) => buildJob(sample, index + 1, true)),
+    ...exploreJobs.map((sample, index) => buildJob(sample, index + 11, false)),
+  );
+  extensions.jobFeedPreviewSamples = 1;
+  localStorage.setItem(STORE, JSON.stringify(db));
+}
+ensureJobFeedPreviewSamples();
 const ui = {
   mode: "cms",
   cms: "overview",
@@ -48,6 +132,8 @@ const ui = {
   search: "",
   status: "",
   feedSearch: "",
+  feedGroup: "matched",
+  feedVisible: { matched: 10, explore: 10, all: 10 },
   filters: { countries: [], cities: [], styles: [], roles: [], skill_level: "", languages: [], include_online: false, work_abroad: false },
   running: false,
   dialog: null,
@@ -2330,6 +2416,17 @@ function mobileNav() {
     const myJobsCount = Object.values(ext().history || {}).filter(
       (h) => h && (h.saved || Object.keys(h.drafts || {}).length || h.applied_at),
     ).length;
+    const list = filteredJobs();
+    const groups = jobFeedGroups(list);
+    const selectedGroup = groups.personalized
+      ? (ui.feedGroup === "explore" ? "explore" : "matched")
+      : "all";
+    const selectedItems = selectedGroup === "matched"
+      ? groups.matched
+      : selectedGroup === "explore"
+        ? groups.more
+        : list;
+    const visibleLimit = ui.feedVisible[selectedGroup] || 10;
 
     below = `
       <!-- 1. Heading row: Job List + 2 Quick Action Buttons -->
@@ -2352,45 +2449,45 @@ function mobileNav() {
       <div class="toolbar" style="margin-top:0; margin-bottom:4px; display:flex; gap:8px; align-items:center;">
         <input id="feed-search" type="search" value="${esc(ui.feedSearch)}" aria-label="Search jobs" placeholder="Title, organization or city" style="flex:1;">
         ${ib("filters", "Filter jobs", "sliders-horizontal")}
-      </div>`;
-    const list = filteredJobs();
-    body =
-      (!dancer().availibility
-        ? '<div class="notice">New job alerts are paused. You can still browse and apply.</div>'
-        : "") +
-      `<div class="section-heading" style="display:flex; justify-content:space-between; align-items:center; margin-top:16px;"><div><h3>${ui.guest ? "All opportunities" : "Recommended opportunities"}</h3><small>${list.length} jobs</small></div></div>` +
-      (list.length
-        ? list.map((item, idx) => {
-            const card = jobCard(item);
-            if (idx === 1 && !ui.guest && !ext().nudgeDismissed) {
-              return card + `
-              <div style="background: linear-gradient(135deg, #f0fdf4 0%, #eff6ff 100%); border: 1px solid #bae6fd; border-radius: 8px; padding: 14px 16px; margin-bottom: 12px; position:relative;">
-                <div style="display:flex; gap:10px; align-items:flex-start;">
-                  <span style="font-size: 22px;">💡</span>
-                  <div style="flex:1;">
-                    <div style="font-weight: 700; font-size: 13px; color: #0369a1; margin-bottom: 4px;">Changed your rate or learned new styles?</div>
-                    <div style="font-size: 12px; color: #475569; line-height: 1.4; margin-bottom: 10px;">Keep your preferences fresh so AI pairs you with the newest casting calls and gigs this month.</div>
-                    <div style="display:flex; gap:8px;">
-                      <button data-action="open-quick-setup" style="background:#0284c7; color:white; border:none; padding:6px 12px; border-radius:6px; font-size:12px; font-weight:600; cursor:pointer;">Quick Update (30s)</button>
-                      <button data-action="dismiss-nudge" style="background:white; border: 1px solid #cbd5e1; color:#64748b; padding:6px 10px; border-radius:6px; font-size:12px; font-weight:500; cursor:pointer;">Keep Current Details</button>
-                    </div>
-                  </div>
-                </div>
-              </div>`;
-            }
-            return card;
-          }).join("")
-        : empty(
-            "No matching opportunities",
-            "Adjust your filters to see more jobs.",
-            btn("reset-filters", "Reset filters"),
-          ));
+      </div>
+      ${groups.personalized ? `<div class="job-feed-switcher" role="tablist" aria-label="Job groups">
+        <button type="button" role="tab" aria-selected="${selectedGroup === "matched"}" class="${selectedGroup === "matched" ? "active" : ""}" data-action="job-feed-group" data-value="matched">Matched jobs <span>${groups.matched.length}</span></button>
+        <button type="button" role="tab" aria-selected="${selectedGroup === "explore"}" class="${selectedGroup === "explore" ? "active" : ""}" data-action="job-feed-group" data-value="explore">Explore jobs <span>${groups.more.length}</span></button>
+      </div>` : ""}`;
+    const nudge = !ui.guest && !ext().nudgeDismissed
+      ? `<div class="profile-refresh-nudge"><strong>Updated your profile recently?</strong><span>Refresh your preferences to get more relevant job matches.</span><button data-action="open-quick-setup">Review profile</button><button data-action="dismiss-nudge">Not now</button></div>`
+      : "";
+    body = (!dancer().availibility
+      ? '<div class="notice">New job alerts are paused. You can still browse and apply.</div>'
+      : "");
+
     if (!list.length) {
-      const nearest = db.ai_opportunities
-        .filter(available)
-        .sort((a, b) => score(b).value - score(a).value)
-        .slice(0, 2);
-      body += `<div class="section-heading"><h3>Outside your current filters</h3></div>${nearest.map(jobCard).join("")}`;
+      body += empty(
+        "No jobs found",
+        "Try changing your search or filters.",
+        btn("reset-filters", "Reset filters"),
+      );
+    } else {
+      const heading = selectedGroup === "all"
+        ? `<div class="section-heading job-feed-section-heading"><div><h3>All active jobs</h3><small>${list.length} jobs</small></div></div>`
+        : "";
+      body += `<section class="job-feed-results">${heading}`;
+      if (selectedItems.length) {
+        body += selectedItems.slice(0, visibleLimit).map((item) =>
+          jobCard(item, false, selectedGroup !== "explore" && selectedGroup !== "all"),
+        ).join("");
+        if (selectedGroup === "matched" && selectedItems.length > 2) body += nudge;
+        if (visibleLimit < selectedItems.length) {
+          body += `<div class="job-feed-load-more"><small>Showing ${Math.min(visibleLimit, selectedItems.length)} of ${selectedItems.length}</small><button type="button" data-action="job-feed-load-more" data-value="${selectedGroup}">Load 10 more</button></div>`;
+        }
+      } else {
+        body += selectedGroup === "matched"
+          ? `<p class="job-feed-empty-note">No profile matches right now.</p><button type="button" class="job-feed-empty-action" data-action="job-feed-group" data-value="explore">Browse ${groups.more.length} other active jobs</button>`
+          : selectedGroup === "explore"
+            ? '<p class="job-feed-empty-note">You’re all caught up. Check back for new jobs.</p>'
+            : empty("No jobs found", "Try changing your search or filters.", btn("reset-filters", "Reset filters"));
+      }
+      body += `</section>`;
     }
   } else if (ui.mobile === "hub") {
     const allHistoryJobs = db.ai_opportunities.filter((o) => {
@@ -2630,6 +2727,44 @@ function filteredJobs() {
     .sort((a, b) => score(b).value - score(a).value);
 }
 
+function jobFeedGroups(list) {
+  if (ui.guest || !ageAllowed()) {
+    return { personalized: false, matched: [], more: list };
+  }
+
+  const profileStyles = String(dancer().dance_styles || "")
+    .split(",")
+    .map((style) => style.trim().toLowerCase())
+    .filter(Boolean);
+  const sameCountry = (o) =>
+    String(o.country || "").trim().toLowerCase() ===
+    String(dancer().country || "").trim().toLowerCase();
+  const isRemote = (o) =>
+    /remote|online|worldwide|work from anywhere/i.test(
+      `${o.location_text || ""} ${o.city || ""}`,
+    );
+  const locationRank = (o) => {
+    if (o.city && o.city.toLowerCase() === String(dancer().city || "").toLowerCase()) return 0;
+    if (sameCountry(o)) return 1;
+    if (isRemote(o)) return 2;
+    return o.city || o.country ? 3 : 4;
+  };
+  const styleRank = (o) =>
+    (o.dance_styles || []).some((style) =>
+      profileStyles.includes(String(style).toLowerCase()),
+    )
+      ? 0
+      : 1;
+
+  return {
+    personalized: true,
+    matched: list.filter((o) => score(o).value >= 40),
+    more: list
+      .filter((o) => score(o).value < 40)
+      .sort((a, b) => locationRank(a) - locationRank(b) || styleRank(a) - styleRank(b)),
+  };
+}
+
 const progressConfig = {
     pending: { label: "Applied", step: 1, color: "#d97706", bg: "#fef3c7" },
     interview: { label: "Interview", step: 2, color: "#2563eb", bg: "#dbeafe" },
@@ -2652,7 +2787,7 @@ function renderStatusPill(jobId, curProg) {
     `;
 }
 
-function jobCard(o, inHub = false) {
+function jobCard(o, inHub = false, showMatch = true) {
     const h = ext().history[o.id] || { saved: false, drafts: {}, applied_at: null }, open = available(o);
     const s = score(o);
 
@@ -2700,6 +2835,7 @@ function jobCard(o, inHub = false) {
     } else if (!open) {
         matchPill = `<span style="background: #fee2e2; color: #b91c1c; font-size: 11px; font-weight: 700; padding: 3px 8px; border-radius: 4px;">Closed</span>`;
     }
+    if (!showMatch && !inHub && open) matchPill = "";
 
     // 4. Clean Meta: Dance Styles & Dates (Typography only, no cluttering SVG icons)
     const styles = (o.dance_styles || []).join(", ");
@@ -4324,7 +4460,7 @@ document.addEventListener("click", async (event) => {
   }
   if (
     ui.mode === "dancer" &&
-    !["mode", "reset", "age", "close", "sign-in", "job", "mobile", "feed-search", "filters", "reset-filters", "continue-onboarding", "login-returning", "open-quick-setup", "dismiss-onboarding-hook", "dismiss-nudge", "toggle-open-to-work", "submit-quick-setup", "open-disclaimer-modal", "agree-disclaimer-from-modal", "submit-age-gate", "submit-age-gate-next", "submit-age-gate-browse", "submit-age-gate-skip", "toggle-quick-style", "toggle-quick-role", "toggle-boost"].includes(a) &&
+    !["mode", "reset", "age", "close", "sign-in", "job", "mobile", "feed-search", "filters", "reset-filters", "job-feed-group", "job-feed-load-more", "continue-onboarding", "login-returning", "open-quick-setup", "dismiss-onboarding-hook", "dismiss-nudge", "toggle-open-to-work", "submit-quick-setup", "open-disclaimer-modal", "agree-disclaimer-from-modal", "submit-age-gate", "submit-age-gate-next", "submit-age-gate-browse", "submit-age-gate-skip", "toggle-quick-style", "toggle-quick-role", "toggle-boost"].includes(a) &&
     !ensureAccess()
   )
     return;
@@ -4374,6 +4510,13 @@ document.addEventListener("click", async (event) => {
     }
     ui.mobile = v;
     ui.dirty = false;
+    render();
+  } else if (a === "job-feed-group") {
+    ui.feedGroup = v === "explore" ? "explore" : "matched";
+    render();
+  } else if (a === "job-feed-load-more") {
+    const group = ["matched", "explore", "all"].includes(v) ? v : "all";
+    ui.feedVisible[group] = (ui.feedVisible[group] || 10) + 10;
     render();
   } else if (a === "force-leave-profile") {
     closeDialog(true);
