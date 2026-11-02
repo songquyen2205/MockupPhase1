@@ -184,6 +184,8 @@ body:has(#mode-cms.active) .overlay button.link:hover { text-decoration: none; }
 #mobile-overlay-root {
   position: absolute;
   inset: 0;
+  width: 100%;
+  height: 100%;
   z-index: 100;
   pointer-events: none;
 }
@@ -193,9 +195,12 @@ body:has(#mode-cms.active) .overlay button.link:hover { text-decoration: none; }
 .mobile-overlay {
   position: absolute;
   inset: 0;
+  width: 100%;
+  height: 100%;
   display: flex;
+  align-items: center;
   flex-direction: column;
-  justify-content: flex-end;
+  justify-content: center;
   z-index: 100;
   overflow: hidden;
 }
@@ -281,8 +286,21 @@ body:has(#mode-cms.active) .overlay button.link:hover { text-decoration: none; }
   border-radius: 16px;
   margin: auto 16px;
   padding: 24px 20px;
+  width: min(420px, calc(100% - 32px));
+  max-height: calc(100dvh - 32px);
+  overflow: auto;
+  overflow-wrap: anywhere;
   box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
   animation: mobileScaleIn 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+}
+.mobile-confirm-card .mobile-sheet-footer {
+  justify-content: flex-end;
+  flex-wrap: wrap;
+}
+.mobile-confirm-card .mobile-sheet-footer button {
+  min-width: 0;
+  max-width: 100%;
+  white-space: normal;
 }
 
 .mobile-toast {
@@ -441,7 +459,7 @@ body:has(#mode-cms.active) .overlay button.link:hover { text-decoration: none; }
 .mobile-app [style*="background: #0284c7"] { background:var(--green) !important; border-color:var(--green) !important; color:#fff !important; }
 .mobile-app [style*="accent-color:#2563eb"],
 .mobile-app [style*="accent-color: #2563eb"] { accent-color:var(--green) !important; }
-@media(max-width:700px){.mobile-overlay{position:fixed;inset:0;height:100dvh}.mobile-dialog-sheet{width:100%;max-height:calc(100dvh - 8px)}}
+@media(max-width:700px){#mobile-overlay-root .mobile-overlay{position:absolute!important;inset:0!important;width:100%;height:100%}.mobile-dialog-sheet{width:100%;max-height:calc(100% - 8px)}}
 .report-flag-note{display:block;color:#b45309;font-size:10px;margin-top:3px;white-space:nowrap}.report-rule-note{margin:10px 0;font-size:12px}.report-rule-note strong{margin-right:3px}.report-actions{flex-wrap:nowrap;white-space:nowrap}.report-actions button{min-height:30px;padding:6px 9px;font-size:11px}.report-job-summary{margin:0 0 10px}.report-job-summary strong,.report-job-summary small{display:block}.report-job-summary small{margin-top:3px}.report-status-note{font-size:12px;color:#59645f;margin:8px 0}.report-count-summary{font-size:12px;margin:12px 0 4px}.report-history-list{margin:0;padding:0}.report-item{padding:9px 0;border-bottom:1px solid var(--line);list-style:none}.report-item-head{display:flex;justify-content:space-between;gap:12px;align-items:baseline;font-size:12px}.report-item-head span{font-size:10px;color:var(--muted);text-align:right}.report-item p{font-size:12px;line-height:1.45;margin-top:4px}.report-item small{font-size:10px}.report-past{border-top:1px solid var(--line);margin-top:10px;padding-top:8px}.report-past summary{font-size:12px;color:var(--blue);cursor:pointer}.report-decision-help{font-size:12px;color:var(--muted)}
 .report-back{margin:10px 0 14px;padding:0;border:0;background:none;color:var(--blue);font-weight:600;cursor:pointer}.report-detail-layout{display:grid;grid-template-columns:minmax(280px,.9fr) minmax(360px,1.1fr);gap:14px;align-items:start}.report-detail-layout h3{margin:0 0 12px}.report-detail-fields{margin:0}.report-detail-fields>div{display:grid;grid-template-columns:minmax(100px,34%) 1fr;gap:12px;padding:9px 0;border-bottom:1px solid var(--line);font-size:12px}.report-detail-fields dt{color:var(--muted)}.report-detail-fields dd{margin:0;min-width:0;overflow-wrap:anywhere}.report-detail-layout .notice{margin:12px 0;font-size:12px;line-height:1.45}.report-detail-layout form .field{margin-top:12px}.report-detail-layout .form-error{min-height:0;margin:4px 0;color:var(--red);font-size:12px}.report-detail-layout .form-error:empty{display:none}
 @media(max-width:800px){.report-detail-layout{grid-template-columns:1fr}.report-detail-fields>div{grid-template-columns:120px 1fr}.report-actions button{white-space:nowrap}}

@@ -2544,7 +2544,7 @@ function mobileNav() {
     </ul>
   </div>
   <style>
-    @media (min-width: 1000px) { .annotation-box { display: block !important; } }
+    .annotation-box { display: none !important; }
   </style>
   <section class="mobile-app" style="position:relative;"><div id="mobile-toast" class="mobile-toast" role="status" aria-live="polite"></div><header class="mobile-top"><div class="mobile-title" style="${title ? '' : 'display:none;'}"><h1>${title}</h1><div class="actions">${tools}</div></div>${below}</header><div class="mobile-body">${alert}${body}</div>${mobileNav()}<div id="mobile-overlay-root">${ui.dialog && ui.dialogState ? renderMobileDialogHTML(ui.dialogState) : ""}</div></section></div>`;
 }
@@ -3432,7 +3432,7 @@ function dialog(kind, title, body, saveLabel = "", extra = "", shape = "") {
   const m = $("#mobile-overlay-root");
   if (m) m.innerHTML = "";
   $("#overlay-root").innerHTML =
-    `<div class="overlay ${shape}"><section class="dialog ${shape === "drawer" ? "" : "wide"}" role="dialog" aria-modal="true" aria-labelledby="dialog-title"><header class="dialog-head"><h2 id="dialog-title">${title}</h2>${ib("close", "Close dialog", "x")}</header><div class="dialog-body"><form id="dialog-form" data-kind="${kind}"><div class="error-text" id="dialog-error" role="alert"></div>${body}</form></div><footer class="dialog-footer">${extra}${btn("close", "Close")}${saveLabel ? `<button class="primary" type="submit" form="dialog-form" ${ui.mode === "cms" && !editable() ? "disabled" : ""}>${saveLabel}</button>` : ""}</footer></section></div>`;
+    `<div class="overlay ${shape}"><section class="dialog ${shape === "drawer" ? "" : "wide"}" role="dialog" aria-modal="true" aria-labelledby="dialog-title"><header class="dialog-head"><h2 id="dialog-title">${title}</h2>${ib("close", "Close dialog", "x")}</header><div class="dialog-body"><form id="dialog-form" data-kind="${kind}"><div class="error-text" id="dialog-error" role="alert"></div>${body}</form></div><footer class="dialog-footer">${extra}${kind === "confirm-application" ? "" : btn("close", "Close")}${saveLabel ? `<button class="primary" type="submit" form="dialog-form" ${ui.mode === "cms" && !editable() ? "disabled" : ""}>${saveLabel}</button>` : ""}</footer></section></div>`;
   document.body.style.overflow = "hidden";
   setTimeout(
     () =>
@@ -4476,16 +4476,43 @@ document.addEventListener("click", async (event) => {
     const h = history(jId);
     const jobObj = job(jId);
     const draftText = (h.drafts && h.drafts[ui.lang]) || `Dear ${jobObj?.organization || 'Team'}, I am interested in applying for ${jobObj?.title || 'this opportunity'}.`;
-    await copyText(draftText);
+    const copied = await copyText(draftText);
+    if (!copied) {
+      toast("Could not copy the draft. Please try again.");
+      return;
+    }
     h.copied_at = now();
+    ui.pendingApplyJob = jId;
+    persist();
+    dialog(
+      "confirm-application",
+      "Have you applied for this job?",
+      "<p>This job will be marked as Applied only after you confirm.</p>",
+      "",
+      '<button type="button" data-action="skip-application">Skip</button><button type="button" class="primary" data-action="confirm-application">Yes, I’ve applied</button>',
+      "center",
+    );
+    toast("Draft copied. Submit it through the original listing.");
+    return;
+  } else if (a === "confirm-application") {
+    const jId = Number(ui.pendingApplyJob);
+    if (!jId) return;
+    const h = history(jId);
     if (!h.applied_at) {
       h.applied_at = now();
       if (!h.progress) h.progress = "pending";
     }
-    audit("copied and applied", jId);
+    audit("application submission confirmed by dancer", jId);
+    ui.pendingApplyJob = null;
+    closeDialog(true);
     persist();
     render();
-    toast("Draft copied! Job marked as Applied.");
+    toast("Job marked as Applied.");
+    return;
+  } else if (a === "skip-application") {
+    ui.pendingApplyJob = null;
+    closeDialog(true);
+    toast("Not marked as Applied. You can update the status after submitting.");
     return;
   } else if (a === "applied") {
     const h = history(v);
